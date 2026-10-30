@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.next-e2e/
+.env*
+!.env.example
+.local/
+test-results/
+playwright-report/
+coverage/
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.playwright-cli/
+output/
