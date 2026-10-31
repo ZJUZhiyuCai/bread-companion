@@ -214,7 +214,7 @@ export function PlushSvg({
               <ellipse cx="886" cy="716" rx="82" ry="42" fill={`url(#${id}-blush)`} />
             </g>
             {EYES.map((e) => (
-              <Eye key={e.side} id={id} side={e.side} cx={e.cx} cy={e.cy} />
+              <Eye key={e.side} id={id} side={e.side} cx={e.cx} cy={e.cy} phone={lit && phoneLight} />
             ))}
             <g className="p-smile">
               <path d="M588 627 Q615 670 642 627 Q615 637 588 627 Z" />
@@ -235,7 +235,7 @@ export function PlushSvg({
   );
 }
 
-function Eye({ id, side, cx, cy }: { id: string; side: 'l' | 'r'; cx: number; cy: number }) {
+function Eye({ id, side, cx, cy, phone }: { id: string; side: 'l' | 'r'; cx: number; cy: number; phone: boolean }) {
   return (
     <g className={`p-eye p-eye--${side}`} transform={`translate(${cx} ${cy})`}>
       <g className="p-size">
@@ -248,6 +248,12 @@ function Eye({ id, side, cx, cy }: { id: string; side: 'l' | 'r'; cx: number; cy
           </g>
           <ellipse rx="97" ry="91" fill={`url(#${id}-depth)`} />
           <ellipse className="p-caustic" cx="16" cy="52" rx="54" ry="25" fill={`url(#${id}-caustic)`} />
+          {/* The red phone at its lower right, caught small on the glass. */}
+          {phone && (
+            <g className="p-reflect">
+              <ellipse cx="62" cy="46" rx="10" ry="4" transform="rotate(-36 62 46)" />
+            </g>
+          )}
           {/* The room's light: it stays where it is while the iris moves under it. */}
           <g className="p-shine">
             <ellipse cx="-34" cy="-42" rx="27" ry="16" transform="rotate(-32 -34 -42)" />

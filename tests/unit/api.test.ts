@@ -76,6 +76,15 @@ describe('real provider candidates', () => {
   it('does not blindly retry ambiguous provider/network failures', async () => {
     setup(); const fetcher=vi.fn(async()=>new Response('private echo body',{status:503}));await expect(new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('uses a receiver-free fetch and rejects redirects without following credentials or retrying', async () => {
+    setup();
+    const fetcher=vi.fn(async function(this: unknown, _url: RequestInfo | URL, init?: RequestInit) {
+      expect(this).toBeUndefined(); expect(init?.redirect).toBe('manual');
+      return new Response(null,{status:302,headers:{Location:'https://untrusted.example/collect'}});
+    });
+    await expect(new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('repairs a verbose call reply once and applies the voice style at the provider boundary', async () => {
     setup(); const input=requestFixture({mode:'listen',channel:'call'});
     const fetcher=vi.fn().mockResolvedValueOnce(upstream({assistantText:'字'.repeat(101),findings:[],warnings:[]})).mockResolvedValueOnce(upstream({assistantText:'先不急着想清楚，慢慢说。',findings:[],warnings:[]}));
@@ -119,7 +128,7 @@ describe('real provider candidates', () => {
 describe('MiniMax adapter', () => {
   it('validates vendor success, decodes hex and retains preset voice', async () => {
     vi.stubEnv('TTS_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');vi.stubEnv('MINIMAX_VOICE_ID','Chinese (Mandarin)_Warm_Bestie');
-    const fetcher=vi.fn(async(_url: RequestInfo | URL, options?:RequestInit)=>{const payload=JSON.parse(options!.body as string);expect(payload.voice_setting.voice_id).toBe('Chinese (Mandarin)_Warm_Bestie');expect(options!.redirect).toBe('error');return Response.json({base_resp:{status_code:0},data:{status:2,audio:'49443300'}});});
+    const fetcher=vi.fn(async(_url: RequestInfo | URL, options?:RequestInit)=>{const payload=JSON.parse(options!.body as string);expect(payload.voice_setting.voice_id).toBe('Chinese (Mandarin)_Warm_Bestie');expect(options!.redirect).toBe('manual');return Response.json({base_resp:{status_code:0},data:{status:2,audio:'49443300'}});});
     expect(await synthesize('你好',new AbortController().signal,fetcher)).toEqual(new Uint8Array([73,68,51,0]));
   });
   it('does not mistake a 200 error payload for usable speech', async () => {
@@ -130,6 +139,17 @@ describe('MiniMax adapter', () => {
     vi.stubEnv('ASR_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');
     const fetcher=vi.fn(async(_url:RequestInfo|URL,opts?:RequestInit)=>{expect(opts!.body).toBeInstanceOf(FormData);return Response.json({text:'待核对的原话',duration:2});});
     expect(await transcribe(new File([encodeWav(new Float32Array(16000))],'recording.wav',{type:'audio/wav'}),new AbortController().signal,fetcher)).toBe('待核对的原话');
+  });
+  it('rejects ASR and TTS redirects without following the audio or text to another host', async () => {
+    vi.stubEnv('ASR_PROVIDER','minimax');vi.stubEnv('TTS_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');
+    const fetcher=vi.fn(async function(this: unknown, _url: RequestInfo | URL, init?: RequestInit) {
+      expect(this).toBeUndefined();expect(init?.redirect).toBe('manual');
+      return new Response(null,{status:307,headers:{Location:'https://untrusted.example/collect'}});
+    });
+    const signal=new AbortController().signal;
+    await expect(synthesize('合成测试',signal,fetcher)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+    await expect(transcribe(new File([encodeWav(new Float32Array(16000))],'synthetic.wav',{type:'audio/wav'}),signal,fetcher)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
   it('rejects forged WAV headers and excessive duration before a paid call', async () => {
     vi.stubEnv('ASR_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');const fetcher=vi.fn();

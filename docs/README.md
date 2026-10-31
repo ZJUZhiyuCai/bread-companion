@@ -2,6 +2,9 @@
 
 ## 当前产品
 
+- [0.4.0 细节设计、并发与上线验收](craft-online-validation.md)：测试证据、实际发布与尚未验证的范围。
+- [在线部署与限额](deployment.md)：Worker、共享 D1、secrets、发布与回退。
+
 - [配置与运行](setup.md)：从无密钥 Mock 到真实文字和语音。
 - [痛点、用户旅程与 Harness](product-harness.md)：角色、上下文、工具权限和失败控制。
 - [安静开场、3D 电话与功能对抗审查](phone3d-audit.md)：0.3.0 图形降级、通话中断恢复与验证范围。
@@ -16,6 +19,8 @@
 - [开源仓库建设](repository-guide.md)：结构依据、维护规则与发布检查。
 
 ## 设计与研究
+
+- [灯下小桌子的细节设计](design-craft-release.md)、[原稿与接入差异](design-craft-provenance.json)、[字体来源与切片](fonts.md)。
 
 - [安抚优先的开场设计](design-calm-entry.md)、[本轮来源与接入差异](calm-entry-provenance.json)。
 

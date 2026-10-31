@@ -39,3 +39,14 @@ GitHub CodeQL 默认查询集采用 `remote_and_local` 威胁模型，首次扫�
 ## 处置原则
 
 上述 12 条使用 GitHub 的 `false positive` 分类归档，并逐条写入来源和判断；没有宣称修复了 12 个可利用漏洞。历史提示、原始扫描和解释均保留。新增代码继续接受 CodeQL、依赖更新与密钥扫描，私密漏洞报告入口见 [SECURITY.md](../SECURITY.md)。
+
+
+## 0.4.0：公开托管后的重新审阅
+
+2026-11-01，PR #8。新增在线 smoke CLI 和 Worker 配置上下文触发 [#20](https://github.com/ZJUZhiyuCai/bread-companion/security/code-scanning/20)、[#21](https://github.com/ZJUZhiyuCai/bread-companion/security/code-scanning/21)、[#22](https://github.com/ZJUZhiyuCai/bread-companion/security/code-scanning/22) 三条 `js/request-forgery` 提示，已重新按公开部署边界审查，而非沿用“仅单用户”的旧理由：
+
+- `scripts/smoke-online.mjs:20` 的目标只来自明确运行该 CLI 的操作者 `--origin`。它要求精确 HTTPS origin 与 `--live`，拒绝重定向；不属于 Worker 打包的应用目录，没有 HTTP 路由启动它，不替访客选择地址或执行测试。
+- `server/providers/speech.ts:7,41` 的 `miniBaseUrl` 只来自 `serverEnv().MINIMAX_BASE_URL` 或官方默认值。在线 `serverEnv()` 读的是 `deployment/sites/worker.ts` 传入的 Cloudflare **平台 env 绑定**，没有从 Request、URL、headers、FormData、模型或对话复制字段。生产配置只由拥有站点的运营者通过原生 secret/config 工具设置。
+- 转写仅接受音频和请求标识，合成 schema 只接受 run 元数据与 text；访客不能提交 endpoint、key 或环境配置。手动重定向 3xx 直接失败，没有带凭据跟随到另一地址。已有两个测试覆盖 agent/ASR/TTS 的此行为。
+
+所以这三条仍属于操作员配置被 local-source 威胁模型标为不可信，而当前产品不存在相应的低权限配置入口；按 false positive 分类保留判断。没有关闭 CodeQL、降低严重级别阈值或忽略目录。若增加 BYO endpoint、远程配置、用户脚本或工具代执行 CLI，必须重新打开审阅并施加网络目的地策略。此结论只覆盖这些具体数据流，不是公开部署的整体安全认证。

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — 2026-11-01
+
+A lamp-lit desk with self-hosted typography, isolated service capacity and an HTTPS trial deployment.
+
+- Integrated official Claude refinements across paper, lighting, enamel/brass controls, dialogue, cards and call states. Reduced the paper grain after visual review.
+- Self-hosted renamed OFL WenKai subsets: a 167 KiB core, with remaining characters loaded by unicode range.
+- Prepared the fixed public welcome audio in parallel with microphone permission; cancellation and permission denial never trigger paid synthesis or late playback. Loaded saved cards and provider capabilities concurrently.
+- Added per-capability circuit breaking and concurrency isolation, bounded incoming-body readers, exact hosted origins and signed anonymous visits.
+- Added D1 atomic shared rolling budgets, deduplication and expiring active leases; accounting failure rejects paid work. Worker secrets are scoped to each request.
+- Retained local Next development and added a separate reproducible Sites/Vinext staging path with versioned migrations. Updated bilingual documentation and hosted data boundaries.
+
+See [validation](docs/craft-online-validation.md), [deployment](docs/deployment.md), [Claude design](docs/design-craft-release.md) and [font attribution](docs/fonts.md).
+
 ## 0.3.0 — 2026-11-01
 
 A quieter first visit and a real 3D telephone beside the photo plush, with bounded graphics loading and recoverable audio interruptions.

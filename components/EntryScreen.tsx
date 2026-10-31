@@ -83,7 +83,9 @@ export function EntryScreen(props: EntryScreenProps) {
         </div>
 
         <div className="entry__content">
-          <h1 className="entry__title">先在这儿待一会儿。</h1>
+          <h1 className="entry__title">
+            先在这儿<span className="entry__title-mark">待一会儿</span>。
+          </h1>
           <p className="entry__lede">不想说话也没关系。想开口的时候，再开口。</p>
 
           {/* The lightest thing to do here: listen. No voice from you, no microphone. */}
@@ -93,6 +95,14 @@ export function EntryScreen(props: EntryScreenProps) {
               <span className="rest-listen__title">先听面包说一小段</span>
               <span className="rest-listen__sub">{listenSub}</span>
             </span>
+            {/* What pressing does, shown rather than said: something plays. Not shown when there is no voice. */}
+            {!(caps && !caps.tts.available) && (
+              <span className="rest-listen__play" aria-hidden="true">
+                <svg viewBox="0 0 12 12" focusable="false">
+                  <path d="M2.5 1.6 C2.5 0.9 3.2 0.5 3.8 0.9 L10.6 5.2 C11.1 5.6 11.1 6.4 10.6 6.8 L3.8 11.1 C3.2 11.5 2.5 11.1 2.5 10.4 Z" />
+                </svg>
+              </span>
+            )}
           </button>
 
           <form className="first-note" onSubmit={submit}>

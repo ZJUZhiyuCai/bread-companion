@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     { key: 'Referrer-Policy', value: 'no-referrer' },
     { key: 'Permissions-Policy', value: 'microphone=(self), camera=(), geolocation=()' },
     { key: 'X-Frame-Options', value: 'DENY' }
+  ] }, { source: '/design/fonts/:file.woff2', headers: [
+    { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
   ] }]; }
 };
 export default nextConfig;

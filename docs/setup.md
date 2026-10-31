@@ -51,6 +51,8 @@ MINIMAX_VOICE_SPEED=1
 | Chrome 未安装 | `npx playwright install chromium`，然后用 `CI=true` 跑 E2E |
 | 保存后另一台设备找不到 | 当前只存浏览器 IndexedDB；主动导出 JSON 再导入，不是云同步 |
 
-## 部署边界
+## 在线部署
 
-当前 `dev` / `start` 绑定 `127.0.0.1`。API 以本机单用户、同源请求为前提，没有公网身份系统。不要简单改成 `0.0.0.0` 当作多用户部署；账号隔离、HTTPS、配额与隐私控制属于单独的工程范围。
+`dev` / `start` 仍绑定 `127.0.0.1`。在线版通过 `deployment/sites/` 的独立 Vinext / Worker 适配复用业务代码；配置 HTTPS 原点、签名访客 cookie、D1 共享配额与服务端 secrets，不能仅改监听地址。完整发布、迁移、验证与回退方法见 [部署指南](deployment.md)。
+
+公网实例不能连接维护者电脑上的 `127.0.0.1:3425`。需使用已授权的 HTTPS 上游端点和该端点实际支持的模型 ID；本项目线上使用 `https://maas-openapi.wanjiedata.com/api/anthropic/v1` 与 `deepseek-v4.1-flash-1017`。它们是运营者配置，访客不能修改。

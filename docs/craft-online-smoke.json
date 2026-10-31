@@ -1,0 +1,101 @@
+{
+  "at": "2026-10-31T19:01:44.092Z",
+  "origin": "https://bread-companion-czy.rosscai.chatgpt.site",
+  "fixture": "Operator-selected synthetic WAV; no physical microphone",
+  "steps": [
+    {
+      "path": "/api/capabilities",
+      "status": 200,
+      "expected": 200,
+      "ms": 1910,
+      "bytes": 886,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 506,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 487,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 480,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 400,
+      "expected": 400,
+      "ms": 502,
+      "bytes": 190,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "expected": 200,
+      "ms": 3597,
+      "bytes": 167,
+      "serverTiming": "provider;dur=2572.0, total;dur=2617.0"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 200,
+      "expected": 200,
+      "ms": 2415,
+      "bytes": 335,
+      "serverTiming": "provider;dur=2063.0, total;dur=2105.0"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 409,
+      "expected": 409,
+      "ms": 535,
+      "bytes": 206,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/synthesize",
+      "status": 200,
+      "expected": 200,
+      "ms": 1873,
+      "bytes": 67956,
+      "serverTiming": "provider;dur=1169.0, total;dur=1211.0"
+    }
+  ],
+  "providers": {
+    "agent": {
+      "mode": "real",
+      "label": "DeepSeek",
+      "configured": true
+    },
+    "asr": {
+      "available": true,
+      "label": "MiniMax 语音转写"
+    },
+    "tts": {
+      "available": true,
+      "label": "MiniMax · 温暖闺蜜",
+      "greeting": "/companion/hello-warm-bestie.mp3?v=1"
+    }
+  },
+  "fixtureSha256": "bf4a7e231993a8c463c9c3cfd9d0965ebde49096345b197aedf98be2c2bfc278",
+  "transcript": "今天的面试结束了，我有一点累，先不想复盘，就想跟你说说话。",
+  "assistantText": "面完先歇着，不复盘。想说什么都行，我听着。",
+  "audioSha256": "035702642d2fa5e543d56e6ce79201e3e50aa2fefcff1b387b41262352306add",
+  "completed": true,
+  "boundary": "Real hosted HTTP chain and request guards; browser audio, physical microphones and acoustic echo are separate checks."
+}
