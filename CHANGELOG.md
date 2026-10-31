@@ -8,6 +8,7 @@ A quieter first visit and a real 3D telephone beside the photo plush, with bound
 - Removed the greeting hops and every eye-squashing blink. Glass highlights and restrained gaze movement keep the companion awake without half-closed eyes.
 - Integrated DeepSeek's telephone and layout refinements, followed by official Claude's scene, lighting, copy and responsive composition. The Blender generator reproduces the committed GLB byte for byte in the documented environment.
 - Added lazy Three.js rendering, a fixed interactive hit area, a 10-second model-download deadline and callable SVG fallback. Construction, rendering, context-loss and malformed-model failures release graphics resources; idle and hidden scenes stop drawing.
+- Wait for service readiness before home graphics initialization; use the callable SVG on software GPUs to prevent shader setup from freezing interaction. Hardware rendering and fault-injection coverage remain.
 - Kept initial 3D preparation behind the opening audio. Unexpected AudioContext suspension/closure now releases microphone capture and offers explicit reconnection.
 - Expanded adversarial browser coverage for graphics failures, late results, audio interruptions and the new entry. Test conditions and physical-device limitations are documented separately.
 

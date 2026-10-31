@@ -49,4 +49,4 @@ npm run check:models
 
 模型需要保留 `phone`、`phone_body`、`handset`、`handset_body`、`dial_wheel`、`cord_root` 和 `cord_tip` 等节点。检查脚本会拒绝缺少关键节点、外部资源、越界缓冲区或超出预算的导出。
 
-按钮和命中区独立于 Canvas。加载、解析或 WebGL 失败时仍可通过 SVG 电话拨号；`?phone=svg` 供开发时对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。
+按钮和命中区独立于 Canvas。加载、解析或 WebGL 失败时仍可通过 SVG 电话拨号；软件渲染器也自动使用 SVG，避免冷着色器编译冻结输入和通话控制。服务能力未就绪时不初始化 3D；`?phone=svg` 供开发时对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。

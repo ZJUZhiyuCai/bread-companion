@@ -6,7 +6,7 @@ import { CALL_GREETING } from '../../domain/call-greeting';
 // Microphone input below is generated inside Web Audio; no physical device is opened.
 test.use({ launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] } });
 
-async function instrument(page: Page, fault: 'construct' | '' = '') {
+async function instrument(page: Page, fault: 'construct' | 'software' | '' = '') {
   await page.addInitScript(initialFault => {
     const w = window as any;
     const contexts: WebGL2RenderingContext[] = [];
@@ -19,10 +19,21 @@ async function instrument(page: Page, fault: 'construct' | '' = '') {
     w.__greetingStarts = [];
     const get = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: any[]) {
+      // Exercise the hardware path on CI's real software WebGL implementation. Only capability
+      // selection is substituted; renderer work, faults, disposal and audio are still real.
+      if (String(args[0]).startsWith('webgl')) args[1] = { ...args[1], failIfMajorPerformanceCaveat: false };
       const context = (get as any).apply(this, args);
       if (context && String(args[0]).startsWith('webgl') && !contexts.includes(context)) contexts.push(context);
       return context;
     } as any;
+    const parameter = WebGL2RenderingContext.prototype.getParameter;
+    WebGL2RenderingContext.prototype.getParameter = function (p: number) {
+      const info = this.getExtension('WEBGL_debug_renderer_info');
+      if (info && p === info.UNMASKED_RENDERER_WEBGL) {
+        return initialFault === 'software' ? 'ANGLE SwiftShader Device' : 'Test hardware capability';
+      }
+      return parameter.call(this, p);
+    };
     for (const name of ['drawElements', 'drawArrays', 'createFramebuffer']) {
       const proto = WebGL2RenderingContext.prototype as any;
       const original = proto[name];
@@ -200,6 +211,8 @@ test('SVG comparison skips the model and WebGL while retaining keyboard calling'
 });
 
 test('a stalled download expires; the next stage retries only after the welcome starts', async ({ page }) => {
+  // Includes the actual 10-second download deadline, shader setup and resource-release assertions.
+  test.setTimeout(45_000);
   await instrument(page);
   let release!: () => void;
   const held = new Promise<void>(resolve => { release = resolve; });
@@ -225,6 +238,42 @@ test('a stalled download expires; the next stage retries only after the welcome 
   release();
   await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
   await hangup(page);
+});
+
+test('software graphics keeps the SVG callable without compiling room shaders', async ({ page }) => {
+  await instrument(page, 'software');
+  await home(page);
+  await expect.poll(async () => (await audit(page)).contexts).toBe(1);
+  await expect(page.locator('.phone3d')).toHaveCount(0);
+  expect((await audit(page)).liveContexts).toBe(0);
+  expect((await audit(page)).draws).toBe(0);
+  await phone(page).click();
+  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  expect((await audit(page)).greetings).toBe(1);
+  expect((await audit(page)).contexts).toBe(1);
+  await hangup(page);
+});
+
+test('pending service readiness does not start graphics work', async ({ page }) => {
+  await instrument(page);
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/capabilities', async route => {
+    const response = await route.fetch();
+    const caps = await response.json();
+    caps.asr.available = caps.tts.available = caps.agent.configured = true;
+    await held;
+    await route.fulfill({ json: caps }).catch(() => {});
+  });
+  await page.goto('/');
+  await expect(phone(page)).toHaveAttribute('aria-disabled', 'true');
+  // Longer than the graphics idle callback's 1.5-second deadline, with the network held independently.
+  await page.waitForTimeout(1800);
+  expect((await audit(page)).contexts).toBe(0);
+  expect((await audit(page)).micCalls).toBe(0);
+  release();
+  await expect(phone(page)).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
 });
 
 test('a corrupt model releases its renderer and stays on SVG for the rest of the call', async ({ page }) => {
