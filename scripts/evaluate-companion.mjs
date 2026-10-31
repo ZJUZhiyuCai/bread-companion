@@ -48,10 +48,10 @@ for (const probe of cases.slice(0, Number(option('--limit', cases.length)))) {
     const raw=(protocol === 'anthropic' ? payload.content?.filter(x=>x.type==='text').map(x=>x.text ?? '').join('') : payload.choices?.[0]?.message?.content) ?? '';
     let parsed;try {parsed=app ? payload : JSON.parse(raw.replace(/^\s*```(?:json)?\s*/i,'').replace(/\s*```\s*$/,'').trim());}catch{}
     const text=parsed?.assistantText ?? '';
-    row={...probe,channel,status:res.status,ms:Math.round(performance.now()-start),stopReason:payload.stop_reason??payload.choices?.[0]?.finish_reason,response:parsed ?? raw,checks:{validJSON:!!parsed,contentOnly:!!parsed && Object.keys(parsed).every(k=>['assistantText','findings','warnings','supportGuidance'].includes(k)),noFindings:parsed?.findings?.length===0,chars:[...text].length,questions:(text.match(/[？?]/g)??[]).length,plainSpeech:!/[#*`]|\([^)]{2,}\)|（[^）]{2,}）/.test(text)}};
+    row={...probe,channel,status:res.status,ms:Math.round(performance.now()-start),stopReason:payload.stop_reason??payload.choices?.[0]?.finish_reason,response:parsed ?? raw,checks:{validJSON:!!parsed,contentOnly:!!parsed && Object.keys(parsed).every(k=>[...['assistantText','findings','warnings','supportGuidance'],...(app ? ['requestId','sessionId','runId','epoch','contextRevision','serviceMode'] : [])].includes(k)),noFindings:parsed?.findings?.length===0,chars:[...text].length,questions:(text.match(/[？?]/g)??[]).length,plainSpeech:!/[#*`]|\([^)]{2,}\)|（[^）]{2,}）/.test(text)}};
   } catch(e) {row={...probe,channel,status:0,ms:Math.round(performance.now()-start),error:e.name};}
   results.push(row);
-  await writeFile(out,JSON.stringify({model:app?'server-selected':model,protocol:app?'application':protocol,capabilities:capabilities?.agent,maxTokens:4096,throughApplication:!!app,promptVersion:PROMPT_VERSION,recordedAt:new Date().toISOString(),synthetic:true,kind:'fixed_context_probes',results},null,2));
+  await writeFile(out,JSON.stringify({model:app?'server-selected':model,protocol:app?'application':protocol,capabilities:capabilities?.agent,maxTokens:app?null:4096,throughApplication:!!app,promptVersion:PROMPT_VERSION,recordedAt:new Date().toISOString(),synthetic:true,kind:'fixed_context_probes',results},null,2));
   console.log(JSON.stringify({id:probe.id,status:row.status,ms:row.ms,reply:row.response?.assistantText ?? row.error},null,0));
 }
 if (results.some(r => r.status !== 200 || !r.response?.assistantText)) process.exitCode = 1;
