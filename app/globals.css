@@ -33,8 +33,11 @@
   --kraft-ink: #4f3219;
   --receipt: #fffdf8;
 
-  --lamp: #ffd58a;
-  --glow: rgba(255, 196, 110, 0.32);
+  /* a low reading lamp, not a party: cream-peach rather than gold */
+  --lamp: #f5cfa0;
+  --glow: rgba(238, 196, 152, 0.26);
+  /* the evening outside the lamp's circle — only ever a faint corner of the room */
+  --dusk: rgba(170, 164, 196, 0.1);
   --glow-rec: rgba(229, 72, 77, 0.12);
 
   --coral: #c8363c;
@@ -91,8 +94,9 @@
     --kraft-ink: #f1ddbf;
     --receipt: #20232c;
 
-    --lamp: #ffcb73;
-    --glow: rgba(255, 186, 96, 0.14);
+    --lamp: #eebf88;
+    --glow: rgba(232, 178, 124, 0.12);
+    --dusk: rgba(120, 116, 160, 0.1);
     --glow-rec: rgba(224, 86, 91, 0.12);
 
     --coral: #e0565b;
@@ -724,17 +728,17 @@ kbd {
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.04em;
-  transform: rotate(-2deg);
-  transition: transform 0.2s var(--ease);
+  transition: border-color 0.2s;
 }
+/* A plain label, not a rubber stamp: it states a fact (an AI) and opens the rest. */
 .ai-stamp:hover {
-  transform: rotate(0deg);
+  border-color: color-mix(in srgb, var(--crust) 45%, var(--line-strong));
 }
 .ai-stamp__ai {
   display: grid;
   place-items: center;
   padding: 0 7px;
-  background: var(--ink);
+  background: var(--ink-2);
   color: var(--bg);
 }
 .ai-stamp__mode {
@@ -742,6 +746,7 @@ kbd {
   place-items: center;
   padding: 0 8px;
   color: var(--ink-2);
+  font-weight: 600;
 }
 .ai-stamp--mock {
   border-style: dashed;
@@ -749,8 +754,9 @@ kbd {
 .ai-stamp--mock .ai-stamp__mode {
   color: var(--amber);
 }
-.ai-stamp--real .ai-stamp__mode {
-  color: var(--green);
+.ai-stamp--real .ai-stamp__mode,
+.ai-stamp--checking .ai-stamp__mode {
+  color: var(--ink-3);
 }
 
 /* ==========================================================================
@@ -803,7 +809,7 @@ kbd {
 }
 
 /*
- * State tunes these; the life loop adds --gx/--gy (gaze), data-blink and data-curious.
+ * State tunes these; the life loop adds --gx/--gy (gaze), data-glint and data-curious.
  * There are no lids: --pupil, --eye (how wide the beads read), --cheek, --smile and pose do the acting.
  */
 .plush {
@@ -850,8 +856,7 @@ kbd {
 
 /* Glass bead eyes. Origin = the socket's centre; a blink flattens the bead toward its lower edge. */
 .p-size,
-.p-ball,
-.p-closed {
+.p-ball {
   transform-box: view-box;
   transform-origin: 0 58px;
 }
@@ -895,24 +900,15 @@ kbd {
   stroke-linecap: round;
   opacity: 0.3;
 }
-.p-closed {
-  fill: none;
-  stroke: #3a2214;
-  stroke-width: 9;
-  stroke-linecap: round;
-  opacity: 0;
+/*
+ * No blink. Now and then the light on the glass softens and comes back — the window highlight dims a
+ * little, the small point of light swells and settles — while the bead keeps its full round shape.
+ */
+.plush[data-glint] .p-shine ellipse {
+  animation: p-glint 0.9s ease-in-out;
 }
-.p-patch {
-  opacity: 0;
-}
-.plush[data-blink] .p-patch {
-  animation: p-blink-patch 0.19s linear;
-}
-.plush[data-blink] .p-ball {
-  animation: p-blink 0.19s ease-in-out;
-}
-.plush[data-blink] .p-closed {
-  animation: p-blink-line 0.19s ease-in-out;
+.plush[data-glint] .p-shine circle {
+  animation: p-glint-dot 0.9s ease-in-out;
 }
 
 .p-blush {
@@ -1198,7 +1194,8 @@ kbd {
   width: 40%;
 }
 .nook.is-lit .nook__glow {
-  animation: lamp-warm 7s ease-in-out infinite;
+  /* the lamp breathes slower than a resting person does, and barely — felt more than seen */
+  animation: lamp-warm 13s ease-in-out infinite;
 }
 /* Goodnight: the lamp turns down once to a small night light; 面包 and the phone stay in it. */
 .nook.is-out .nook__glow {
@@ -1206,6 +1203,60 @@ kbd {
 }
 .nook.is-out .nook__phone {
   filter: brightness(0.92);
+}
+
+/* ==========================================================================
+   The red phone in three dimensions — a transparent canvas over the drawn one
+   ========================================================================== */
+
+/*
+ * Placed by Phone3D from the same numbers the engine uses. It never takes a pointer: the button, its
+ * name and the static hit outline belong to the drawn phone underneath, before, during and after.
+ */
+.phone3d {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease), filter 0.3s;
+}
+.phone3d[data-state='ready'] {
+  opacity: 1;
+}
+.phone3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.phone-door__art {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+/*
+ * Once the model is up, the drawing steps aside — all but two layers that belong to the room rather than
+ * to the drawing: the floor (the long soft shadow toward the lower right and the phone's warm red glow
+ * on the table, which comes up under the hand and breathes while it rings — the same soft shadows the
+ * photo has) and the bell marks, which keep saying "ringing" the same way, unmoving with reduced motion.
+ * Hidden with opacity, so the hit outline keeps working.
+ */
+.rp > * {
+  transition: opacity 0.4s var(--ease);
+}
+:is(.phone-door__art, .cstage).is-3d .rp > :not(.rp-bell, .rp-floor) {
+  opacity: 0;
+}
+/* the 3D phone's own contact shade sits in the drawn one; keep the pair from doubling up */
+:is(.phone-door__art, .cstage).is-3d .rp-floor > ellipse:last-child {
+  opacity: 0.45;
+}
+.phone-door.is-blocked .phone3d[data-state='ready'] {
+  opacity: 0.8;
+  filter: saturate(0.3);
+}
+.cstage[data-pose='down'] .phone3d {
+  filter: saturate(0.3) brightness(0.9);
 }
 
 /* ==========================================================================
@@ -1764,13 +1815,19 @@ kbd {
   padding: 18px clamp(18px, 4vw, 52px) 28px;
   overflow-x: hidden;
 }
+/*
+ * The room: one low lamp behind 面包, its light pooling where it sits rather than spreading over the
+ * page, and the evening in the far corner. Calm comes from where the light is, not from turning it down.
+ */
 .entry::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 90vh;
+  height: 100vh;
   z-index: -1;
-  background: radial-gradient(48% 62% at 30% 18%, var(--glow), transparent 72%);
+  background:
+    radial-gradient(42% 52% at 27% 46%, var(--glow), transparent 74%),
+    radial-gradient(46% 40% at 96% 100%, var(--dusk), transparent 70%);
   pointer-events: none;
 }
 .entry__top {
@@ -1785,42 +1842,54 @@ kbd {
 .entry__stage {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  gap: clamp(28px, 5vw, 80px);
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: clamp(24px, 4vw, 64px);
   align-items: center;
   width: 100%;
-  max-width: 1120px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: clamp(12px, 4vh, 48px) 0;
+  padding: clamp(8px, 3vh, 36px) 0;
 }
-/* 面包 sits in the light on the left; its red phone stands in front, to the right. */
+/*
+ * 面包 sits in the light on the left; its red phone stands in front, to the right — on the same table.
+ *
+ * One table line for both, at every width. The hero is square, so these percentages mean the same thing
+ * across and down: 面包's feet sit 94.1% of the way down its picture, and the phone's base sits 199/260
+ * of the phone picture's width below that picture's top. The phone is placed from the top so its base
+ * lands on the feet line, and its name plate rests on the table in front of it, growing downward with
+ * the text size instead of lifting the phone off the table.
+ */
 .entry__hero {
+  --scene-top: 4%;
+  --scene-w: 88%;
+  --door-w: 50%;
   position: relative;
   width: 100%;
-  max-width: 480px;
-  aspect-ratio: 1 / 1.04;
+  max-width: 560px;
+  aspect-ratio: 1 / 1;
   justify-self: center;
 }
 .entry__scene {
   position: absolute;
-  left: 0;
-  top: 17%;
-  width: 76%;
+  left: -3%;
+  top: var(--scene-top);
+  width: var(--scene-w);
 }
-/* 面包 introduces itself — as an AI — from above its own head */
+/* 面包 says who it is — an AI — from beside its head, once, and asks for nothing. */
 .hello-bubble {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 2;
   width: max-content;
-  max-width: min(15em, 50%);
-  padding: 11px 16px 12px;
+  max-width: min(14em, 48%);
+  padding: 10px 15px 11px;
   border-radius: 18px 18px 18px 6px;
   border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: var(--shadow-paper);
-  animation: bubble-in 0.6s 0.5s var(--ease) both;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-s);
+  /* it is simply there when the page has settled — no pop, no scale */
+  animation: settle-in 1.2s 0.4s ease-out both;
 }
 .hello-bubble::after {
   content: '';
@@ -1838,15 +1907,15 @@ kbd {
 .hello-bubble__big {
   display: block;
   font-family: var(--font-serif);
-  font-size: 1.18rem;
-  font-weight: 700;
-  line-height: 1.45;
+  font-size: 1.04rem;
+  font-weight: 600;
+  line-height: 1.5;
 }
 .hello-bubble__small {
   display: block;
   color: var(--ink-2);
-  font-size: 0.88rem;
-  line-height: 1.55;
+  font-size: 0.86rem;
+  line-height: 1.6;
 }
 
 .doors {
@@ -1859,47 +1928,117 @@ kbd {
   margin-top: 0;
 }
 .entry__content {
-  max-width: 560px;
-  animation: rise 0.7s 0.1s var(--ease) both;
+  max-width: 520px;
+  animation: settle-in 1s 0.1s ease-out both;
 }
+/* A sentence, not a headline: set like a line in a letter, unhurried. */
 .entry__title {
   font-family: var(--font-serif);
-  font-size: clamp(2.3rem, 5.4vw, 3.6rem);
-  line-height: 1.2;
-  letter-spacing: 0.04em;
-  font-weight: 700;
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  font-weight: 600;
 }
 .entry__lede {
-  margin-top: 14px;
-  font-size: 1.08rem;
+  margin-top: 12px;
+  font-size: 1.02rem;
   color: var(--ink-2);
   line-height: 1.8;
 }
 
+/* The lightest way in: listen to 面包 for a moment. Found first, asks nothing. */
+.rest-listen {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-top: 26px;
+  padding: 14px 18px 14px 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  color: var(--ink);
+  text-align: left;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.rest-listen:hover {
+  border-color: color-mix(in srgb, var(--crust) 38%, var(--line));
+  background: var(--surface);
+}
+.rest-listen__icon {
+  flex: none;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kraft) 80%, transparent);
+  color: var(--crust);
+}
+.rest-listen__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rest-listen__title {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+.rest-listen__sub {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+
+/* For later: sorting it out, and what was kept. Present, reachable, never first. */
+.entry__later {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+  margin-top: 22px;
+}
+.later-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+  text-align: left;
+  transition: color 0.15s;
+}
+.later-link:hover {
+  color: var(--ink);
+}
+.later-link .lucide {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  color: color-mix(in srgb, var(--crust) 80%, var(--ink-3));
+}
+.later-link small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+}
+
+/* A quiet note on the table: there if you want to write, not a form waiting to be filled. */
 .first-note {
   position: relative;
-  margin-top: 28px;
-  padding: 18px 18px 12px;
-  border-radius: 20px;
+  margin-top: 12px;
+  padding: 14px 16px 10px;
+  border-radius: 18px;
   border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: var(--shadow-paper);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.first-note::before {
-  /* a strip of paper tape */
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 28px;
-  width: 74px;
-  height: 20px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--kraft-2) 75%, transparent);
-  transform: rotate(-4deg);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  box-shadow: var(--shadow-s);
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
 }
 .first-note:focus-within {
   border-color: color-mix(in srgb, var(--crust) 55%, var(--line));
+  background: var(--surface);
   box-shadow: var(--shadow-paper), 0 0 0 4px var(--focus-ring);
 }
 .first-note__label {
@@ -1912,12 +2051,12 @@ kbd {
 .first-note__input {
   display: block;
   width: 100%;
-  min-height: 56px;
+  min-height: 48px;
   padding: 2px 0;
   border: 0;
   background: transparent;
   resize: none;
-  font-size: 1.08rem;
+  font-size: 1.04rem;
   line-height: 1.75;
 }
 .first-note__input:focus-visible {
@@ -1931,8 +2070,8 @@ kbd {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 8px;
-  padding-top: 10px;
+  margin-top: 6px;
+  padding-top: 8px;
   border-top: 1px dashed var(--line);
 }
 /* Nothing to say under the box unless the line is too long; then it takes the left side. */
@@ -1943,67 +2082,59 @@ kbd {
   display: none;
 }
 
+/* Three quiet other ways in, one row: no heading, no second line of explanation. */
 .ways {
-  margin-top: 26px;
-}
-.ways__title {
-  font-size: 0.86rem;
-  color: var(--ink-3);
-  margin-bottom: 6px;
+  margin-top: 18px;
 }
 .ways__list {
   display: flex;
-  flex-direction: column;
-}
-.ways__list li + li {
-  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .way {
   display: flex;
   align-items: center;
-  gap: 14px;
-  width: 100%;
-  min-height: 60px;
-  padding: 10px 12px;
-  margin: 2px 0;
-  border: 0;
-  border-radius: 14px;
+  gap: 9px;
+  min-height: 44px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: transparent;
+  color: var(--ink-2);
   text-align: left;
-  transition: background-color 0.15s, transform 0.2s var(--ease);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
 .way:hover {
-  background: color-mix(in srgb, var(--surface) 75%, transparent);
-  transform: translateX(3px);
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink);
 }
 .way__icon {
-  width: 36px !important;
-  height: 36px !important;
-  padding: 8px;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 6px;
   border-radius: 50%;
   background: var(--kraft);
   color: var(--crust);
 }
 .way__text {
   display: flex;
-  flex-direction: column;
   min-width: 0;
 }
 .way__title {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
 }
 .way__sub {
-  color: var(--ink-3);
-  font-size: 0.85rem;
-  line-height: 1.5;
+  display: none;
 }
 
 .entry__foot {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: 20px;
 }
 .drawer-link {
   display: inline-flex;
@@ -4055,6 +4186,14 @@ kbd {
 .phone-door__btn:focus-visible {
   outline-offset: 0;
 }
+/* The plate under the phone is the visible control; the focus ring belongs there, not round the art. */
+.phone-door--hero .phone-door__btn:focus-visible {
+  outline: none;
+}
+.phone-door--hero .phone-door__btn:focus-visible .phone-door__text {
+  outline: 2px solid var(--crust);
+  outline-offset: 3px;
+}
 /* Its shadows are drawn in the same light as 面包's, inside the SVG; the box itself never moves. */
 .phone-door__phone {
   width: 100%;
@@ -4086,13 +4225,24 @@ kbd {
 .phone-door.is-blocked :is(.phone-door__title, .phone-door__sub) {
   color: var(--ink-2);
 }
-/* home: the phone stands on the table in front of 面包, a little to the right */
+/*
+ * home: the phone stands on the table in front of 面包, a little to the right — its base on the same
+ * line as 面包's feet (see .entry__hero for the arithmetic), so the two are one still life at every width.
+ */
 .phone-door--hero {
   position: absolute;
-  right: -3%;
-  bottom: 0;
+  right: -1%;
+  top: calc(var(--scene-top) + var(--scene-w) * 0.941 - var(--door-w) * 0.765);
+  bottom: auto;
   z-index: 1;
-  width: 42%;
+  width: var(--door-w);
+}
+/*
+ * The same lacquer, a shade quieter on the first screen: a little less saturated and bright, so its red
+ * belongs with the plush's crust and blush rather than outshining them. Easy to find, never shouting.
+ */
+.phone-door--hero .phone-door__art {
+  filter: saturate(0.86) brightness(0.97) drop-shadow(0 16px 12px rgba(82, 44, 20, 0.14));
 }
 /*
  * Its box overlaps 面包, so only the phone's outline and its name take a click — patting 面包's side
@@ -4105,6 +4255,89 @@ kbd {
 }
 .phone-door--hero .phone-door__text {
   pointer-events: auto;
+}
+.phone-door--hero .phone-door__btn {
+  gap: 0;
+  padding: 0 0 6px;
+}
+/*
+ * On the home page the name under the phone is the call's doorplate: one quiet cream plate with the
+ * little phone on it, resting flat on the table. It is the only part of the still life that says
+ * "this is a button"; the plate itself is the hit area, so the object stays a picture.
+ */
+.phone-door--hero .phone-door__text {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 13px 10px;
+  border: 1px solid color-mix(in srgb, var(--phone) 24%, var(--line));
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 10px 22px -16px rgba(72, 34, 12, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s var(--ease);
+}
+.phone-door--hero .phone-door__title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+.phone-door__glyph {
+  flex: none;
+  width: 38px;
+  margin: -8px 0 -7px -4px;
+}
+.phone-door__go {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-left: auto;
+  color: var(--ink-3);
+  transition: transform 0.2s var(--ease), color 0.2s;
+}
+.phone-door__btn:not([aria-disabled='true']):hover .phone-door__text {
+  border-color: color-mix(in srgb, var(--phone) 52%, var(--line));
+  box-shadow: 0 14px 28px -16px rgba(72, 34, 12, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
+}
+.phone-door__btn:not([aria-disabled='true']):hover .phone-door__go {
+  color: var(--phone);
+  transform: translateX(2px);
+}
+.phone-door--hero .phone-door__sub {
+  display: none;
+}
+.phone-door--hero.is-blocked .phone-door__text {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  box-shadow: none;
+}
+.phone-door--hero.is-blocked .phone-door__title {
+  color: var(--ink-2);
+}
+.phone-door--hero.is-blocked .phone-door__glyph {
+  filter: saturate(0.25);
+  opacity: 0.7;
+}
+.phone-door--hero.is-blocked .phone-door__go {
+  display: none;
+}
+.phone-door--hero.is-blocked .phone-door__sub {
+  display: block;
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+.phone-door--hero.is-blocked .phone-door__text {
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .phone-door--hero .rp-svg .rp-hit {
   pointer-events: all;
@@ -4264,7 +4497,7 @@ kbd {
 /* 面包 and the red phone on one table. The picture is wider than tall (1000 × 820). */
 .callroom__stage {
   flex: none;
-  width: min(420px, 86vw, 46dvh);
+  width: min(464px, 88vw, 50dvh);
   max-width: 100%;
   margin: 4px 0 0;
   transition: width 0.35s var(--ease);
@@ -4401,15 +4634,15 @@ kbd {
 
 .callroom__captions {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-direction: column;
-  justify-content: safe flex-end;
+  justify-content: flex-start;
   overflow-y: auto;
   gap: 10px;
   width: 100%;
   max-width: 620px;
-  min-height: 64px;
-  margin-top: 14px;
+  min-height: 56px;
+  margin-top: 16px;
 }
 .cap {
   flex: none;
@@ -4480,12 +4713,13 @@ kbd {
 }
 
 .callroom__controls {
+  margin-top: auto;
+  padding-top: 18px;
   display: flex;
   flex: none;
   align-items: flex-start;
   justify-content: center;
   gap: clamp(16px, 6vw, 44px);
-  margin-top: 18px;
 }
 .callkey {
   display: flex;
@@ -4799,46 +5033,59 @@ body:has(.session.is-calling) .toasts {
     gap: 4px;
     padding-top: 4px;
   }
-  /* Let greeting and phone take their own rows even when narrow text wraps. */
+  /*
+   * One still life: 面包 at the left, the phone on the right of the same table, its plate in front.
+   * Still square, so the table-line arithmetic in .entry__hero holds here too: feet at 81.4%, the
+   * phone's picture from 47.7%, its base on the feet line, the plate below inside the box.
+   */
   .entry__hero {
-    max-width: 520px;
-    aspect-ratio: auto;
-    display: grid;
-    grid-template-columns: 54% 46%;
-    align-items: end;
+    --scene-top: 8%;
+    --scene-w: 78%;
+    --door-w: 44%;
+    max-width: 500px;
+    aspect-ratio: 1 / 1;
+    margin-top: -4px;
   }
   .entry__scene {
-    position: relative;
-    grid-column: 1;
-    grid-row: 1 / 3;
-    align-self: center;
-    top: auto;
-    width: 100%;
+    left: -1%;
+  }
+  /* stacked, 面包 is near the top: the lamp's pool follows it there */
+  .entry::before {
+    background:
+      radial-gradient(70% 34% at 34% 24%, var(--glow), transparent 74%),
+      radial-gradient(60% 30% at 100% 100%, var(--dusk), transparent 70%);
   }
   .hello-bubble {
-    position: relative;
-    grid-column: 2;
-    grid-row: 1;
-    top: auto;
-    width: 100%;
-    max-width: none;
+    top: 0;
+    right: 0;
+    width: max-content;
+    max-width: 58%;
     padding: 9px 13px 10px;
   }
   .hello-bubble__small {
     font-size: 0.82rem;
   }
   .phone-door--hero {
-    position: relative;
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: end;
-    right: 0;
-    width: 100%;
-    max-width: 170px;
-    margin-top: 10px;
+    position: absolute;
+    right: -1%;
+    max-width: none;
+    margin-top: 0;
   }
   .phone-door--hero .phone-door__title {
-    font-size: 0.94rem;
+    font-size: 0.86rem;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .phone-door--hero .phone-door__glyph {
+    display: none;
+  }
+  .phone-door--hero .phone-door__text {
+    padding: 9px 11px 10px;
+    border-radius: 13px;
+  }
+  .phone-door--hero .phone-door__go {
+    width: 15px;
+    height: 15px;
   }
   .entry__content,
   .end__content {
@@ -4948,7 +5195,6 @@ body:has(.session.is-calling) .toasts {
   }
   .callroom__controls {
     gap: 10px;
-    margin-top: 12px;
   }
   .callkey {
     width: 84px;
@@ -5062,9 +5308,6 @@ body:has(.session.is-calling) .toasts {
   .hello-bubble__big {
     font-size: 1.05rem;
   }
-  .entry__hero {
-    aspect-ratio: 1.15;
-  }
   .call-pill {
     padding: 0 12px 0 8px;
   }
@@ -5090,10 +5333,32 @@ body:has(.session.is-calling) .toasts {
   html:is([data-text-size='l'], [data-text-size='xl']) .topbar {
     flex-wrap: wrap;
   }
+  /* Enlarged text gets its own room above the photo; it must never cover an eye. */
+  html:is([data-text-size='l'], [data-text-size='xl']) .entry__hero {
+    margin-top: 4.5rem;
+  }
+  html:is([data-text-size='l'], [data-text-size='xl']) .hello-bubble {
+    top: -4.5rem;
+    max-width: 100%;
+  }
+  /* The plaque can grow leftward while the phone and its fixed hit area stay put. */
+  .phone-door--hero .phone-door__text {
+    width: max-content;
+    min-width: 100%;
+    max-width: calc(100vw - 32px);
+    align-self: flex-end;
+  }
 }
 
 /* The narrowest bars keep the bun; its name is still there for screen readers and in 面包's own line. */
 @media (max-width: 360px) {
+  .entry__hero {
+    margin-top: 4.5rem;
+  }
+  .hello-bubble {
+    top: -4.5rem;
+    max-width: 100%;
+  }
   .topbar .brand-logo__type {
     display: none;
   }
@@ -5419,36 +5684,22 @@ body:has(.session.is-calling) .toasts {
     opacity: 0;
   }
 }
-/* the bead flattens toward its lower edge and the closed line shows only at the bottom */
-@keyframes p-blink {
+/* light moving on wet glass: the window dims a little and returns; the bead's shape never changes */
+@keyframes p-glint {
   0%,
   100% {
-    transform: scaleY(1);
+    opacity: 0.94;
   }
-  42%,
-  56% {
-    transform: scaleY(0.06);
+  45% {
+    opacity: 0.6;
   }
 }
-@keyframes p-blink-patch {
+@keyframes p-glint-dot {
   0%,
   100% {
-    opacity: 0;
+    opacity: 0.72;
   }
-  8%,
-  92% {
-    opacity: 1;
-  }
-}
-@keyframes p-blink-line {
-  0%,
-  32%,
-  70%,
-  100% {
-    opacity: 0;
-  }
-  44%,
-  56% {
+  55% {
     opacity: 1;
   }
 }
@@ -5480,6 +5731,15 @@ body:has(.session.is-calling) .toasts {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+/* just becomes visible: no lift, no scale, nothing that reads as "look at me" */
+@keyframes settle-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 @keyframes bubble-in {
@@ -5575,7 +5835,7 @@ body:has(.session.is-calling) .toasts {
     opacity: 1;
   }
   50% {
-    opacity: 0.86;
+    opacity: 0.93;
   }
 }
 /* down to a night light, not to dark */
@@ -5618,9 +5878,5 @@ body:has(.session.is-calling) .toasts {
   /* The phone still says "ringing" without shaking: the bell marks simply stay on. */
   .rp[data-pose='dialing'] .rp-bell path {
     opacity: 0.75;
-  }
-  /* Never blinks; this only guards against a blink that started just before the setting changed. */
-  .p-closed {
-    opacity: 0 !important;
   }
 }

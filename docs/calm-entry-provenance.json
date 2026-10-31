@@ -1,0 +1,55 @@
+{
+  "version": "0.3.0",
+  "baseline": "bcca67071b8990205e216d0ec0c2e99f1925e0f0",
+  "officialClaude": {
+    "task": "20261031-bread-blender-trial",
+    "session": "44c9130e-cb35-492c-8d46-90e7092217f7",
+    "author": "Official Claude Code / Claude Opus 5.5 / high",
+    "completedBeijing": "2026-11-01T00:58:38+08:00",
+    "stage": "integrated-20261101",
+    "originalSha256": {
+      "app/globals.css": "f8e8afb7cb32fd9a2cc3b8055a4ecf84b5c154f75f446bc87b487d897702ad08",
+      "components/BreadBuddy.tsx": "2c4ba67389237697e2945bdd1ab9e0c87b91c8a6f8d356d07192c40e5c46f01f",
+      "components/Companion.tsx": "244052fb084b7fcc488724eb03affe6a9d5515604b0ba27a79d85b0650ef5cdf",
+      "components/EntryScreen.tsx": "a3519110089e6794a73e58ce47f65b85d141d41208d281f2286d1b1189d0a6a1",
+      "components/ServiceStatus.tsx": "e3d7ebe11ecc7b868f724ad85ee1a761ed7acb356350479634e76e8097317c28",
+      "docs/design-calm-entry.md": "64e0b78c1424ca5595afcb72709a372d61ffc1634a855c975890f4a39a3f5e3e"
+    },
+    "mergeBaseSha256": {
+      "app/globals.css": "7b67e8313ed20173e71e251d67c433518c8a199dff0ee95c83a9fe8e6d7c82d2",
+      "components/BreadBuddy.tsx": "518e84fb4d63a1466beb24414f4ea24f44956744028dc53a99c9f7e068ebd1ef",
+      "components/Companion.tsx": "d880e888b1c54c38d03b444c524926724584694e99a3c2daafb425add014c7c9",
+      "components/EntryScreen.tsx": "6dea5ad02c8fa8c058a6ce6dd026318427e339134368ce6de76840967cc4e407",
+      "components/ServiceStatus.tsx": "aafa17c88fb5899ba0f2feea509bfe264f73e8661efd7efb865f04a3ca2dcc96"
+    }
+  },
+  "deepseek": {
+    "patchSha256": "ec1869533fb5bd063dd3f479a346265b07254432201e922697ffbc25393374c2",
+    "designNotesSha256": "1df6a1ac3d94ace90d7e5510ed7e212b18db260e389182cf9a468c1b4beb1ded",
+    "modelGeneratorSha256": "e9be57bfe936179d74303d25fa2dcce3290c0aee24092c0068d2fc54e690611c",
+    "glbSha256": "d3f1a5c4f07a9815e832651f576e0f36af7b0955bb2736fc3a75e5c710324117",
+    "reproduction": "Blender 5.2.2 LTS; regenerated GLB byte-for-byte matches the submitted patch.",
+    "note": "The supplied notes say runtime cord turns changed from 22 to 11; the actual patch and independent source still use 22. The submitted code is preserved."
+  },
+  "originalRetention": "Both submitted DeepSeek files and all official Claude snapshots retained unmodified locally. User reference photos, credentials and local logs are not published.",
+  "codexIntegrationChanges": [
+    "Reviewed the new Claude stage against an immutable copy of the DeepSeek integration; only five visual components/styles and one design document changed. No old remote frontend replaced local correctness fixes.",
+    "Removed one stale CSS comment describing the blink that Claude removed. The original design note remains unchanged; actual highlight animation is 0.9 seconds.",
+    "Retained the graphics lifecycle, bounded model-download and SVG-fallback fixes, and AudioContext interruption cleanup/reconnection; these are documented in phone3d-audit.md.",
+    "Kept the concise unavailable-call label, correcting the unconfigured text-provider case so it does not falsely offer typing as a working fallback.",
+    "Updated behavioral regression selectors for the new entry and added empty-note, IME, length-limit and no-microphone listen-first coverage.",
+    "Updated release version, documentation and actual UI screenshots separately.",
+    "Reproduced a 320px extra-large-text overflow and bubble/eye overlap; gave the bubble reserved space above the photo and let the phone plaque grow leftward, preserving phone geometry and hit area. Added light/dark layout and contrast coverage.",
+    "Extended the narrow-screen correction to standard-size text at 360px and below, checked standard/extra-large light/dark layouts at four widths, and aligned browser metadata with the new opening."
+  ],
+  "mergedVisualSha256": {
+    "app/globals.css": "b1711ed6bc1741b6ed7098a272f3b21e6b5e1e61038599b653cf6dbd0a4d2d16",
+    "components/BreadBuddy.tsx": "2c4ba67389237697e2945bdd1ab9e0c87b91c8a6f8d356d07192c40e5c46f01f",
+    "components/Companion.tsx": "244052fb084b7fcc488724eb03affe6a9d5515604b0ba27a79d85b0650ef5cdf",
+    "components/EntryScreen.tsx": "a3519110089e6794a73e58ce47f65b85d141d41208d281f2286d1b1189d0a6a1",
+    "components/ServiceStatus.tsx": "e3d7ebe11ecc7b868f724ad85ee1a761ed7acb356350479634e76e8097317c28",
+    "docs/design-calm-entry.md": "64e0b78c1424ca5595afcb72709a372d61ffc1634a855c975890f4a39a3f5e3e",
+    "app/layout.tsx": "25677784c0b573f42ec98958b8157bba3ab6e641416a5c81c2fab9084f1a3026"
+  },
+  "verification": "phone3d-audit.md"
+}

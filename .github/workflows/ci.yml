@@ -30,6 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run check:models
       - run: npm test
       - run: npm run eval:companion -- --dry-run
       - run: npm run build

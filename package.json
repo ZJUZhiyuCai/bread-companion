@@ -1,6 +1,6 @@
 {
   "name": "bread-companion",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3210",
@@ -10,13 +10,15 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm test && npm run build",
-    "eval:companion": "node scripts/benchmark-companion.mjs"
+    "eval:companion": "node scripts/benchmark-companion.mjs",
+    "check:models": "node scripts/inspect-companion-glb.mjs public/companion/3d/bread-phone.glb"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
     "next": "16.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "three": "0.187.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -25,6 +27,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "0.187.0",
     "fake-indexeddb": "^6.2.4",
     "typescript": "^5.9.3",
     "vitest": "5.0.5"

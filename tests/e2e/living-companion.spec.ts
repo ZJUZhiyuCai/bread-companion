@@ -106,16 +106,21 @@ test('hangup during dialling releases the device and rejects a late welcome', as
   expect(stats).toEqual({ syntheses: 0, transcripts: 0 });
 });
 
-test('the small-screen greeting never covers the phone and patting preserves a typed draft', async ({ page }) => {
+test('the entry greeting, phone and title stay separate across widths and patting preserves a typed draft', async ({ page }) => {
   await setup(page);
-  for (const width of [320, 375, 390]) {
+  for (const width of [320, 375, 390, 778, 1440]) {
     await page.setViewportSize({ width, height: 700 });
     const greeting = await page.locator('.hello-bubble').boundingBox();
     const phone = await page.locator('.phone-door__phone').boundingBox();
     expect(greeting!.y + greeting!.height).toBeLessThanOrEqual(phone!.y);
+    if (width <= 900) {
+      const plate = await page.locator('.phone-door__text').boundingBox();
+      const title = await page.locator('.entry__title').boundingBox();
+      expect(plate!.y + plate!.height).toBeLessThanOrEqual(title!.y);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
-  const input = page.getByRole('textbox', { name: '写下第一句，不用整理好', exact: true });
+  const input = page.getByRole('textbox', { name: '想写的时候，写在这儿', exact: true });
   await input.fill('今天有一点累。');
   await page.getByRole('button', { name: '摸摸面包', exact: true }).click();
   await expect(input).toBeFocused();

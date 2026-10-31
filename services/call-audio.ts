@@ -51,6 +51,14 @@ export class BrowserCallAudio implements CallAudioPort {
     try {
       await resumed; await context.audioWorklet.addModule('/call-capture.js');
       if (generation !== this.generation) return false;
+      if (context.state !== 'running') throw new Error('声音连接暂停了，重新接通后再说。');
+      // The OS can interrupt audio without hiding the page or ending a track.
+      // A frozen audio graph must not leave the UI listening with a live mic.
+      context.onstatechange = () => {
+        if (generation === this.generation && context === this.context && context.state !== 'running') {
+          events.failure('声音连接暂停了，重新接通后再说。');
+        }
+      };
       const capture = new AudioWorkletNode(context, 'bread-capture', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1 });
       this.capture = capture; this.source = context.createMediaStreamSource(stream);
       this.source.connect(capture); capture.connect(context.destination);
@@ -110,7 +118,11 @@ export class BrowserCallAudio implements CallAudioPort {
     if (this.capture) { this.capture.port.onmessage = null; this.capture.onprocessorerror = null; this.capture.disconnect(); this.capture.port.close(); }
     this.capture = null; this.source?.disconnect(); this.source = null;
     this.stream?.getTracks().forEach(t => { t.onended = null; t.stop(); }); this.stream = null;
-    const context = this.context; this.context = null; if (context && context.state !== 'closed') void context.close().catch(() => {});
+    const context = this.context; this.context = null;
+    if (context) {
+      context.onstatechange = null;
+      if (context.state !== 'closed') void context.close().catch(() => {});
+    }
     this.detector = null; this.events = null; this.echo.clear();
   }
 }

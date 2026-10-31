@@ -70,7 +70,7 @@ test('eyes hold a settled gaze while the pointer rests on the telephone', async 
 
 test('the chat telephone keeps its bottom edge under a resting pointer', async ({ page }) => {
   await ready(page);
-  await page.getByRole('button', { name: '我想说几句 进去慢慢打字', exact: true }).click();
+  await page.getByRole('button', { name: '进去慢慢写', exact: true }).click();
   const phone = page.locator('.phone-door--panel .phone-door__btn');
   await expect(phone).toBeVisible();
   await page.mouse.move(1400, 950);

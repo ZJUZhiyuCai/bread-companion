@@ -1,15 +1,23 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { CallState } from '@/domain/types';
 import { PlushSvg } from './BreadBuddy';
+import { Phone3D } from './Phone3D';
 import { PhoneFigure, phonePose } from './RedPhone';
 import { buddyForCall } from './call';
 import { useDomId } from './hooks';
+import { CALL_PHONE } from './phone3d/layouts';
+import { usePhone3D } from './phone3d/usePhone3D';
 
 /**
  * The call, as one picture: 面包 on the table and the red phone in front of it. One SVG, so the
  * handset can travel from the cradle to 面包's cheek in shared coordinates.
+ *
+ * The phone is the Blender model on a canvas laid exactly over the drawn one, in the same 1000×820
+ * space: it is dialled and rings while connecting, its handset swings up to the photo's cheek with the
+ * cord following once the line is open, and it goes back down on hold or hang-up. Until the model is up,
+ * or if it can't be, the drawn phone does all of that itself.
  *
  * Every movement is the call's real phase — dial and ring while `connecting`, the handset comes up the
  * moment the line is open, goes back on hold when paused. There is no timer here that pretends to connect.
@@ -17,9 +25,11 @@ import { useDomId } from './hooks';
 export function CallStage({ call, level, className = '' }: { call: CallState; level: number; className?: string }) {
   const id = useDomId('stage');
   const pose = phonePose(call.phase);
+  const spatial = usePhone3D();
+  const [solid, setSolid] = useState(false);
   return (
     <div
-      className={`cstage ${className}`}
+      className={`cstage ${solid ? 'is-3d' : ''} ${className}`}
       data-phase={call.phase}
       data-pose={pose}
       style={{ '--lvl': level.toFixed(3) } as CSSProperties}
@@ -45,6 +55,7 @@ export function CallStage({ call, level, className = '' }: { call: CallState; le
           <PhoneFigure pose={pose} id={id} />
         </svg>
       </svg>
+      {spatial && <Phone3D layout={CALL_PHONE} pose={pose} onReady={setSolid} />}
     </div>
   );
 }

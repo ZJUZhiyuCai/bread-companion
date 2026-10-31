@@ -1,13 +1,13 @@
 'use client';
 
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { ArrowRight, Archive, Headphones, MessageCircle, ScanText } from 'lucide-react';
+import { ArrowRight, Archive, Headphones, ScanText } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
 import { BrandLogo } from './Brand';
 import { CallLauncher } from './Companion';
 import { LampScene } from './NightWindow';
 import { AiStamp } from './ServiceStatus';
-import { useAutoGrow, useFlash } from './hooks';
+import { useAutoGrow } from './hooks';
 
 interface EntryScreenProps {
   caps: Capabilities | null;
@@ -20,21 +20,31 @@ interface EntryScreenProps {
   onOpenAbout: () => void;
 }
 
+/**
+ * The first screen, for someone who has just been turned down and is tired. It asks for nothing: 面包
+ * sits in a low lamp and looks at you, and the page says you can simply stay. Everything else is there
+ * when you want it, ordered by how much it costs — listening (no voice, no mic), a note, the phone —
+ * and sorting things out waits at the foot of the page until you are ready for it.
+ *
+ * There is no hello animation: no wave, no hop, no bubble popping in. Nothing moves until you do.
+ */
 export function EntryScreen(props: EntryScreenProps) {
   const { caps, savedCount, onTalk, onCall, onWelcome, onReview, onOpenArchive, onOpenAbout } = props;
   const [text, setText] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
   useAutoGrow(ref, text, 200);
-  const waving = useFlash(true, 2800);
   const maxInput = caps?.limits.maxInputChars ?? null;
   const over = maxInput !== null && text.length > maxInput;
   const typing = text.trim().length > 0;
 
+  // One way in for writing. Empty, the note just opens the conversation ("进去慢慢写"); with words in
+  // it, it sends them. The old separate "我想说几句" door did the first half of this on its own.
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
+    if (over) return;
     const t = text.trim();
-    if (!t || over) return;
-    onTalk(t);
+    if (t) onTalk(t);
+    else onTalk();
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -42,11 +52,12 @@ export function EntryScreen(props: EntryScreenProps) {
     if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
     if (window.matchMedia('(pointer: coarse)').matches) return;
     e.preventDefault();
-    submit();
+    // Enter on an empty note is not a request to leave the page.
+    if (typing) submit();
   };
 
   // Only the fact that changes what happens: whether there is a voice to play at all.
-  const welcomeSub = caps && !caps.tts.available ? '一段二三十秒的话，现在只有文字' : '一段二三十秒的话';
+  const listenSub = caps && !caps.tts.available ? '二三十秒，现在只有文字，不开麦克风' : '二三十秒，不用开口，也不开麦克风';
 
   return (
     <main id="main" className="entry">
@@ -60,88 +71,67 @@ export function EntryScreen(props: EntryScreenProps) {
       </div>
 
       <div className="entry__stage">
-        {/* 面包 and its red phone share the light: the phone is the call button itself. */}
+        {/* 面包 and its red phone share one table and one low lamp; the phone is the call button itself. */}
         <div className="entry__hero">
-          {/* Says it is an AI once, in its own greeting; the stamp beside it opens the rest. */}
+          {/* Says it is an AI once, in its own words, and asks for nothing. */}
           <p className="hello-bubble">
-            <span className="hello-bubble__big">嗨，我是面包。</span>
-            <span className="hello-bubble__small">一个 AI。今晚想说什么，我都听着。</span>
+            <span className="hello-bubble__big">我是面包，一个 AI。</span>
+            <span className="hello-bubble__small">陪你待一会儿，不说话也行。</span>
           </p>
-          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} className="entry__scene" pokeable phoneNear />
+          <LampScene state={typing ? 'attentive' : 'idle'} className="entry__scene" pokeable phoneNear />
           <CallLauncher variant="hero" caps={caps} onCall={() => onCall(text)} />
         </div>
 
         <div className="entry__content">
-          <h1 className="entry__title">今晚，先说说。</h1>
-          <p className="entry__lede">打字可以，打个电话也可以。说到哪儿算哪儿，想停的时候随时停。</p>
+          <h1 className="entry__title">先在这儿待一会儿。</h1>
+          <p className="entry__lede">不想说话也没关系。想开口的时候，再开口。</p>
 
-          <div className="doors">
-            <form className="first-note door" onSubmit={submit}>
-              <label htmlFor="entry-first" className="first-note__label">
-                写下第一句，不用整理好
-              </label>
-              <textarea
-                id="entry-first"
-                ref={ref}
-                className="first-note__input"
-                rows={2}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={onKey}
-                placeholder="比如：刚收到拒信。我准备了三天，最后只收到一句“不合适”。"
-                aria-describedby="entry-first-help"
-                aria-invalid={over || undefined}
-              />
-              <div className="first-note__row">
-                {/* Only speaks up when it has to: the placeholder already shows what a first line is. */}
-                <p id="entry-first-help" className="first-note__help small warn-text">
-                  {over ? `超过 ${maxInput} 字了，可以先说一部分` : ''}
-                </p>
-                <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
-                  说给面包 <ArrowRight aria-hidden="true" />
-                </button>
-              </div>
-            </form>
-          </div>
+          {/* The lightest thing to do here: listen. No voice from you, no microphone. */}
+          <button type="button" className="rest-listen" onClick={onWelcome}>
+            <Headphones aria-hidden="true" className="rest-listen__icon" />
+            <span className="rest-listen__text">
+              <span className="rest-listen__title">先听面包说一小段</span>
+              <span className="rest-listen__sub">{listenSub}</span>
+            </span>
+          </button>
 
-          <div className="ways">
-            <p className="ways__title" id="ways-title">
-              或者，换一种开始
-            </p>
-            <ul className="ways__list" aria-labelledby="ways-title">
-              <li>
-                <button type="button" className="way" onClick={() => onTalk()}>
-                  <MessageCircle aria-hidden="true" className="way__icon" />
-                  <span className="way__text">
-                    <span className="way__title">我想说几句</span>
-                    <span className="way__sub">进去慢慢打字</span>
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button type="button" className="way" onClick={onWelcome}>
-                  <Headphones aria-hidden="true" className="way__icon" />
-                  <span className="way__text">
-                    <span className="way__title">现在不想说，先听一小段</span>
-                    <span className="way__sub">{welcomeSub}，不会打开麦克风</span>
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button type="button" className="way" onClick={onReview}>
-                  <ScanText aria-hidden="true" className="way__icon" />
-                  <span className="way__text">
-                    <span className="way__title">我想直接复盘</span>
-                    <span className="way__sub">不用填表，面包先问你一个问题</span>
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
+          <form className="first-note" onSubmit={submit}>
+            <label htmlFor="entry-first" className="first-note__label">
+              想写的时候，写在这儿
+            </label>
+            <textarea
+              id="entry-first"
+              ref={ref}
+              className="first-note__input"
+              rows={2}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={onKey}
+              placeholder="一个词、半句话都可以。"
+              aria-describedby="entry-first-help"
+              aria-invalid={over || undefined}
+            />
+            <div className="first-note__row">
+              {/* Only speaks up when it has to. */}
+              <p id="entry-first-help" className="first-note__help small warn-text">
+                {over ? `超过 ${maxInput} 字了，可以先说一部分` : ''}
+              </p>
+              <button type="submit" className={`btn ${typing ? 'btn--primary' : 'btn--ghost'}`} disabled={over}>
+                {typing ? '说给面包' : '进去慢慢写'} <ArrowRight aria-hidden="true" />
+              </button>
+            </div>
+          </form>
 
-          {/* No disclaimer footer: what 面包 is and where words go is one tap away, in 关于. */}
-          <footer className="entry__foot">
-            <button type="button" className="drawer-link" onClick={onOpenArchive} aria-haspopup="dialog">
+          {/* For later: sorting it out, and what was kept before. Always reachable, never first. */}
+          <footer className="entry__later">
+            <button type="button" className="later-link" onClick={onReview}>
+              <ScanText aria-hidden="true" />
+              <span>
+                想整理的时候，一起复盘这次面试
+                <span className="sr-only">：不用填表，面包先问你一个问题</span>
+              </span>
+            </button>
+            <button type="button" className="later-link" onClick={onOpenArchive} aria-haspopup="dialog">
               <Archive aria-hidden="true" />
               <span>
                 以前留下的{savedCount > 0 ? `（${savedCount}）` : ''}

@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '面包 · 今晚，先说说',
-  description: '收到面试拒信的那个晚上，可以和面包打字说说，也可以给它打个电话；在你愿意时，再一起留个记号、看一段回答或练一题。',
+  title: '面包 · 先在这儿待一会儿',
+  description: '收到面试拒信的那个晚上，先在这儿待一会儿。想开口时，可以打字或给面包打个电话；想整理时，再一起留个记号、看一段回答或练一题。',
   icons: { icon: '/favicon.svg' },
   robots: { index: false, follow: false },
 };

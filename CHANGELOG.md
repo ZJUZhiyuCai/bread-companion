@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — 2026-11-01
+
+A quieter first visit and a real 3D telephone beside the photo plush, with bounded graphics loading and recoverable audio interruptions.
+
+- Replaced the opening demand to talk with permission to stay. Listen/read first, enter a chat with an empty note, and find optional interview review later on the page.
+- Removed the greeting hops and every eye-squashing blink. Glass highlights and restrained gaze movement keep the companion awake without half-closed eyes.
+- Integrated DeepSeek's telephone and layout refinements, followed by official Claude's scene, lighting, copy and responsive composition. The Blender generator reproduces the committed GLB byte for byte in the documented environment.
+- Added lazy Three.js rendering, a fixed interactive hit area, a 10-second model-download deadline and callable SVG fallback. Construction, rendering, context-loss and malformed-model failures release graphics resources; idle and hidden scenes stop drawing.
+- Kept initial 3D preparation behind the opening audio. Unexpected AudioContext suspension/closure now releases microphone capture and offers explicit reconnection.
+- Expanded adversarial browser coverage for graphics failures, late results, audio interruptions and the new entry. Test conditions and physical-device limitations are documented separately.
+
+See [validation and limits](docs/phone3d-audit.md), [Claude's opening design](docs/design-calm-entry.md), [model rebuild guide](docs/phone-model.md) and [source provenance](docs/calm-entry-provenance.json).
+
 ## 0.2.1 — 2026-10-31
 
 A steadier, open-eyed companion and a shared material language for the character, telephone and original SVG brand.

@@ -4,21 +4,22 @@
 
 **把复杂留给 agent，把温暖留给用户。**
 
-收到拒信的那个晚上，先说说。想复盘时，再把真实材料整理成一张卡片、练一道题。
+收到拒信的那个晚上，可以先在这儿待一会儿。想开口时再聊；想复盘时，再把真实材料整理成一张卡片、练一道题。
 
 [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home.png)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v030.png)
 
 *实际本机界面。真实语音需服务端配置；无密钥启动会清楚标为规则演示。*
 
 ## 它能做什么
 
-- **一个会回应的小伙伴。** 毛绒身体、稳定注视的玻璃眼睛，能回应摸头；休息时也保留完整眼神，减少动态时保持安静。
-- **拿起红色电话。** 漆红机身、象牙转盘与黄铜细节；点座机即可拨号，接通后听筒抬起，传来温暖闺蜜的声音，默认开场从本地播放。
+- **一个会回应的小伙伴。** 照片版毛绒身体、始终完整睁开的玻璃眼睛，能回应摸头；高光轻缓变化，减少动态时保持安静。
+- **拿起红色 3D 电话。** Blender 建模、Three.js 渲染；漆红机身、象牙转盘与黄铜细节；点座机即可拨号，接通后听筒抬起，传来温暖闺蜜的声音，默认开场从本地播放。
+- **可以先安静地待着。** 首页不催促表达；先读一小段话、选择播放，或空着便笺进入聊天，复盘放到后面。
 - **直接开口或打字。** 不填情绪标签，不先选模式；面包用简短中文回应。
 - **自然插话。** 网页电话按停顿接话；面包在想或在说时可以直接开口打断，也能静音、暂停、挂断。
 - **想整理时再整理。** 贴材料、留个记号、看回答、练一题；题目与关注点由 agent 准备。
@@ -26,7 +27,7 @@
 - **保存由你决定。** 卡片预览确认后才写入当前浏览器，支持 Markdown / JSON 导出和 JSON 导入。
 - **失败有退路。** 原话旁重试不重复发话；超时、停止、结束和迟到结果由控制器处理。
 
-这是 **0.2.1 预览版、本机单用户应用**。有界上下文不是跨天关系记忆；当前没有账号、云同步或公网多用户服务。下一阶段优先改善连续记忆、回复质感和语音首响，而不是增加配置表单。见 [我们与领先产品的差距](docs/competitive-benchmark.md)。
+这是 **0.3.0 预览版、本机单用户应用**。有界上下文不是跨天关系记忆；当前没有账号、云同步或公网多用户服务。下一阶段优先改善连续记忆、回复质感和语音首响，而不是增加配置表单。见 [我们与领先产品的差距](docs/competitive-benchmark.md)。
 
 ## 快速开始
 
@@ -54,6 +55,8 @@ macOS 也可以双击 `启动面包.command`。它只在本机启动应用。仓
 
 ### 接入真实文字与语音
 
+3D 电话加载或 WebGL 失败时自动回到可拨号的 SVG；[模型源码与重建](docs/phone-model.md) 不要求运行应用的人安装 Blender。
+
 配置都在服务端，用户不需要填写模型表单。完整变量与步骤见 [配置指南](docs/setup.md)。
 
 | 能力 | 当前验证过的配置 |
@@ -70,15 +73,16 @@ macOS 也可以双击 `启动面包.command`。它只在本机启动应用。仓
 
 | 检查 | 已有证据 |
 | --- | --- |
-| 工程回归 | 155 项单元/集成、27 条浏览器流程；CI 跑类型、测试、构建与 Chromium |
+| 工程回归 | 155 项单元/集成、40 条浏览器流程；CI 跑类型、模型资产检查、测试、构建与 Chromium |
 | 中文对话复测 | v14：8 个情境、16 轮接口调用，含一条控制层道别；完整响应中位 **1.165 s**、p90 **1.477 s**；未测首 token |
 | 语音链路 | v0.2 虚拟麦克风实测：固定开场 **0.240 s**；两轮说完至回复出声 **4.202 / 3.275 s**；开口至停止旧声 **362 ms** |
 | 仍然会失败的体验 | 明确道别已有窄范围规则；仍有套话、补写细节和未请求的建议。调参前后原始合成样本全部保留 |
 
-样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。详见 [本轮视觉与交互验收](docs/material-identity-validation.md)、[此前语音验收](docs/living-companion-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
+样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。详见 [本轮开场、3D 电话与功能验收](docs/phone3d-audit.md)、[此前语音验收](docs/living-companion-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
 
 ```sh
 npm run typecheck
+npm run check:models
 npm test
 npm run build
 npx playwright install chromium
@@ -117,7 +121,7 @@ flowchart LR
 | `services/` | 会话与媒体生命周期、存档事务、导出 |
 | `server/`、`app/api/` | 供应商适配、同源边界、限流、截止时间与去重 |
 | `prompts/` | 有版本的倾听、分析与电话提示词 |
-| `components/`、`app/` | Claude 设计的界面与面包形象 |
+| `components/`、`app/` | Claude 与 DeepSeek 协作的界面、面包形象与电话 |
 | `tests/`、`evaluations/` | 工程回归、合成情境和可复现的评估记录 |
 
 [完整文档导航](docs/README.md) · [数据处理](docs/data-handling.md) · [安全策略](SECURITY.md) · [更新记录](CHANGELOG.md)
@@ -126,6 +130,6 @@ flowchart LR
 
 欢迎从中文对话失败案例、真机语音复现、可控记忆或文档入手。先看 [贡献指南](CONTRIBUTING.md)、[路线图](ROADMAP.md) 和 [社区约定](CODE_OF_CONDUCT.md)。
 
-前端由官方 Claude Code 协作完成，Codex 负责后端、集成与验证，维护者负责项目取舍；原稿哈希与接入差异保留在设计溯源中。
+前端由官方 Claude Code 与 DeepSeek 协作打磨，Codex 负责后端、集成与验证，维护者负责项目取舍；原稿哈希与接入差异保留在设计溯源中。
 
 **[MIT License](LICENSE)** © 2026 Zhiyu Cai and Bread contributors。角色与语音来源见 [素材说明与生成提示词](docs/living-companion-assets.md)，依赖及素材权利范围见 [Third-party notices](THIRD_PARTY_NOTICES.md)。

@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type FocusEvent } from 'react';
+import { ArrowRight } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
 import { BreadBuddy, type BuddyState } from './BreadBuddy';
 import { LampScene } from './NightWindow';
+import { Phone3D } from './Phone3D';
 import { PhoneGlyph, RedPhone } from './RedPhone';
-import { BUDDY_LINE, CALL_PREFACE, callBlockReason } from './call';
+import { BUDDY_LINE, CALL_PREFACE, callBlockDetail, callBlockReason } from './call';
 import { useDomId } from './hooks';
+import { HERO_PHONE } from './phone3d/layouts';
+import { usePhone3D } from './phone3d/usePhone3D';
 
 interface CallLauncherProps {
   caps: Capabilities | null;
@@ -21,11 +25,29 @@ interface CallLauncherProps {
  * turns to look; one click starts the real call. How a call works is the button's own description,
  * not a paragraph under it. When a call can't happen the phone stays put with its colour drained,
  * says why, and points back to typing — it never fakes a connection.
+ *
+ * On the home page the phone is the Blender model, drawn over the SVG one once it has loaded. The
+ * <button>, its name and its static hit outline are the SVG phone's and never change: the canvas takes
+ * no pointer, so pressing works the same before, during and after the model loads — or if it never does.
  */
 export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLauncherProps) {
   const id = useDomId('call');
   const block = blocked || callBlockReason(caps);
+  const detail = callBlockDetail(caps);
   const [hint, setHint] = useState('');
+  const spatial = usePhone3D() && variant === 'hero';
+  const [solid, setSolid] = useState(false);
+  // Hover and keyboard focus raise the handset once; leaving lowers it after a beat. Driven by enter/leave
+  // on a hit area that never moves, so a hand resting on an edge can't make it bob.
+  const [near, setNearNow] = useState(false);
+  const leaveTimer = useRef(0);
+  const setNear = (on: boolean) => {
+    window.clearTimeout(leaveTimer.current);
+    if (on) setNearNow(true);
+    else leaveTimer.current = window.setTimeout(() => setNearNow(false), 220);
+  };
+  useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
+  const onFocus = (e: FocusEvent<HTMLButtonElement>) => setNear(e.currentTarget.matches(':focus-visible'));
 
   useEffect(() => {
     if (!hint) return;
@@ -78,15 +100,43 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
         aria-disabled={!!block || undefined}
         aria-describedby={`${id}-pre`}
         data-phone
+        title={block ? [block, detail].filter(Boolean).join(' ') : undefined}
+        {...(spatial
+          ? {
+              onPointerEnter: () => setNear(true),
+              onPointerLeave: () => setNear(false),
+              onFocus,
+              onBlur: () => setNear(false),
+            }
+          : {})}
       >
-        <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
+        {spatial ? (
+          <span className={`phone-door__art ${solid ? 'is-3d' : ''}`}>
+            <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
+            <Phone3D
+              layout={HERO_PHONE}
+              pose={block ? 'down' : 'rest'}
+              lift={near && !block}
+              // No greeting hop: on a first screen meant to let a tired person settle, the phone waits to
+              // be reached for. It answers the hand (the handset rises on hover/focus), never calls out.
+              greet={false}
+              onReady={setSolid}
+            />
+          </span>
+        ) : (
+          <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
+        )}
         <span className="phone-door__text">
-          <span className="phone-door__title">给面包打个电话</span>
+          <span className="phone-door__title">
+            {variant === 'hero' && <PhoneGlyph className="phone-door__glyph" />}
+            给面包打个电话
+            {variant === 'hero' && <ArrowRight className="phone-door__go" aria-hidden="true" />}
+          </span>
           <span className="phone-door__sub">{block || '用说的，不用打字'}</span>
         </span>
       </button>
       <span id={`${id}-pre`} className="sr-only">
-        {block || CALL_PREFACE}
+        {block ? [block, detail].filter(Boolean).join(' ') : CALL_PREFACE}
       </span>
       <p className="sr-only" aria-live="polite">
         {hint}

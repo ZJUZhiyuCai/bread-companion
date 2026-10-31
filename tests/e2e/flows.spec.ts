@@ -5,7 +5,7 @@ import { mockCandidate } from '../../server/providers/mock-agent';
 
 const opening='刚收到拒信。我准备了三天，最后只收到一句不合适。';
 const reply='准备了三天，最后却只得到很简短的回复。你现在最想说的是这个结果，还是面试里某个一直放不下的片段？';
-async function enter(page:Page) { await page.goto('/');await page.getByRole('button',{name:/我想说几句/}).click(); }
+async function enter(page:Page) { await page.goto('/');await page.getByRole('button',{name:/进去慢慢写/}).click(); }
 async function send(page:Page,text:string) { await page.getByRole('textbox',{name:'写给面包',exact:true}).fill(text);await page.getByRole('button',{name:'发出',exact:true}).click(); }
 async function note(page:Page) {
   await enter(page);await send(page,opening);await expect(page.getByText(reply,{exact:true})).toBeVisible();
@@ -20,12 +20,86 @@ async function keep(page:Page) {
 }
 async function audit(page:Page) {const a=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();expect(a.violations.filter(v=>v.impact==='serious'||v.impact==='critical')).toEqual([]);}
 
+test('the quiet entry needs explicit intent: empty Enter stays, composition stays, limits hold, and an empty click opens chat',async({page})=>{
+  let turns=0;
+  page.on('request',request=>{if(request.url().endsWith('/api/agent/turn'))turns++;});
+  await page.route('**/api/capabilities',async route=>{
+    const response=await route.fetch();const caps=await response.json();caps.limits.maxInputChars=12;
+    await route.fulfill({json:caps});
+  });
+  await page.goto('/');
+  const title=page.getByRole('heading',{name:'先在这儿待一会儿。',exact:true});
+  const input=page.getByRole('textbox',{name:'想写的时候，写在这儿',exact:true});
+  await expect(page.getByRole('button',{name:/关于面包：一个 AI，现在是规则演示/})).toBeVisible();
+  await input.press('Enter');await expect(title).toBeVisible();
+  await input.fill('先');await input.dispatchEvent('keydown',{key:'Enter',isComposing:true});await expect(title).toBeVisible();
+  await input.press('Shift+Enter');await expect(input).toHaveValue('先\n');
+  await input.fill('这是一句超过十二个字的输入内容。');
+  await expect(page.getByRole('button',{name:'说给面包',exact:true})).toBeDisabled();
+  await input.press('Enter');await expect(title).toBeVisible();
+  await expect(page.getByText('超过 12 字了，可以先说一部分',{exact:true})).toBeVisible();
+  await input.fill('   ');await page.getByRole('button',{name:'进去慢慢写',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeFocused();
+  expect(turns).toBe(0);
+});
+
+test('listening first never asks for microphone access and has an honest text fallback',async({page})=>{
+  await page.addInitScript(()=>{
+    (window as any).__entryMicCalls=0;
+    navigator.mediaDevices.getUserMedia=async()=>{(window as any).__entryMicCalls++;throw new Error('No microphone in listen-first mode');};
+  });
+  await page.goto('/');
+  const listen=page.getByRole('button',{name:/先听面包说一小段/});
+  await expect(listen).toContainText('现在只有文字');
+  expect(await page.evaluate(()=>(window as any).__entryMicCalls)).toBe(0);
+  await listen.click();
+  await expect(page.getByText('给你的一小段话',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'播放这段话',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).not.toBeFocused();
+  expect(await page.evaluate(()=>(window as any).__entryMicCalls)).toBe(0);
+});
+
+test('light and dark entry keep the telephone reachable with standard and extra-large text across widths',async({page})=>{
+  await page.route('**/api/capabilities',async route=>{
+    const response=await route.fetch();const caps=await response.json();
+    caps.asr.available=caps.tts.available=caps.agent.configured=true;
+    await route.fulfill({json:caps});
+  });
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.goto('/');
+  for(const size of ['标准','特大']) {
+    await page.getByRole('button',{name:/关于面包：一个 AI/}).click();
+    await page.getByRole('radio',{name:size,exact:true}).check();
+    await page.getByRole('button',{name:'关闭',exact:true}).click();
+    for(const colorScheme of ['light','dark'] as const) {
+      await page.emulateMedia({colorScheme});
+      for(const width of [320,390,778,1440]) {
+        await page.setViewportSize({width,height:1000});
+        await page.getByRole('button',{name:/给面包打个电话/}).scrollIntoViewIfNeeded();
+        const title=await page.locator('.entry__title').boundingBox();
+        const plate=await page.locator('.phone-door__text').boundingBox();
+        if(width<=900)expect(plate!.y+plate!.height).toBeLessThanOrEqual(title!.y);
+        if(width<=360 || (size==='特大' && width<=420)) {
+          const bubble=await page.locator('.hello-bubble').boundingBox();
+          const eye=await page.locator('.entry__scene .p-ball').last().boundingBox();
+          expect(bubble!.y+bubble!.height).toBeLessThanOrEqual(eye!.y);
+        }
+        expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+        const fit=await page.locator('.phone-door__text').evaluate(el=>({client:el.clientWidth,scroll:el.scrollWidth}));
+        expect(fit.scroll).toBeLessThanOrEqual(fit.client);
+        await page.screenshot({path:`output/playwright/calm-${colorScheme}-${width}-${size}.png`,fullPage:true});
+      }
+      await audit(page);
+    }
+  }
+});
+
 test('first sentence starts a conversation directly; refusal and ending never force review',async({page})=>{
-  await page.goto('/');await page.getByRole('textbox',{name:'写下第一句，不用整理好'}).fill(opening);await page.getByRole('button',{name:'说给面包',exact:true}).click();
+  await page.goto('/');await page.getByRole('textbox',{name:'想写的时候，写在这儿'}).fill(opening);await page.getByRole('button',{name:'说给面包',exact:true}).click();
   await expect(page.getByText(reply,{exact:true})).toBeVisible();await send(page,'今晚不想复盘');
   await expect(page.getByText('好，今晚不做分析。可以继续说，也可以停在这里。',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'结束',exact:true}).click();await expect(page.getByText('今晚先停在这里。',{exact:true})).toBeVisible();
-  await expect(page.getByText(opening,{exact:true})).toHaveCount(0);await page.reload();await expect(page.getByRole('button',{name:/我想说几句/})).toBeVisible();
+  await expect(page.getByText(opening,{exact:true})).toHaveCount(0);await page.reload();await expect(page.getByRole('button',{name:/进去慢慢写/})).toBeVisible();
   expect(await page.evaluate(()=>localStorage.length)).toBe(0);
 });
 
@@ -65,8 +139,8 @@ test('provider failure retains text and leaves stop/end available',async({page})
 test('mobile welcome and conversation have accessible semantics and keep controls in view',async({page})=>{
   await page.emulateMedia({reducedMotion:'reduce'});await page.setViewportSize({width:390,height:844});await page.goto('/');await audit(page);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
-  await page.getByRole('button',{name:/我想说几句/}).click();await audit(page);
-  for(const width of [320,390,768]) {await page.setViewportSize({width,height:844});await expect(page.getByRole('button',{name:/关于面包：AI，规则演示/})).toBeVisible();await expect(page.getByRole('button',{name:'停止',exact:true})).toBeInViewport();await expect(page.getByRole('button',{name:'结束',exact:true})).toBeInViewport();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);}
+  await page.getByRole('button',{name:/进去慢慢写/}).click();await audit(page);
+  for(const width of [320,390,768]) {await page.setViewportSize({width,height:844});await expect(page.getByRole('button',{name:/关于面包：一个 AI，现在是规则演示/})).toBeVisible();await expect(page.getByRole('button',{name:'停止',exact:true})).toBeInViewport();await expect(page.getByRole('button',{name:'结束',exact:true})).toBeInViewport();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);}
 });
 
 test('one-box material becomes a review, then the agent prepares a practice question without setup',async({page})=>{

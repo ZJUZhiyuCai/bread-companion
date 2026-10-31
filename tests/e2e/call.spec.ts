@@ -74,7 +74,7 @@ test.describe('continuous calls with a real browser audio graph',()=>{
   test('denied permission gives a real retry and preserves a draft when returning to typing',async({page})=>{
     const stats=await setup(page);
     await page.addInitScript(()=>{(window as any).__micAttempts=0;navigator.mediaDevices.getUserMedia=async()=>{(window as any).__micAttempts++;throw new DOMException('denied','NotAllowedError');};});
-    await page.goto('/');await page.getByRole('textbox',{name:'写下第一句，不用整理好',exact:true}).fill('这句还没写完。');await page.getByRole('button',{name:/给面包打个电话/}).click();
+    await page.goto('/');await page.getByRole('textbox',{name:'想写的时候，写在这儿',exact:true}).fill('这句还没写完。');await page.getByRole('button',{name:/给面包打个电话/}).click();
     await expect(page.locator('.callroom')).toHaveAttribute('data-phase','error');await expect(page.locator('.callroom').getByRole('alert')).toContainText('还没能打开麦克风');
     await page.getByRole('button',{name:'再试一次',exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as any).__micAttempts)).toBe(2);
     await page.getByRole('button',{name:'挂断',exact:true}).click();await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toHaveValue('这句还没写完。');expect(stats.asr).toBe(0);expect(stats.turns).toHaveLength(0);
@@ -86,6 +86,27 @@ test.describe('continuous calls with a real browser audio graph',()=>{
     await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));});
     await page.getByRole('button',{name:'继续通话',exact:true}).click();await expect(page.locator('.callroom')).toHaveAttribute('data-phase','listening');await page.keyboard.press('Escape');await expect(page.locator('.callroom')).toHaveAttribute('data-phase','paused');
     await page.getByRole('button',{name:'挂断',exact:true}).click();await tracksStopped(page);
+  });
+  for(const interruption of ['suspend','close'] as const) test(`unexpected audio engine ${interruption} releases capture and offers an explicit reconnect`,async({page})=>{
+    const stats=await setup(page);
+    await page.addInitScript(()=>{
+      const Context=window.AudioContext;
+      (window as any).__callContexts=[];
+      window.AudioContext=class extends Context {
+        constructor(...args:ConstructorParameters<typeof AudioContext>){super(...args);(window as any).__callContexts.push(this);}
+      };
+    });
+    await dial(page);await expect(page.locator('.callroom')).toHaveAttribute('data-phase','listening');
+    await page.evaluate(async action=>{await (window as any).__callContexts[0][action]();},interruption);
+    await expect(page.locator('.callroom')).toHaveAttribute('data-phase','error');
+    await tracksStopped(page);
+    await expect(page.locator('.callroom').getByRole('alert')).toContainText('声音连接暂停了');
+    expect(stats.asr).toBe(0);
+    await page.getByRole('button',{name:'再试一次',exact:true}).click();
+    await expect(page.locator('.callroom')).toHaveAttribute('data-phase','listening');
+    expect(await page.evaluate(()=>(window as any).__callContexts.length)).toBe(2);
+    await page.getByRole('button',{name:'挂断',exact:true}).click();await tracksStopped(page);
+    await expect.poll(()=>page.evaluate(()=>(window as any).__callContexts.every((c:AudioContext)=>c.state==='closed'))).toBe(true);
   });
   test('small screens keep call controls reachable, reduced motion and errors accessible',async({page})=>{
     await page.setViewportSize({width:320,height:700});await page.emulateMedia({reducedMotion:'reduce'});const stats=await setup(page,{failTTS:true});await dial(page);

@@ -9,11 +9,15 @@ import { useDomId } from './hooks';
  * light of the room it sits in (a warm key from the upper left, occlusion low on the right, a red
  * glow from the phone when the phone stands beside it).
  *
- * The eyes are always open. There are no lids: rest, pause, trouble and goodnight are carried by pose,
- * light and small props. The only closing is a quick blink, in which the glass bead flattens to a line.
+ * The eyes are always open, and they never change shape. There are no lids and no blink: a plush's
+ * glass safety eyes don't close, and any squash of the bead — however quick — passes through the shape
+ * of a half-open eye. What keeps them alive is the light: every so often the glint on the glass softens
+ * and comes back, slowly, the way light moves on something wet. Rest, pause, trouble and goodnight are
+ * carried by pose, light and small props.
  *
- * Nothing here reads the user. The eyes look at the user, at what the user is using (focus, pointer,
- * a tap) or at what 面包 itself is busy with; the microphone level only ever drives a small nod.
+ * Nothing here reads the user. The eyes rest on the person; they only turn toward the phone when it
+ * is hovered, toward a field being typed in, or toward what 面包 itself is busy with. The microphone
+ * level only ever drives a small nod.
  */
 export type BuddyState =
   | 'idle'
@@ -42,8 +46,6 @@ const EYES = [
 ] as const;
 /** Between the eyes, as a fraction of the figure — where gaze is measured from. */
 const EYE_MID: [number, number] = [628 / S, 585 / S];
-/** The fur behind each eye is sampled this far above the socket; it only shows mid-blink. */
-const FUR = 190;
 
 type Extra = 'dots' | 'moon' | 'mute' | 'rec' | 'drop' | null;
 
@@ -56,7 +58,7 @@ const EXTRA: Partial<Record<BuddyState, Extra>> = {
   error: 'drop',
 };
 
-/** States in which the eyes may follow the pointer or the focused control. Talking and "heard you" keep eye contact. */
+/** States in which the eyes may leave the person: toward the phone when it is hovered, or a field being typed in. */
 const FOLLOWS: BuddyState[] = ['idle', 'wave', 'attentive', 'listening', 'paused', 'recording'];
 /** Only a truly idle 面包 glances around, and only after a long quiet spell. */
 const WANDERS: BuddyState[] = ['idle'];
@@ -65,8 +67,8 @@ const WANDERS: BuddyState[] = ['idle'];
 const DEAD_ZONE = 0.14;
 /** …and the eyes hold each fixation at least this long (ms). State changes are exempt. */
 const HOLD = 320;
-/** After the pointer stops, keep looking where it was for this long before coming back to the user. */
-const POINTER_MEMORY = 6000;
+/** How long the light on the glass takes to soften and come back (ms). Matches p-glint in the CSS. */
+const GLINT_MS = 900;
 
 interface FigureProps {
   state: BuddyState;
@@ -74,7 +76,7 @@ interface FigureProps {
   level?: number;
   /** Where to look while connecting, as a direction from the eyes (-1..1). */
   lookAt?: [number, number];
-  /** Run the blink / gaze loop. Off for copies that only need a pose. */
+  /** Run the glint / gaze loop. Off for copies that only need a pose. */
   alive?: boolean;
   /** Draw the room's light on the fur. Worth it at scene size; small avatars skip the extra layers. */
   lit?: boolean;
@@ -185,27 +187,6 @@ export function PlushSvg({
           <stop offset="1" stopColor="#ff4a33" stopOpacity="0" />
         </radialGradient>
 
-        {/* solid well past the asset's own eye (≈ 93 × 88) and its shading, then fading into the fur */}
-        <radialGradient id={`${id}-feather`}>
-          <stop offset="0.84" stopColor="#fff" />
-          <stop offset="1" stopColor="#000" />
-        </radialGradient>
-        <mask id={`${id}-patch`} maskContentUnits="userSpaceOnUse">
-          <ellipse rx="122" ry="116" fill={`url(#${id}-feather)`} />
-        </mask>
-        {EYES.map((e) => (
-          <pattern
-            key={e.side}
-            id={`${id}-fur-${e.side}`}
-            patternUnits="userSpaceOnUse"
-            width={S}
-            height={S}
-            x={-e.cx - e.fx}
-            y={-e.cy + FUR}
-          >
-            <image href={PLUSH_SRC} width={S} height={S} />
-          </pattern>
-        ))}
       </defs>
 
       <g className="p-ground">
@@ -219,21 +200,6 @@ export function PlushSvg({
         <g className="p-pose">
           <g className="p-breathe">
             <image className="p-body" href={PLUSH_SRC} width={S} height={S} />
-            {/*
-              Fur over the asset's own eyes, shown only while a blink flattens the glass bead. Under the
-              room light, so for that moment it matches the fur around it.
-            */}
-            {EYES.map((e) => (
-              <ellipse
-                key={e.side}
-                className="p-patch"
-                transform={`translate(${e.cx} ${e.cy})`}
-                rx="122"
-                ry="116"
-                fill={`url(#${id}-fur-${e.side})`}
-                mask={`url(#${id}-patch)`}
-              />
-            ))}
             {lit && (
               <>
                 <rect className="p-light p-light--key" width={S} height={S} fill={`url(#${id}-key)`} mask={`url(#${id}-body)`} />
@@ -290,7 +256,6 @@ function Eye({ id, side, cx, cy }: { id: string; side: 'l' | 'r'; cx: number; cy
           </g>
         </g>
       </g>
-      <path className="p-closed" d="M-62 46 Q0 74 62 46" />
     </g>
   );
 }
@@ -338,7 +303,7 @@ function Extras({ extra }: { extra: Exclude<Extra, null> }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Life: looking and blinking. Writes CSS variables straight onto the <svg>, so */
+/* Life: looking, and light on the glass. Writes CSS variables onto the <svg>, so */
 /* nothing re-renders; state lives in refs so the loop never restarts.          */
 /*                                                                            */
 /* Attention works in fixations: the eyes pick a place, jump there once, and    */
@@ -462,21 +427,19 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
 
-    let lastBlink = t0;
-    const blink = (force = false) => {
-      const now = performance.now();
-      if (still || (!force && now - lastBlink < 1200)) return;
-      lastBlink = now;
-      svg.setAttribute('data-blink', '');
-      later(() => svg.removeAttribute('data-blink'), 220);
+    // The glint: the light on the glass softens and returns over GLINT_MS. The bead itself never moves.
+    const glint = () => {
+      if (still || svg.hasAttribute('data-glint')) return;
+      svg.setAttribute('data-glint', '');
+      later(() => svg.removeAttribute('data-glint'), GLINT_MS);
     };
 
     let gx = 0;
     let gy = 0;
     let lastSaccade = -Infinity;
     let lastState: BuddyState | null = null;
-    let nextBlink = t0 + rand(2600, 5200);
-    let nextWander = t0 + rand(9000, 15000);
+    let nextGlint = t0 + rand(4200, 7800);
+    let nextWander = t0 + rand(16000, 24000);
     let wander: { x: number; y: number; until: number } | null = null;
 
     const write = () => {
@@ -513,28 +476,33 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
       if (fixed) {
         target = fixed;
       } else if (FOLLOWS.includes(s)) {
-        const active = document.activeElement;
-        const typing = s === 'attentive' && isTextField(active) ? active : null;
-        const f = typing ?? (focus && now - focus.t < 5000 && watchable(focus.el) ? focus.el : null);
-        if (f) {
-          const r = f.getBoundingClientRect();
-          target = toward(r.left + Math.min(r.width * 0.35, 200), r.top + r.height / 2);
+        // The face rests on the person, not on the mouse. A pointer crossing the page is not a cue;
+        // only a real place to look turns the eyes — the phone when it is hovered, the field while
+        // you type — and each is one eased jump held in place.
+        if (svg.hasAttribute('data-curious') && s !== 'hearing' && s !== 'speaking') {
+          target = [0.5, 0.34];
           engaged = true;
-        } else if (!still && pointer && now - pointer.t < POINTER_MEMORY) {
-          // Keeps looking where the hand stopped; comes back to the user only after a while.
-          target = toward(pointer.x, pointer.y);
-          engaged = true;
+        } else {
+          const active = document.activeElement;
+          const typing = s === 'attentive' && isTextField(active) ? active : null;
+          const f = typing ?? (focus && now - focus.t < 4200 && watchable(focus.el) ? focus.el : null);
+          if (f) {
+            const r = f.getBoundingClientRect();
+            target = toward(r.left + Math.min(r.width * 0.35, 200), r.top + r.height / 2);
+            engaged = true;
+          }
         }
       }
 
-      if (!still && !engaged && !fixed && WANDERS.includes(s) && now - lastInput > 8000) {
+      // A rare, small glance aside after a long quiet spell — sitting with you, not scanning the room.
+      if (!still && !engaged && !fixed && WANDERS.includes(s) && now - lastInput > 12000) {
         if (wander && now > wander.until) {
           wander = null;
-          nextWander = now + rand(10000, 18000);
+          nextWander = now + rand(18000, 30000);
         }
         if (!wander && now > nextWander) {
-          if (Math.random() < 0.5) wander = { x: rand(-0.7, 0.7), y: rand(-0.45, 0.35), until: now + rand(1400, 2400) };
-          else nextWander = now + rand(10000, 18000);
+          if (Math.random() < 0.4) wander = { x: rand(-0.38, 0.38), y: rand(-0.18, 0.22), until: now + rand(1800, 2800) };
+          else nextWander = now + rand(18000, 30000);
         }
         if (wander) target = [wander.x, wander.y];
       } else {
@@ -544,18 +512,15 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
       const dist = Math.hypot(target[0] - gx, target[1] - gy);
       const due = changed ? dist > 0.005 : dist > DEAD_ZONE && now - lastSaccade > HOLD;
       if (due) {
-        // People often blink with a big change of gaze.
-        if (dist > 0.6 && Math.random() < 0.3) blink();
         gx = target[0];
         gy = target[1];
         lastSaccade = now;
         write();
       }
 
-      if (!still && now > nextBlink) {
-        blink(true);
-        if (Math.random() < 0.12) later(() => blink(true), 340);
-        nextBlink = now + rand(3500, 7000);
+      if (!still && now > nextGlint) {
+        glint();
+        nextGlint = now + rand(5200, 9600);
       }
     };
     write();
@@ -574,7 +539,7 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
       document.removeEventListener('pointerout', onOut);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
-      svg.removeAttribute('data-blink');
+      svg.removeAttribute('data-glint');
       svg.removeAttribute('data-curious');
     };
   }, [ref, alive]);

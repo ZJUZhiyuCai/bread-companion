@@ -140,11 +140,23 @@ export function buddyLine(state: BuddyState, canRetry = false): string {
 /** Text-mode activities that hold the microphone or speaker; a call has to take over from them. */
 export const AUDIO_ACTIVITIES: Activity[] = ['requesting_mic', 'recording', 'recorded', 'transcribing', 'speaking'];
 
-/** Why a call can't start right now, or '' if it can. Never pretends to connect. */
+/**
+ * Why a call can't start right now, or '' if it can. Never pretends to connect. Kept to one short line:
+ * the form beside the phone is already the way back, and the technical reason belongs in the tooltip.
+ */
 export function callBlockReason(caps: Capabilities | null): string {
   if (!caps) return '还在检查语音能力';
-  if (!caps.agent.configured) return '面包的回复服务暂时没接好，稍后再试';
-  if (!caps.asr.available) return `现在打不了电话${caps.asr.reason ? `（${caps.asr.reason}）` : ''}，打字照样可以`;
-  if (!caps.tts.available) return `面包现在发不出声音${caps.tts.reason ? `（${caps.tts.reason}）` : ''}，打字照样可以`;
+  if (!caps.agent.configured) return '面包暂时接不上，稍后再试';
+  if (!caps.asr.available) return '现在打不了电话，先打字吧';
+  if (!caps.tts.available) return '面包暂时发不出声音，先打字吧';
+  return '';
+}
+
+/** The operator's own reason, for the button's tooltip only. */
+export function callBlockDetail(caps: Capabilities | null): string {
+  if (!caps) return '';
+  if (!caps.agent.configured) return '面包的回复服务未配置。';
+  if (!caps.asr.available) return caps.asr.reason || '语音转写未配置。';
+  if (!caps.tts.available) return caps.tts.reason || '语音合成未配置。';
   return '';
 }

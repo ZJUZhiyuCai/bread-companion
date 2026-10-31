@@ -8,12 +8,14 @@ import { formatBytes } from './labels';
 export type TextSize = 'm' | 'l' | 'xl';
 
 export function agentSummary(caps: Capabilities | null): { short: string; tone: 'checking' | 'mock' | 'real' } {
-  if (!caps) return { short: '检查中', tone: 'checking' };
+  if (!caps) return { short: '关于', tone: 'checking' };
+  // A demo changes what the replies can be, so it stays on the stamp. "Real model" is an engineering
+  // fact, not something a tired person needs to read on the first screen; it lives in 关于.
   if (caps.agent.mode === 'mock') return { short: '演示', tone: 'mock' };
-  return { short: '真实模型', tone: 'real' };
+  return { short: '关于', tone: 'real' };
 }
 
-/** The small stamp next to the name: always says it's an AI and whether replies are a demo. */
+/** The small stamp next to the name: always says it's an AI, and says "demo" when replies are one. */
 export function AiStamp({ caps, onClick }: { caps: Capabilities | null; onClick: () => void }) {
   const agent = agentSummary(caps);
   return (
@@ -22,7 +24,7 @@ export function AiStamp({ caps, onClick }: { caps: Capabilities | null; onClick:
       className={`ai-stamp ai-stamp--${agent.tone}`}
       onClick={onClick}
       aria-haspopup="dialog"
-      aria-label={`关于面包：AI，${caps ? (caps.agent.mode === 'mock' ? '规则演示' : '真实模型') : '正在检查服务'}`}
+      aria-label={`关于面包：一个 AI${caps ? (caps.agent.mode === 'mock' ? '，现在是规则演示' : '') : '，正在检查服务'}`}
     >
       <span className="ai-stamp__ai">AI</span>
       <span className="ai-stamp__mode">{agent.short}</span>

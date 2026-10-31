@@ -23,7 +23,7 @@ test('browser recording converts to WAV, requires transcript confirmation, and c
   await page.route('**/api/speech/synthesize',async route=>{
     tts++;await route.fulfill({body:Buffer.from(encodeWav(new Float32Array(16000*4))),contentType:'audio/wav'});
   });
-  await page.goto('/');await page.getByRole('button',{name:/我想说几句/}).click();
+  await page.goto('/');await page.getByRole('button',{name:/进去慢慢写/}).click();
   await page.getByRole('button',{name:'录一段话：转成字后先给你改，再决定发不发',exact:true}).click();
   await expect(page.locator('time')).toHaveText('0:01',{timeout:7000});
   await page.getByRole('button',{name:'说完了',exact:true}).click();
