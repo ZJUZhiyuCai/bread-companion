@@ -40,16 +40,18 @@
     "Updated behavioral regression selectors for the new entry and added empty-note, IME, length-limit and no-microphone listen-first coverage.",
     "Updated release version, documentation and actual UI screenshots separately.",
     "Reproduced a 320px extra-large-text overflow and bubble/eye overlap; gave the bubble reserved space above the photo and let the phone plaque grow leftward, preserving phone geometry and hit area. Added light/dark layout and contrast coverage.",
-    "Extended the narrow-screen correction to standard-size text at 360px and below, checked standard/extra-large light/dark layouts at four widths, and aligned browser metadata with the new opening."
+    "Extended the narrow-screen correction to standard-size text at 360px and below, checked standard/extra-large light/dark layouts at four widths, and aligned browser metadata with the new opening.",
+    "Investigated the initial cloud E2E failure using retained traces: capabilities returned in about 0.53s but software graphics delayed interaction for seconds. Added performance-caveat/software-renderer SVG fallback and deferred home graphics until capabilities settle. Added two capability-selection regressions; real WebGL fault tests override only capability selection to keep exercising graphics on CI. The stalled-download test retains its 10s production deadline with a 45s total test budget."
   ],
   "mergedVisualSha256": {
     "app/globals.css": "b1711ed6bc1741b6ed7098a272f3b21e6b5e1e61038599b653cf6dbd0a4d2d16",
     "components/BreadBuddy.tsx": "2c4ba67389237697e2945bdd1ab9e0c87b91c8a6f8d356d07192c40e5c46f01f",
-    "components/Companion.tsx": "244052fb084b7fcc488724eb03affe6a9d5515604b0ba27a79d85b0650ef5cdf",
+    "components/Companion.tsx": "9447b79a0f7e1bda175db705ab8e763ab4531d935a10cefa5213a73d89bec36d",
     "components/EntryScreen.tsx": "a3519110089e6794a73e58ce47f65b85d141d41208d281f2286d1b1189d0a6a1",
     "components/ServiceStatus.tsx": "e3d7ebe11ecc7b868f724ad85ee1a761ed7acb356350479634e76e8097317c28",
     "docs/design-calm-entry.md": "64e0b78c1424ca5595afcb72709a372d61ffc1634a855c975890f4a39a3f5e3e",
-    "app/layout.tsx": "25677784c0b573f42ec98958b8157bba3ab6e641416a5c81c2fab9084f1a3026"
+    "app/layout.tsx": "25677784c0b573f42ec98958b8157bba3ab6e641416a5c81c2fab9084f1a3026",
+    "components/phone3d/engine.ts": "89129a9b92907d0d5f920f1a00b5909ea3de76106e8b191742657f98221684b7"
   },
   "verification": "phone3d-audit.md"
 }

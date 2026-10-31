@@ -11,7 +11,7 @@
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v030.png)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v030.jpg)
 
 *实际本机界面。真实语音需服务端配置；无密钥启动会清楚标为规则演示。*
 
@@ -73,7 +73,7 @@ macOS 也可以双击 `启动面包.command`。它只在本机启动应用。仓
 
 | 检查 | 已有证据 |
 | --- | --- |
-| 工程回归 | 155 项单元/集成、40 条浏览器流程；CI 跑类型、模型资产检查、测试、构建与 Chromium |
+| 工程回归 | 155 项单元/集成、42 条浏览器流程；CI 跑类型、模型资产检查、测试、构建与 Chromium |
 | 中文对话复测 | v14：8 个情境、16 轮接口调用，含一条控制层道别；完整响应中位 **1.165 s**、p90 **1.477 s**；未测首 token |
 | 语音链路 | v0.2 虚拟麦克风实测：固定开场 **0.240 s**；两轮说完至回复出声 **4.202 / 3.275 s**；开口至停止旧声 **362 ms** |
 | 仍然会失败的体验 | 明确道别已有窄范围规则；仍有套话、补写细节和未请求的建议。调参前后原始合成样本全部保留 |

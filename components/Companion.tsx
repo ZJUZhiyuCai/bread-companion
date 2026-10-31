@@ -35,7 +35,8 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
   const block = blocked || callBlockReason(caps);
   const detail = callBlockDetail(caps);
   const [hint, setHint] = useState('');
-  const spatial = usePhone3D() && variant === 'hero';
+  // Readiness is more urgent than decoration: do not compile shaders while capabilities are pending.
+  const spatial = usePhone3D() && variant === 'hero' && caps !== null;
   const [solid, setSolid] = useState(false);
   // Hover and keyboard focus raise the handset once; leaving lowers it after a beat. Driven by enter/leave
   // on a hit area that never moves, so a hand resting on an edge can't make it bob.

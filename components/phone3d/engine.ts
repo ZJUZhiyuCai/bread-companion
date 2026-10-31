@@ -197,9 +197,19 @@ export class PhoneEngine {
     private readonly onLost: () => void,
   ) {
     // Throws when WebGL 2 can't be had; the caller keeps the drawn phone.
-    const context = canvas.getContext('webgl2', { alpha: true, antialias: true, powerPreference: 'low-power' });
+    const context = canvas.getContext('webgl2', {
+      alpha: true, antialias: true, powerPreference: 'low-power', failIfMajorPerformanceCaveat: true,
+    });
     if (!context) throw new Error('phone: WebGL 2 unavailable');
     try {
+      // Some ANGLE configurations still grant a software context despite the caveat flag. Preparing
+      // the reflected room on it can freeze input/audio controls for seconds. Keep the callable SVG.
+      // This capability stays in memory; the renderer name is never sent to a server or persisted.
+      const info = context.getExtension('WEBGL_debug_renderer_info');
+      const renderer = info ? String(context.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
+      if (/swiftshader|llvmpipe|softpipe|software rasterizer|microsoft basic render/i.test(renderer)) {
+        throw new Error('phone: software graphics uses SVG');
+      }
       this.renderer = new WebGLRenderer({ canvas, context, alpha: true, antialias: true, powerPreference: 'low-power' });
     } catch (error) {
       // Three can throw after allocating driver resources but before returning
