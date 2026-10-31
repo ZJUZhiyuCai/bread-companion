@@ -71,6 +71,8 @@ npm run eval:companion -- --live --app http://127.0.0.1:3210
 
 See the [synthetic cases and published outputs](evaluations/README.md), [current entry, 3D phone and adversarial validation](docs/phone3d-audit.md), [earlier voice validation](docs/living-companion-validation.md), and [sourced competitor comparison](docs/competitive-benchmark.md). The comparison is public-source research plus Bread testing, not a blinded trial of paid competitor products.
 
+Two hosted synthetic rounds took **7.89 / 9.12 s** for the combined ASR, text and TTS HTTP requests; this is not browser time-to-first-audio. The slower final-framework result is published alongside the first sample. These public measurements should not be confused with the faster local measurements above.
+
 Current shared-budget, concurrency and deployment evidence is in [0.4.0 validation](docs/craft-online-validation.md). Fixed greeting loading overlaps microphone preparation; local archive loading overlaps capability discovery. Paid generation is never hedged across duplicate requests.
 
 ## Architecture and participation
