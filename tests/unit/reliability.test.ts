@@ -99,6 +99,17 @@ describe('recovery owns one user turn', () => {
     if (action === 'stop') c.stop(); else if (action === 'end') c.end(); else if (action === 'material') c.addMaterial('后来补充的材料。'); else c.setMode('review');
     await c.retryLastTurn(); expect(fetcher).toHaveBeenCalledTimes(1); expect(c.getSnapshot().canRetry).toBe(false);
   });
+  it('a later storage/input error cannot revive a failed chat retry', async () => {
+    const fetcher = vi.fn(async () => Response.json({ error: { retryable: true, userMessage: '稍后再试' } }, { status: 503 }));
+    const c = new BreadController(fetcher); c.addMaterial('之前提供的一段材料。'); await c.send('今天有点累。');
+    expect(c.getSnapshot().canRetry).toBe(true); expect(c.getSnapshot().notice).not.toBe('');
+    c.dismissNotice(); expect(c.getSnapshot().notice).toBe(''); expect(c.getSnapshot().canRetry).toBe(true);
+    await c.saveCard();
+    expect(c.getSnapshot().error).not.toBe(''); expect(c.getSnapshot().canRetry).toBe(false);
+    await c.retryLastTurn(); expect(fetcher).toHaveBeenCalledTimes(1);
+    await c.send('再说一小句。'); expect(c.getSnapshot().canRetry).toBe(true);
+    c.clearNotice(); c.addMaterial(''); expect(c.getSnapshot().canRetry).toBe(false);
+  });
   it('long chatting does not consume the 24 material slots', async () => {
     const c = new BreadController(async (_url, init) => Response.json(mockCandidate(JSON.parse(init!.body as string))));
     for (let i = 0; i < 30; i++) await c.send(`我说一点日常${i}。`);

@@ -143,7 +143,7 @@ export default function BreadApp() {
 
       <AboutSheet open={aboutOpen} onClose={() => setAboutOpen(false)} caps={vm.capabilities} textSize={textSize} setTextSize={setTextSize} />
 
-      <Notices notice={vm.notice} error={vm.error} clearNotice={vm.clearNotice} canRetry={vm.canRetry} retryLastTurn={vm.retryLastTurn} />
+      <Notices notice={vm.notice} error={vm.error} clearNotice={vm.dismissNotice} />
     </>
   );
 }

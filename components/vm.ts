@@ -11,4 +11,8 @@ export type BreadVM = BreadViewModel & {
   assist: (mode: AssistMode) => Promise<void>;
   /** One box: recorded as user-provided material (not externally verified). */
   addMaterial: (text: string) => boolean;
+  /** The last text turn failed and can be sent again as-is; false once anything has changed since. */
+  canRetry?: boolean;
+  /** Re-runs that turn without recording the user's line a second time. */
+  retryLastTurn?: () => Promise<void>;
 };

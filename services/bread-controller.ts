@@ -64,7 +64,7 @@ export class BreadController {
   private buildView(): BreadViewModel {
     return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds, canRetry: this.canRetry(), retryLastTurn: this.retryLastTurn,
       call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.callController.resume,
-      busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice };
+      busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice, dismissNotice: this.dismissNotice };
   }
   async initialize() {
     this.disposed = false;
@@ -75,8 +75,9 @@ export class BreadController {
   }
   dispose() { this.disposed = true; this.initialization++; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
   private cancelResources() { this.failedTurn = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
-  private fail(error: unknown, fallback = '操作没有完成，请重试。') { this.error = error instanceof Error ? error.message : fallback; this.publish(); }
-  clearNotice = () => { this.notice = ''; this.error = ''; this.publish(); };
+  private fail(error: unknown, fallback = '操作没有完成，请重试。', retainFailedTurn = false) { if (!retainFailedTurn) this.failedTurn = null; this.error = error instanceof Error ? error.message : fallback; this.publish(); }
+  dismissNotice = () => { this.notice = ''; this.publish(); };
+  clearNotice = () => { this.failedTurn = null; this.notice = ''; this.error = ''; this.publish(); };
   start = (mode: Mode = 'listen', welcome = false) => {
     if (this.state.lifecycle !== 'active') return;
     this.dispatch({ type: 'START', mode, welcome: welcome ? WELCOME : mode === 'listen' ? '想从哪里说起都可以。' : '可以直接说说面试里让你挂心的片段，或贴一段当时的回答。我来帮你理一理。' });
@@ -150,7 +151,7 @@ export class BreadController {
     } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) {
       if (channel === 'text' && retryable) this.failedTurn = { text, sessionId: token.sessionId, epoch: token.epoch, contextRevision: token.contextRevision, mode: request.mode };
       this.dispatch({ type: 'FINISH', token, activity: 'error' });
-      this.fail(e instanceof TypeError ? new Error('刚才没连上，你的话还在。') : e);
+      this.fail(e instanceof TypeError ? new Error('刚才没连上，你的话还在。') : e, '回复没有完成，请重试。', true);
     } }
   }
   addMaterial = (text: string) => {

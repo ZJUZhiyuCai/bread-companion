@@ -13,7 +13,7 @@ import { SavePreview } from './SavePreview';
 import { MaterialDialog } from './Sources';
 import { TopBar } from './TopBar';
 import { WorkPanel, type TraySection } from './WorkPanel';
-import { AUDIO_ACTIVITIES, IDLE_CALL, buddyForActivity, isCallOpen } from './call';
+import { AUDIO_ACTIVITIES, IDLE_CALL, buddyForActivity, buddyLine, isCallOpen } from './call';
 import { anyDialogOpen, useFlash, useMediaQuery } from './hooks';
 import {
   ACTIVITY_META,
@@ -96,9 +96,12 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   }, []);
 
   // Quiet announcements: what the loaf is doing, a new card, a new piece of material.
-  // During a call the room announces its own phases.
+  // During a call the room announces its own phases. Back to idle, the old "在想" is cleared, so a
+  // reply that has already arrived is never followed by a stale "still working". Effects declared
+  // below (hang-up, new card) run after this one and still get the last word.
   useEffect(() => {
-    if (!inCall) setLive(activity === 'idle' ? '' : `面包${ACTIVITY_META[activity].label}`);
+    if (activity === 'idle') setLive('');
+    else if (!inCall) setLive(`面包${ACTIVITY_META[activity].label}`);
   }, [activity, inCall]);
 
   // Calls leave a mark in the transcript: where they started and how long they lasted.
@@ -117,7 +120,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
       setCallMarks((marks) =>
         marks.map((k, i) => (i === marks.length - 1 && k.end === null ? { ...k, end: count, seconds: lastElapsed.current } : k)),
       );
-      setLive('通话挂断了。刚才的话都留在对话里，可以接着打字。');
+      setLive('通话挂断了，刚才的话都在对话里');
       window.setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 0);
     }
     wasInCall.current = inCall;
@@ -185,6 +188,15 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   const assist = (mode: AssistMode) => {
     if (!canAct || busy) return;
     void vm.assist(mode);
+  };
+
+  // The retry key disappears as soon as the reply is underway; keep focus on the page, not on <body>,
+  // and without pulling up a phone keyboard.
+  const canRetry = !!vm.canRetry && !!vm.retryLastTurn && canAct && !inCall;
+  const retry = () => {
+    if (!canRetry || busy) return;
+    headingRef.current?.focus({ preventScroll: true });
+    void vm.retryLastTurn?.();
   };
 
   // A call owns the microphone and the speaker. A one-off recording has to be settled by the user
@@ -287,6 +299,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
 
   const companionProps = {
     buddy,
+    line: buddyLine(buddy, canRetry),
     status: ACTIVITY_META[activity].label,
     caps,
     onCall: startCall,
@@ -356,6 +369,8 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
                 busy={busy}
                 canAct={canAct}
                 callMarks={callMarks}
+                canRetry={canRetry && !busy}
+                onRetry={retry}
                 onStarter={onStarter}
                 emptyExtra={
                   !hasCorner && canAct ? (
@@ -409,7 +424,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
           size="lg"
           className="tray-sheet"
           title="今晚的卡片与材料"
-          subtitle="只在这次对话里。你选“留下”的，才会存到这台设备。"
+          subtitle="你选“留下”的，才会存到这台设备"
           closeLabel="收起"
         >
           {showTray && tray}

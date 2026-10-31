@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, type ReactNode } from 'react';
-import { HeartHandshake, LoaderCircle, Paperclip, Phone, PhoneOff, Square, Volume2 } from 'lucide-react';
+import { HeartHandshake, LoaderCircle, Paperclip, Phone, PhoneOff, RotateCcw, Square, Volume2 } from 'lucide-react';
 import type { Card, Message } from '@/domain/types';
 import { CardSlip } from './CardView';
 import { StateAvatar } from './StateAvatar';
@@ -41,6 +41,9 @@ interface ConversationProps {
   busy: boolean;
   canAct: boolean;
   callMarks: CallMark[];
+  /** The last reply failed and can be asked for again, as-is. */
+  canRetry?: boolean;
+  onRetry?: () => void;
   /** Puts a starter line into the composer. */
   onStarter?: (text: string) => void;
   /** Extra content under the opening greeting (the phone card on small screens). */
@@ -71,9 +74,12 @@ export function Conversation(props: ConversationProps) {
     busy,
     canAct,
     callMarks,
+    canRetry = false,
+    onRetry,
     onStarter,
     emptyExtra,
   } = props;
+  const showRetry = canRetry && !!onRetry && !thinking && canAct;
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const stickToBottom = useRef(true);
@@ -93,7 +99,7 @@ export function Conversation(props: ConversationProps) {
   const marksKey = callMarks.map((k) => `${k.start}-${k.end}`).join(',');
   useEffect(() => {
     if (stickToBottom.current) endRef.current?.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' });
-  }, [messages.length, thinking, cardKey, marksKey, reduced]);
+  }, [messages.length, thinking, cardKey, marksKey, showRetry, reduced]);
 
   const firstAssistantId = messages.find((m) => m.role === 'assistant')?.id;
 
@@ -229,6 +235,15 @@ export function Conversation(props: ConversationProps) {
               );
             })}
             {marksAt(callMarks, messages.length)}
+            {/* Right under the line that went unanswered: the line stays, only the reply is asked for again. */}
+            {showRetry && (
+              <li className="msg-retry">
+                <span className="msg-retry__text">这句还没回上来</span>
+                <button type="button" className="pill pill--warm" onClick={onRetry}>
+                  <RotateCcw aria-hidden="true" /> 再试一次
+                </button>
+              </li>
+            )}
             {thinking && (
               <li className="msg msg--bread msg--thinking">
                 <span className="msg__mark" aria-hidden="true">
@@ -284,9 +299,9 @@ function CallDivider({ kind, seconds = 0 }: { kind: 'start' | 'end' | 'brief'; s
       <span className="call-divider__line" aria-hidden="true" />
       <span className="call-divider__text">
         <Icon aria-hidden="true" />
-        {kind === 'start' && '开始语音通话 · 下面是通话字幕'}
-        {kind === 'end' && `通话结束 · ${formatClock(seconds)} · 可以接着打字`}
-        {kind === 'brief' && `打过一次电话 · ${formatClock(seconds)} · 没有留下字幕`}
+        {kind === 'start' && '语音通话'}
+        {kind === 'end' && `通话结束 · ${formatClock(seconds)}`}
+        {kind === 'brief' && `打过一次电话 · ${formatClock(seconds)}`}
       </span>
       <span className="call-divider__line" aria-hidden="true" />
     </li>

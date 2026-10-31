@@ -58,14 +58,15 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
         <h1 ref={headingRef} tabIndex={-1} className="end__title">
           今晚先停在这里。
         </h1>
-        <p className="end__lede">录音、回应和播放都停下了，之后再到的结果也不会出现。没有问卷，也没有要做的下一步。</p>
+        {/* One device fact, one release. The late-result guarantee is the backend's job, not a sentence here. */}
+        <p className="end__lede">麦克风和声音都停了。没有问卷，也没有要做的下一步。</p>
 
         {snapshot ? (
           <section className="end__card" aria-labelledby="end-card-h">
             <h2 id="end-card-h" className="end__sub">
               {saved ? '这张已经留下了' : '这张卡片还在桌上'}
             </h2>
-            {!saved && <p className="small muted">它只在这个页面里，关掉或刷新就没有了。留不留，由你决定。</p>}
+            {!saved && <p className="small muted">关掉或刷新页面，它就没有了。</p>}
             <CardView
               card={snapshot.card}
               findings={snapshot.findings}
@@ -92,7 +93,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
             )}
           </section>
         ) : (
-          <p className="end__none">这次没有要留下的东西，所以什么都不会存。这也是一种好好结束。</p>
+          <p className="end__none">这次没有要留下的东西。这也是一种好好结束。</p>
         )}
 
         <div className="end__actions">
@@ -128,7 +129,8 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
             </>
           )}
         </div>
-        <p className="end__fine small muted">“再说一会儿”和“打个电话”都会开始一次新的对话，刚才的聊天不会带过去。</p>
+        {/* Kept: "再说一会儿" reads like "continue", and it doesn't. Prevents a real surprise, so it stays — short. */}
+        {!confirmLeave && <p className="end__fine small muted">都会开始新的一段，刚才的聊天不带过去。</p>}
       </div>
 
       {snapshot && (

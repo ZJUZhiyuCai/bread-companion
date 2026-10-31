@@ -50,4 +50,6 @@ export interface BreadViewModel {
   sendTranscript: () => Promise<void>;
   speak: (text: string) => Promise<void>;
   clearNotice: () => void;
+  /** Dismiss a success notice without clearing a newer error or retry. */
+  dismissNotice: () => void;
 }

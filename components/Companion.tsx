@@ -96,6 +96,8 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
 
 interface CompanionProps {
   buddy: BuddyState;
+  /** What 面包 says; defaults to its usual line for the state. */
+  line?: string;
   /** Short status in plain words, for the label under the figure. */
   status: string;
   caps: Capabilities | null;
@@ -104,12 +106,12 @@ interface CompanionProps {
 }
 
 /** Desktop: 面包's corner. The figure under the lamp follows the real state; the phone sits right below it. */
-export function CompanionPanel({ buddy, status, caps, onCall, callBlocked }: CompanionProps) {
+export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
   return (
     <aside className="companion" aria-label="面包">
       <div className="companion__figure">
-        <p key={BUDDY_LINE[buddy]} className="companion__bubble" data-state={buddy}>
-          {BUDDY_LINE[buddy]}
+        <p key={line} className="companion__bubble" data-state={buddy}>
+          {line}
         </p>
         <LampScene state={buddy} idPrefix="companion-lamp" className="companion__scene" />
       </div>
@@ -125,7 +127,7 @@ export function CompanionPanel({ buddy, status, caps, onCall, callBlocked }: Com
 }
 
 /** Phones: a slim perch under the top bar — the loaf, one line from it, and the phone. */
-export function CompanionPerch({ buddy, status, caps, onCall, callBlocked }: CompanionProps) {
+export function CompanionPerch({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
   return (
     <div className="perch" data-state={buddy}>
       <span className="perch__buddy">
@@ -133,7 +135,7 @@ export function CompanionPerch({ buddy, status, caps, onCall, callBlocked }: Com
       </span>
       <p className="perch__line">
         <span className="perch__name">面包</span>
-        <span className="perch__say">{BUDDY_LINE[buddy]}</span>
+        <span className="perch__say">{line}</span>
         <span className="sr-only">（{status}）</span>
       </p>
       <CallLauncher variant="pill" caps={caps} onCall={onCall} blocked={callBlocked} />

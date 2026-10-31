@@ -2170,6 +2170,22 @@ kbd {
   width: 11px;
   height: 11px;
 }
+/* Sits under your own note, on your side: the line is still yours and still there. */
+.msg-retry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 10px;
+  margin-top: -8px;
+  font-size: 0.86rem;
+  color: var(--ink-3);
+  animation: rise 0.3s var(--ease) both;
+}
+.msg-retry .lucide {
+  width: 15px;
+  height: 15px;
+}
 .msg__after {
   margin-top: 6px;
   color: var(--ink-3);

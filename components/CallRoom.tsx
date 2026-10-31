@@ -74,18 +74,19 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
     setAnnounce('停下来了，在听你说');
   }, [phase, call.heardSpeech]);
 
-  // The feedback owns its timer; another audio frame or phase change must not leave it stuck on.
-  useEffect(() => {
-    if (!caught) return;
-    const t = window.setTimeout(() => setCaught(false), 1100);
-    return () => window.clearTimeout(t);
-  }, [caught]);
-
   useEffect(() => {
     if (phase !== 'speaking' || cueSpent.current) return;
     cueSpent.current = true;
     setCue(true);
   }, [phase]);
+
+  // Each transient owns its own lifetime. Tied to phase instead, the next phase change would clear
+  // the timeout while leaving the state on — a cut-off look or a cue that never goes away.
+  useEffect(() => {
+    if (!caught) return;
+    const t = window.setTimeout(() => setCaught(false), 1100);
+    return () => window.clearTimeout(t);
+  }, [caught]);
 
   useEffect(() => {
     if (!cue) return;
@@ -155,7 +156,8 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           {(meta.hint || (phase === 'paused' && call.error)) && (
             <p className="callroom__hint">{phase === 'paused' && call.error ? call.error : meta.hint}</p>
           )}
-          {cue && <p className="callroom__cue">想说就直接开口，也可以点“插话”</p>}
+          {/* Only while there is something to interrupt; muted or paused, the line would be wrong. */}
+          {cue && CUTTABLE.includes(phase) && <p className="callroom__cue">想说就直接开口，也可以点“插话”</p>}
           {phase === 'error' && call.error && (
             <p className="callroom__error" role="alert">
               {call.error}
@@ -174,7 +176,8 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               </p>
             )}
             {call.caption ? (
-              // Cut off mid-sentence: the line recedes instead of vanishing, so it reads as interrupted.
+              // Cut off while speaking, the backend keeps the caption: the line recedes instead of
+              // vanishing, so it reads as interrupted. Cut off while thinking, there is no line — the rings say it.
               <p className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''}`}>
                 <span className="cap__who">面包</span>
                 <span className="cap__text">{call.caption}</span>

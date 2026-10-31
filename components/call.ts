@@ -123,9 +123,19 @@ export const BUDDY_LINE: Record<BuddyState, string> = {
   recording: '在听这一段。',
   muted: '你静音了，我等着。',
   paused: '先停一下，不着急。',
-  error: '出了点小问题，打字还能用。',
+  // No promise about what still works: that depends on what failed, and the notice says it exactly.
+  error: '刚才出了点问题。',
   asleep: '晚安。',
 };
+
+/**
+ * The line 面包 actually says. A failed text reply that can be sent again gets its own line, so the
+ * loaf names what happened and the retry next to that message is the obvious next step.
+ */
+export function buddyLine(state: BuddyState, canRetry = false): string {
+  if (state === 'error' && canRetry) return '刚才那句没回上来。';
+  return BUDDY_LINE[state];
+}
 
 /** Text-mode activities that hold the microphone or speaker; a call has to take over from them. */
 export const AUDIO_ACTIVITIES: Activity[] = ['requesting_mic', 'recording', 'recorded', 'transcribing', 'speaking'];

@@ -296,10 +296,9 @@ export function Composer(props: ComposerProps) {
           {micHint}
         </span>
         <p id={`${id}-help`} className="composer__help">
+          {/* The shortcut row already names Esc = 停止; no separate "it's busy" sentence. */}
           {micHint ? (
             <span className="warn-text">{micHint}</span>
-          ) : busy ? (
-            '面包在忙，想打断就点“停止”或按 Esc'
           ) : coarse ? (
             '回车换行，点箭头发出'
           ) : (

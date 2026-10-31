@@ -1,6 +1,8 @@
-# 面包 · 自然电话阶段验收
+# 面包 · 验收记录
 
-最新：文字低延迟与稳定性升级见 [升级验收](upgrade-validation.md)；以下为此前电话轮次的历史记录。当前文字也已切换 DeepSeek。
+最新：Claude 于 2026-10-31 14:36 北京时间完成官方同会话续作；前端减法、原话旁重试与通话交互已审查接入，保留本机稳定性修复。文字/电话均为低延迟 DeepSeek，MiniMax Warm Bestie 保持。**当前结果与限制以 [升级验收](upgrade-validation.md) 为准**，产品流程和 Harness 见 [设计说明](product-harness.md)。
+
+以下保留此前电话阶段的历史记录，其中“待额度恢复”已由上述最终续作完成，不是当前待办。
 
 2026-10-31，北京时间。第四轮已经把后端和 Claude 已交付的首页、聊天、电话界面接入本机生产版；**Claude 的结束页/关于等最后收尾仍待额度恢复，不把整轮称为完成**。第三轮完整记录保留在 [上一轮验收](acceptance-companion-call.md)。
 
@@ -31,7 +33,7 @@
 
 心理学资料包括回应时间、积极倾听、自主表达以及AI倾听的原始研究。应用的是交互假设，不宣称心理治疗效果，见 [论文依据与取舍](call-research.md)。
 
-## Claude 续作
+## 历史：额度中断与续作安排
 
 第四轮任务 `20261031-bread-natural-call`，会话 `191e8deb-adff-4c35-b910-4d845727dbed`。已回收21份原稿，8份相对第三轮有改动（含设计说明），原稿保存在控制项目 `tasks/20261031-bread-natural-call/source-stage1/`。SHA256及Codex接入修改见 [溯源](natural-call-frontend-provenance.json)。
 

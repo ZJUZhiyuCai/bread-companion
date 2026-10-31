@@ -53,7 +53,7 @@ export function TopBar(props: TopBarProps) {
             className="ctl ctl--end"
             onClick={onEnd}
             disabled={!active}
-            title="挂断并结束今晚的整段对话；只想挂断，用下面的“挂断”"
+            title="挂断，并结束今晚的对话"
           >
             <Moon aria-hidden="true" />
             结束
@@ -100,7 +100,7 @@ export function TopBar(props: TopBarProps) {
           disabled={!active}
           aria-keyshortcuts="Escape"
           aria-describedby="stop-desc"
-          title="停下正在进行的回应、播放、录音或转写（Esc）"
+          title="停下（Esc）"
         >
           <Square aria-hidden="true" />
           停止
@@ -113,7 +113,7 @@ export function TopBar(props: TopBarProps) {
           className="ctl ctl--end"
           onClick={onEnd}
           disabled={!active}
-          title={cardWaiting ? '结束今晚。结束后仍可决定要不要留下这张卡片' : '结束今晚：停下一切'}
+          title={cardWaiting ? '结束今晚，卡片之后还能留' : '结束今晚'}
         >
           <Moon aria-hidden="true" />
           结束

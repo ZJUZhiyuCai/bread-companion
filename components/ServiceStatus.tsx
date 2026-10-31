@@ -47,7 +47,7 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
         <div>
           <p className="about__lede">面包是一个 AI 程序，没有真人值守。</p>
           <p className="small muted">
-            它可以陪你说说话（打字或打电话）、帮你留个记号、在你想要时一起看一段回答或练一题。它的表情只表示它自己在听、在想还是在说，不会判断你的情绪。它不做心理诊断，也不知道招聘方没有公开的决定原因——不知道的，它会说不知道。
+            打字或打电话陪你说说话；你想要时，帮你留个记号、一起看一段回答或练一题。它不做心理诊断或治疗，也不知道招聘方没公开的原因——不知道的，它会说不知道。它的表情只表示它自己在听、在想还是在说，不判断你的情绪。
           </p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
                   </>
                 ) : (
                   <>
-                    <strong>真实模型</strong>：由服务端调用模型生成，核对格式和引用后才显示。
+                    <strong>真实模型</strong>：由服务端调用模型生成。
                   </>
                 )}
                 {caps.agent.label && <span className="about__meta">{caps.agent.label}</span>}
@@ -76,9 +76,15 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
             <div>
               <dt>打电话</dt>
               <dd>
-                <strong>{caps.agent.configured && caps.asr.available && caps.tts.available ? '可以，点电话按钮才会接通' : '现在不可用，打字照样可以'}</strong>
+                <strong>
+                  {!caps.agent.configured
+                    ? '现在不可用，回复服务暂时没接好'
+                    : caps.asr.available && caps.tts.available
+                      ? '可以，点电话按钮才会接通'
+                      : '现在不可用，打字照样可以'}
+                </strong>
                 <span className="about__meta">
-                  网页里和 AI 的语音对话，不是电话线路。停顿后自动接话，想插话时直接开口；也保留“插话”按钮。字幕留在这次对话里，挂断后可以接着打字。
+                  网页里和 AI 的语音对话，不是运营商的电话线路，也没有真人接听。接通后它一直在听：你停一下，它就把这句转成字、回一句、念出来。它在想或在说的时候，也在这台设备上留意新的声音，你一开口它就停下来听，你刚开的头也留着。环境吵、用外放或蓝牙时可能听错或漏听，所以“插话”按钮一直都在。静音、暂停或挂断后，麦克风就不再采集。字幕留在这次对话里。
                 </span>
               </dd>
             </div>
@@ -120,8 +126,8 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
         <h3 id="about-data">你说的话去了哪里</h3>
         {caps?.processingNotice && <p className="prewrap">{caps.processingNotice}</p>}
         <ul className="about__points">
-          <li>默认不保存：结束会清掉聊天和完整材料，只留下已经展示的有效卡片供你选择；刷新后，未保存的内容也会消失。</li>
-          <li>只有你点了“就留下这些”的那张卡片，才会存到<strong>这台设备的这个浏览器</strong>里。它不是云备份，不能跨设备；清理浏览器数据会一起清掉；别人用这台设备的这个浏览器也可能看到。</li>
+          <li>默认不保存：结束会清掉聊天和完整材料，只把已展示的有效卡片留给你决定；刷新后，没留下的内容也会消失。</li>
+          <li>只有你点了“就留下这些”的那张卡片，才会存到<strong>这台设备的这个浏览器</strong>里。它不是云备份，不能跨设备；清理浏览器数据会一起清掉；用这台设备这个浏览器的人也可能看到。</li>
           <li>导出的文件直接下载到这台设备，不会发到任何地方。</li>
         </ul>
       </section>
@@ -151,7 +157,7 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
           <li>
             <kbd>Esc</kbd> 停止正在进行的回应、播放或转写；通话中是暂停
           </li>
-          <li>通话里的静音、说完了 / 插话、挂断都是普通按钮，可以用 <kbd>Tab</kbd> 走到、<kbd>Enter</kbd> 或空格按下</li>
+          <li>通话里可以直接开口插话；静音、说完了 / 插话、挂断也都是普通按钮，可以用 <kbd>Tab</kbd> 走到、<kbd>Enter</kbd> 或空格按下</li>
           <li>
             <kbd>Enter</kbd> 发出，<kbd>Shift</kbd> + <kbd>Enter</kbd> 换行（输入法组字时不会发出）
           </li>
