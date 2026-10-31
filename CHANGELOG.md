@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.1 — 2026-10-31
+
+A steadier, open-eyed companion and a shared material language for the character, telephone and original SVG brand.
+
+- Removed persistent closed and half-closed eye states; rest, mute, pause and error use posture and small props. Only a brief 190 ms blink remains.
+- Removed frequent random gaze jitter. Fixed stationary-pointer hover loops on both the home and chat telephones without moving their hit areas.
+- Rebuilt the phone with lacquer shading, an inset ivory dial, brass details, dimensional handset and coiled cord; added matching light and contact shadows to the plush.
+- Original vector logo, standalone mark, monochrome logo and favicon; shared paths in the interface.
+- Fixed the transient narrow call column when resizing from desktop to portrait. Preserved the real call-state animation and cached Warm Bestie greeting.
+- 155 unit/integration checks and 27 browser flows pass locally, including three new motion regressions.
+
+See [validation and limits](docs/material-identity-validation.md), [Claude's design](docs/design-material-identity.md) and [source provenance](docs/material-identity-provenance.json).
+
 ## 0.2.0 — 2026-10-31
 
 A plush companion and a red rotary telephone, with a shorter path from tapping to hearing a voice.

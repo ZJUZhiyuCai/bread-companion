@@ -1,3 +1,5 @@
+<img src="public/brand/bread-logo.svg" width="146" height="64" alt="Bread 面包" />
+
 # Bread · 面包
 
 **A warm companion for a difficult evening. Complexity belongs to the agent.**
@@ -13,15 +15,15 @@ Talk after an interview rejection. When you feel ready, turn your own material i
 
 ## What works
 
-- An original plush character with animated eyes, gaze, blinks and touch response, respecting reduced-motion preferences.
-- A red rotary phone that dials and lifts its handset with the real connection state; a bundled opening in the configured default voice.
+- An original plush character with stable glass-eye gaze, brief blinks and touch response. Rest, pause and error keep the eyes open; reduced-motion preferences are respected.
+- A lacquer-red rotary phone with an ivory dial and brass details. It dials and lifts its handset with the real connection state; a bundled opening uses the configured default voice.
 - Chinese text conversations and continuous browser voice calls, with speech interruption, mute, pause and hangup.
 - Agent-led notes, interview review and one-question practice without setup forms.
 - Evidence-linked, editable cards. Correcting a source invalidates old references.
 - Explicit save preview, browser-local storage, Markdown/JSON export and JSON import.
 - Bounded context, in-session preferences, timeouts, deduplication, cancellation and retry without duplicate messages.
 
-**Local single-user preview, version 0.2.** There are no accounts, cross-device sync or persistent relationship memories. The public repository is not a hosted public service. Calls use sequential ASR → text generation → TTS, not a native full-duplex speech model.
+**Local single-user preview, version 0.2.1.** There are no accounts, cross-device sync or persistent relationship memories. The public repository is not a hosted public service. Calls use sequential ASR → text generation → TTS, not a native full-duplex speech model.
 
 ## Run without API keys
 
@@ -42,7 +44,7 @@ For real services, see [Setup](docs/setup.md). The tested configuration uses an 
 
 ## Evidence, not an EQ badge
 
-155 unit/integration checks and 24 browser paths cover cancellation, evidence, storage, calls and the new opening/animation lifecycle. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+155 unit/integration checks and 27 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening needs no synthesis round trip; subsequent replies still do. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 
@@ -61,7 +63,7 @@ CI uses Mock providers. Live evaluation is opt-in and may incur provider costs:
 npm run eval:companion -- --live --app http://127.0.0.1:3210
 ```
 
-See the [synthetic cases and published outputs](evaluations/README.md), [current validation](docs/living-companion-validation.md), and [sourced competitor comparison](docs/competitive-benchmark.md). The comparison is public-source research plus Bread testing, not a blinded trial of paid competitor products.
+See the [synthetic cases and published outputs](evaluations/README.md), [current visual and interaction validation](docs/material-identity-validation.md), [earlier voice validation](docs/living-companion-validation.md), and [sourced competitor comparison](docs/competitive-benchmark.md). The comparison is public-source research plus Bread testing, not a blinded trial of paid competitor products.
 
 ## Architecture and participation
 

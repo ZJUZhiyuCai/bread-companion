@@ -20,7 +20,7 @@ export function StateAvatar({ state, size = 'md', decorative = false, className 
         : state === 'generating' || state === 'validating' || state === 'transcribing'
           ? 'thinking'
           : state === 'ended'
-            ? 'asleep'
+            ? 'night'
             : 'idle';
     return (
       <span className={`avatar avatar--xs ${className}`} data-state={state} role={label ? 'img' : undefined} aria-label={label}>

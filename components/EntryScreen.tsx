@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { ArrowRight, Archive, Headphones, MessageCircle, ScanText } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
+import { BrandLogo } from './Brand';
 import { CallLauncher } from './Companion';
 import { LampScene } from './NightWindow';
 import { AiStamp } from './ServiceStatus';
@@ -51,7 +52,9 @@ export function EntryScreen(props: EntryScreenProps) {
     <main id="main" className="entry">
       <div className="entry__top">
         <p className="wordmark">
-          面包<span className="wordmark__sub">收到拒信的那个晚上</span>
+          <BrandLogo className="wordmark__logo" />
+          <span className="sr-only">面包</span>
+          <span className="wordmark__sub">收到拒信的那个晚上</span>
         </p>
         <AiStamp caps={caps} onClick={onOpenAbout} />
       </div>
@@ -64,7 +67,7 @@ export function EntryScreen(props: EntryScreenProps) {
             <span className="hello-bubble__big">嗨，我是面包。</span>
             <span className="hello-bubble__small">一个 AI。今晚想说什么，我都听着。</span>
           </p>
-          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} className="entry__scene" pokeable />
+          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} className="entry__scene" pokeable phoneNear />
           <CallLauncher variant="hero" caps={caps} onCall={() => onCall(text)} />
         </div>
 

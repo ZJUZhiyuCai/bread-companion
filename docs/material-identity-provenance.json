@@ -1,0 +1,32 @@
+{
+  "baseline": "f32d214",
+  "task": "20261031-bread-material-identity",
+  "originalSha256": {
+    "components/CallStage.tsx": "1246c9a14f63f4b16528b5d03109438888d1268c28f3020e16594c139d1446ed",
+    "components/RedPhone.tsx": "9239aaa0f0de854808987bb6bd72ab4960e86b30d1efa729f60e4d319b4ca64e",
+    "components/call.ts": "79d063f924b25eae08cdbe6bb21ddac725dcde38e89ef62caf08e3c0adaa32ee",
+    "components/TopBar.tsx": "555186c3a068dc35776f29c4925bfef4bfcf3702e61a98f0bf9bfa853d0f956e",
+    "components/NightWindow.tsx": "f9dbf3ba88b859655a814dcf980b2afc19e267073745c04b66616ca1980f23e3",
+    "components/Brand.tsx": "ffeb0087ca08e867fd03ed18b029e3fbf9434d35b6c5e93dc25dc7da524a404c",
+    "components/StateAvatar.tsx": "3d0255f46d05d90222e031f6fe7c2ebb1304a23407283631b483022d249aec71",
+    "components/BreadBuddy.tsx": "8ef09bc278757316f73ba94318d742be24335eaab1c14655ced46d59be032cee",
+    "components/EntryScreen.tsx": "d2ceb2331727da276fb1dba378d760cb92127a60bc1c06c538702e1289ef71c7",
+    "app/globals.css": "64d243ceca50d40b920231b059613bcb90746fa764559c32af548b8ffe9f8c5f",
+    "public/brand/bread-logo-mono.svg": "c6611a039e064887a5355d7c3e22f31fef128a569de3284175cf0126765f9d7d",
+    "public/brand/bread-logo.svg": "f86d1618b4a20fa148f570217e164bd7c1d86b6aa7cde99849fed71d1f666bfa",
+    "public/brand/bread-mark.svg": "edf437949f5da9fb016b2101b14419a0d4019bd8c58f1ba5dc827cf0f0bb61ea",
+    "public/favicon.svg": "88ab1b7996a0a3acb8187bd440ae706e35ac3611b36cb2b48e6c216509bb4b25",
+    "docs/design-material-identity.md": "1d2695dfa022fbd132a35bb0af98426338d546160cd956dd9cae0fcc5cbbc8bd"
+  },
+  "author": "Official Claude Code / Claude Opus 5.5 / high",
+  "session": "edddd64e-83fe-4c20-8a3c-579832149064",
+  "completedBeijing": "2026-10-31T18:49:12+08:00",
+  "originalRetention": "Unmodified source retained in the local Claude control task. The user reference screenshot is not published.",
+  "codexIntegrationChanges": [
+    "Removed translateY from the panel telephone button hover after reproducing 20 enter/leave cycles in 1.1 seconds at its bottom edge; the visual handset still lifts once.",
+    "Made the call layout switch to one column at 1079px in CSS, before the media-query hook removes the desktop transcript. This fixes the reproduced transient 28px-wide main column after a desktop-to-portrait resize.",
+    "Added three behavioral motion regression tests. Updated the existing dial test to observe actual wheel rotation rather than requiring the animation to live on the wheel element.",
+    "Version, documentation and production screenshots updated separately; no backend, model, voice, audio or dependency changes."
+  ],
+  "verification": "material-identity-validation.md"
+}

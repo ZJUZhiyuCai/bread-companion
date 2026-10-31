@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 146 64" role="img" aria-label="面包">
+  <title>面包</title>
+  <!-- One ink, for stamps, print and single-colour use. Eyes and smile are cut out of the bun. -->
+  <defs>
+    <mask id="face" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#FFFFFF"/>
+      <ellipse cx="24.5" cy="38" rx="4" ry="4.4" fill="#000000"/>
+      <ellipse cx="39.5" cy="38" rx="4" ry="4.4" fill="#000000"/>
+      <path d="M29.6 43.2 Q32 45.8 34.4 43.2" fill="none" stroke="#000000" stroke-width="1.6" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <g fill="#2A1D17">
+    <g mask="url(#face)">
+      <ellipse cx="22" cy="57.6" rx="6.4" ry="3.9"/>
+      <ellipse cx="42" cy="57.6" rx="6.4" ry="3.9"/>
+      <path d="M32 14 C39.5 14 44.5 20.5 48 28.5 C52.5 38.5 56 45 55 51 C54 56.5 47 58.5 32 58.5 C17 58.5 10 56.5 9 51 C8 45 11.5 38.5 16 28.5 C19.5 20.5 24.5 14 32 14 Z"/>
+    </g>
+    <circle cx="23.3" cy="36.6" r="1.3"/>
+    <circle cx="38.3" cy="36.6" r="1.3"/>
+  </g>
+  <g fill="none" stroke="#2A1D17" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M31.8 14.6 C31 12 31.4 9.2 33.6 8.6 C35.6 8 36.6 10.2 35.2 11.2 C33.8 12.2 32.6 10 34.4 8 C36 6.2 38.4 5.2 39.8 6.6 C41 7.8 39.6 9.6 38.4 8.8 C37.2 8 38.4 5.6 40.6 4.8 C41.6 4.4 42.6 4.4 43.4 4.8" stroke-width="2.4"/>
+    <g stroke-width="9">
+      <g transform="translate(71 15.08) scale(0.3572)">
+        <path d="M10 12 H90"/>
+        <path d="M50 12 L43 28"/>
+        <path d="M17 30 V91"/>
+        <path d="M17 30 H83 V91"/>
+        <path d="M39 30 V91"/>
+        <path d="M61 30 V91"/>
+        <path d="M39 50 H61"/>
+        <path d="M39 70 H61"/>
+        <path d="M17 91 H83"/>
+      </g>
+      <g transform="translate(108.6 15.08) scale(0.3572)">
+        <path d="M38 8 Q34 22 16 36"/>
+        <path d="M30 22 H82 Q86 22 86 27 V64 Q86 76 74 72"/>
+        <path d="M32 40 H64 V58"/>
+        <path d="M32 58 H64"/>
+        <path d="M32 40 V80 Q32 91 43 91 H82 Q90 91 90 82"/>
+      </g>
+    </g>
+  </g>
+</svg>

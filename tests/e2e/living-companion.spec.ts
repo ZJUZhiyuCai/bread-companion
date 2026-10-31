@@ -93,7 +93,11 @@ test('hangup during dialling releases the device and rejects a late welcome', as
   await page.getByRole('button', { name: /给面包打(?:个)?电话/ }).click();
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'connecting');
   await expect(page.locator('.cstage')).toHaveAttribute('data-pose', 'dialing');
-  expect(await page.locator('.cstage .rp-wheel').evaluate(el => el.getAnimations().some(a => a.playState === 'running'))).toBe(true);
+  // The angle is animated on the parent and inherited by the wheel and hole walls.
+  // Observe the rendered rotation, independently of which element owns the animation.
+  const wheel = page.locator('.cstage .rp-wheel');
+  const firstRotation = await wheel.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).b);
+  await expect.poll(() => wheel.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).b)).not.toBe(firstRotation);
   await page.getByRole('button', { name: '挂断', exact: true }).click();
   release();
   await expect(page.locator('.callroom')).toHaveCount(0);

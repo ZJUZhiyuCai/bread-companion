@@ -1,12 +1,20 @@
 'use client';
 
 import type { CallPhase } from '@/domain/types';
+import { BUN, BUN_EYES } from './Brand';
 import { useDomId } from './hooks';
 
 /**
- * The red rotary phone, drawn in layers in a 260×220 space: plinth, glossy body, a dial plate with a
- * finger wheel that really turns, a finger stop, cradle forks with hook-switch plungers, a coiled cord
- * and a separate handset. Poses only ever come from the real call phase:
+ * The red rotary phone, in a 260×220 space, seen three-quarters from a little above with the same lamp
+ * as 面包: warm key light from the upper left, shade and a long soft shadow toward the lower right.
+ *
+ * Built like the object: a plinth (top, front, lit chamfer), a lacquered body (sloped face, lit left
+ * wall, dark right wall with a rim light, a top deck), a recessed dial — ivory number plate, a red
+ * finger wheel with real thickness whose holes keep their inner wall on the far side as it turns, a
+ * brass finger stop, a domed cap with the brand mark — cradle posts and plungers, a handset with its
+ * own light for each pose, and a coiled cord that keeps its turns and opens up when stretched.
+ *
+ * Poses only ever come from the real call phase:
  *
  *   rest     on the table, handset in the cradle
  *   dialing  `connecting`: the wheel is pulled round twice, then the phone rings until the line opens
@@ -35,136 +43,343 @@ export function phonePose(phase: CallPhase): PhonePose {
   }
 }
 
-const DIAL_X = 130;
-const DIAL_Y = 128;
+/* ---------- the body ---------- */
+
+const PLINTH_TOP = 'M34 170 Q36 162 46 161 H214 Q224 162 226 170 L234 184 H26 Z';
+const PLINTH_FRONT = 'M26 184 H234 Q240 184 240 189 V193 Q240 199 233 199 H27 Q20 199 20 193 V189 Q20 184 26 184 Z';
+const BODY = 'M38 177 C35 150 44 120 62 100 C71 90 85 85 101 84 H159 C175 85 189 90 198 100 C216 120 225 150 222 177 Z';
+const FACE = 'M52 177 C50 152 58 126 74 108 C81 100 91 97 103 97 H157 C169 97 179 100 186 108 C202 126 210 152 208 177 Z';
+const DECK = 'M70 96 C77 87 89 83 102 83 H158 C171 83 183 87 190 96 C183 99 171 100 158 100 H102 C89 100 77 99 70 96 Z';
+const PRONGS = [
+  'M60 97 C59 86 60 76 64 71 H80 C84 76 85 86 84 97 Z',
+  'M200 97 C201 86 200 76 196 71 H180 C176 76 175 86 176 97 Z',
+];
+const LIPS = [
+  'M57 86 C63 92 81 92 87 86 L87 95 C81 101 63 101 57 95 Z',
+  'M203 86 C197 92 179 92 173 86 L173 95 C179 101 197 101 203 95 Z',
+];
+
+/* ---------- the dial: drawn as circles, tilted into an ellipse by the face's slope ---------- */
+
+const DX = 130;
+const DY = 139;
+const TILT = 0.84;
 const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 /** 1 at the upper right, round anticlockwise to 0 at the lower right; the finger stop sits in the gap. */
 const HOLES = DIGITS.map((d, i) => {
   const a = ((-40 - 28 * i) * Math.PI) / 180;
-  return { d, x: (DIAL_X + 30 * Math.cos(a)).toFixed(2), y: (DIAL_Y + 30 * Math.sin(a)).toFixed(2) };
+  return { d, x: (28.5 * Math.cos(a)).toFixed(2), y: (28.5 * Math.sin(a)).toFixed(2) };
 });
+/** The far inner wall of a finger hole: the hole minus itself shifted toward the viewer. */
+const WALL = 'M-6.9 1.2 A7 7 0 1 1 6.9 1.2 A7 7 0 0 0 -6.9 1.2 Z';
+/** The wheel's edge, seen below its top face. */
+const WHEEL_SIDE = 'M-39.47 1.6 A39.5 39.5 0 1 0 39.47 1.6 A39.5 39.5 0 0 1 -39.47 1.6 Z';
 
-/** Same commands in both, so browsers that animate `d` can stretch the cord between them. */
-const CORD_REST = 'M60 158 C120 178 236 176 240 132 C243 100 226 78 214 62';
-const CORD_LIFTED = 'M60 158 C30 170 -20 150 -40 120 C-56 90 -54 52 -46.5 28';
+/* ---------- the handset, in its own space; centre of the handle at 0,0 ---------- */
 
-const BODY = 'M28 172 C24 132 40 96 70 80 C98 66 162 66 190 80 C220 96 236 132 232 172 Z';
+const HANDSET =
+  'M-60 -2 C-40 -15 40 -15 60 -2 L60 9 C40 -1 -40 -1 -60 9 Z ' +
+  'M-90 8 C-91 -5 -82 -12 -70 -12 C-58 -12 -50 -6 -50 4 L-52 20 C-54 26 -61 28 -71 28 C-81 28 -88 26 -89 20 Z ' +
+  'M90 8 C91 -5 82 -12 70 -12 C58 -12 50 -6 50 4 L52 20 C54 26 61 28 71 28 C81 28 88 26 89 20 Z';
+
+/* ---------- the cord: a coil generated along a curve, same turns in every pose ---------- */
+
+type Pt = [number, number];
+
+function bezier(p: Pt[], t: number): Pt {
+  const u = 1 - t;
+  const a = u * u * u;
+  const b = 3 * u * u * t;
+  const c = 3 * u * t * t;
+  const d = t * t * t;
+  return [a * p[0][0] + b * p[1][0] + c * p[2][0] + d * p[3][0], a * p[0][1] + b * p[1][1] + c * p[2][1] + d * p[3][1]];
+}
+
+function bezierTangent(p: Pt[], t: number): Pt {
+  const u = 1 - t;
+  return [
+    3 * u * u * (p[1][0] - p[0][0]) + 6 * u * t * (p[2][0] - p[1][0]) + 3 * t * t * (p[3][0] - p[2][0]),
+    3 * u * u * (p[1][1] - p[0][1]) + 6 * u * t * (p[2][1] - p[1][1]) + 3 * t * t * (p[3][1] - p[2][1]),
+  ];
+}
+
+/**
+ * A looped trochoid along the curve: the same number of points in every pose, so browsers that animate
+ * `d` stretch the coil instead of swapping it. The loops ease in at both ends, where the cord meets a plug.
+ */
+function coil(p: Pt[], turns = 22, radius = 4.4, lead = 3.2, per = 10): string {
+  const n = turns * per;
+  let d = '';
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const [x, y] = bezier(p, t);
+    const [dx, dy] = bezierTangent(p, t);
+    const len = Math.hypot(dx, dy) || 1;
+    const tx = dx / len;
+    const ty = dy / len;
+    const a = (i / per) * Math.PI * 2;
+    const k = Math.min(1, t * 12, (1 - t) * 12);
+    const s = Math.sin(a) * radius * k;
+    const c = (Math.cos(a) - 1) * lead * k;
+    d += `${i ? 'L' : 'M'}${(x - ty * s + tx * c).toFixed(1)} ${(y + tx * s + ty * c).toFixed(1)}`;
+  }
+  return d;
+}
+
+/** Rest: out from under the right cup, a loop beside the body, into the back of the plinth. */
+const CORD_REST = coil([
+  [201, 93],
+  [238, 98],
+  [252, 152],
+  [234, 186],
+]);
+/** Lifted: from the handset at 面包's cheek, down and behind the body. Start = the lifted pose's cup plug. */
+const CORD_LIFTED = coil([
+  [-53.6, 9.7],
+  [-40, 78],
+  [10, 130],
+  [234, 186],
+]);
+
+/** Where a pointer can press the phone. Never transformed, so hover can't move it out from under the hand. */
+const HIT = 'M14 186 C12 150 26 112 42 94 C42 72 52 52 70 52 H190 C208 52 218 72 218 94 C238 112 254 150 252 186 L246 204 H14 Z';
 
 export function PhoneFigure({ pose, id }: { pose: PhonePose; id: string }) {
   const cord = pose === 'lifted' ? CORD_LIFTED : CORD_REST;
   return (
     <g className="rp" data-pose={pose}>
       <defs>
-        <linearGradient id={`${id}-body`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f45a4b" />
-          <stop offset="0.45" stopColor="#d3291f" />
-          <stop offset="1" stopColor="#8a1010" />
+        {/* lacquer */}
+        <linearGradient id={`${id}-walls`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#e65a45" />
+          <stop offset="0.2" stopColor="#c8322b" />
+          <stop offset="0.72" stopColor="#962021" />
+          <stop offset="1" stopColor="#560e12" />
         </linearGradient>
-        <linearGradient id={`${id}-plinth`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#a8160f" />
-          <stop offset="1" stopColor="#5e0707" />
+        <linearGradient id={`${id}-face`} x1="0.2" y1="0" x2="0.6" y2="1">
+          <stop offset="0" stopColor="#f06b52" />
+          <stop offset="0.38" stopColor="#d23d30" />
+          <stop offset="0.82" stopColor="#a52423" />
+          <stop offset="1" stopColor="#7a171a" />
         </linearGradient>
-        <radialGradient id={`${id}-gloss`} cx="0.3" cy="0.2" r="0.62">
-          <stop offset="0" stopColor="#fff" stopOpacity="0.6" />
-          <stop offset="0.55" stopColor="#fff" stopOpacity="0.08" />
+        <linearGradient id={`${id}-deck`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f78368" />
+          <stop offset="1" stopColor="#c8392d" />
+        </linearGradient>
+        <linearGradient id={`${id}-ptop`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#bf3029" />
+          <stop offset="0.5" stopColor="#9a1f1e" />
+          <stop offset="1" stopColor="#651215" />
+        </linearGradient>
+        <linearGradient id={`${id}-pfront`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#861a1b" />
+          <stop offset="1" stopColor="#3e0a0d" />
+        </linearGradient>
+        <linearGradient id={`${id}-ao`} gradientUnits="userSpaceOnUse" x1="0" y1="150" x2="0" y2="178">
+          <stop offset="0" stopColor="#2a0507" stopOpacity="0" />
+          <stop offset="1" stopColor="#2a0507" stopOpacity="0.5" />
+        </linearGradient>
+        <radialGradient id={`${id}-spec`}>
+          <stop offset="0" stopColor="#fff" stopOpacity="0.62" />
           <stop offset="1" stopColor="#fff" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id={`${id}-hs`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f65e4f" />
-          <stop offset="0.55" stopColor="#c8221b" />
-          <stop offset="1" stopColor="#7a0d0d" />
+        {/* 面包's cream fur, reflected in the lacquer on the side that faces it */}
+        <radialGradient id={`${id}-fur`}>
+          <stop offset="0" stopColor="#ffe9c8" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#ffe9c8" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id={`${id}-body`}>
+          <path d={BODY} />
+        </clipPath>
+
+        {/* the dial */}
+        <linearGradient id={`${id}-well`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3d080b" />
+          <stop offset="0.55" stopColor="#7b1518" />
+          <stop offset="1" stopColor="#d65a45" />
         </linearGradient>
-        <radialGradient id={`${id}-well`} cx="0.5" cy="0.4" r="0.6">
-          <stop offset="0.7" stopColor="#6a0c0a" />
-          <stop offset="1" stopColor="#a81d17" />
-        </radialGradient>
-        <radialGradient id={`${id}-plate`} cx="0.42" cy="0.36" r="0.7">
-          <stop offset="0" stopColor="#fffaf1" />
-          <stop offset="1" stopColor="#e6d4b6" />
-        </radialGradient>
-        <linearGradient id={`${id}-wheel`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fffdf8" stopOpacity="0.96" />
-          <stop offset="1" stopColor="#e2d0b1" stopOpacity="0.96" />
+        <linearGradient id={`${id}-lip`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ffb39d" stopOpacity="0.9" />
+          <stop offset="0.5" stopColor="#c8322b" stopOpacity="0" />
+          <stop offset="1" stopColor="#3d080b" stopOpacity="0.6" />
         </linearGradient>
-        <radialGradient id={`${id}-shadow`}>
-          <stop offset="0" stopColor="#1e0c06" stopOpacity="0.45" />
-          <stop offset="1" stopColor="#1e0c06" stopOpacity="0" />
+        <radialGradient id={`${id}-plate`} cx="0.4" cy="0.32" r="0.75">
+          <stop offset="0" stopColor="#fffaf0" />
+          <stop offset="0.7" stopColor="#f1e3c8" />
+          <stop offset="1" stopColor="#d6bd94" />
         </radialGradient>
+        <radialGradient id={`${id}-wheel`} cx="0.34" cy="0.26" r="0.86">
+          <stop offset="0" stopColor="#f47a62" />
+          <stop offset="0.45" stopColor="#cf3a2f" />
+          <stop offset="1" stopColor="#7e1719" />
+        </radialGradient>
+        <radialGradient id={`${id}-cap`} cx="0.38" cy="0.3" r="0.8">
+          <stop offset="0" stopColor="#fffdf6" />
+          <stop offset="0.7" stopColor="#f1e2c4" />
+          <stop offset="1" stopColor="#c9ab7d" />
+        </radialGradient>
+        <linearGradient id={`${id}-brass`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f3d9a4" />
+          <stop offset="0.5" stopColor="#c9a16a" />
+          <stop offset="1" stopColor="#7d5a2c" />
+        </linearGradient>
         <mask id={`${id}-holes`} maskContentUnits="userSpaceOnUse">
-          <circle cx={DIAL_X} cy={DIAL_Y} r="41" fill="#fff" />
+          <circle r="39.5" fill="#fff" />
           {HOLES.map((h) => (
-            <circle key={h.d} cx={h.x} cy={h.y} r="7.6" fill="#000" />
+            <circle key={h.d} cx={h.x} cy={h.y} r="7" fill="#000" />
           ))}
         </mask>
+
+        {/* the handset: one light for the cradle, one for when it is turned up against 面包 */}
+        <linearGradient id={`${id}-hs-rest`} gradientUnits="userSpaceOnUse" x1="0" y1="-14" x2="0" y2="28">
+          <stop offset="0" stopColor="#ffc2ad" stopOpacity="0.62" />
+          <stop offset="0.3" stopColor="#ff8a70" stopOpacity="0.12" />
+          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#2a0507" stopOpacity="0.55" />
+        </linearGradient>
+        <linearGradient id={`${id}-hs-lift`} gradientUnits="userSpaceOnUse" x1="-30" y1="40" x2="10" y2="-20">
+          <stop offset="0" stopColor="#ffc2ad" stopOpacity="0.55" />
+          <stop offset="0.3" stopColor="#ff8a70" stopOpacity="0.12" />
+          <stop offset="0.6" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#2a0507" stopOpacity="0.55" />
+        </linearGradient>
+        <linearGradient id={`${id}-hs-run`} gradientUnits="userSpaceOnUse" x1="-90" y1="0" x2="90" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.1" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.2" />
+        </linearGradient>
+
+        {/* on the table */}
+        <radialGradient id={`${id}-contact`}>
+          <stop offset="0" stopColor="#1e0c06" stopOpacity="0.62" />
+          <stop offset="1" stopColor="#1e0c06" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-cast`}>
+          <stop offset="0" stopColor="#3a1a0c" stopOpacity="0.34" />
+          <stop offset="1" stopColor="#3a1a0c" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${id}-glow`}>
+          <stop offset="0" stopColor="#ff5a3c" stopOpacity="0.32" />
+          <stop offset="1" stopColor="#ff5a3c" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
-      <ellipse className="rp-shadow" cx="130" cy="202" rx="124" ry="14" fill={`url(#${id}-shadow)`} />
+      <g className="rp-floor">
+        <ellipse className="rp-redglow" cx="130" cy="196" rx="132" ry="18" fill={`url(#${id}-glow)`} />
+        <ellipse cx="150" cy="200" rx="128" ry="15" fill={`url(#${id}-cast)`} />
+        <ellipse cx="130" cy="198.5" rx="110" ry="5.5" fill={`url(#${id}-contact)`} />
+      </g>
 
       <g className="rp-cord">
         <path className="rp-cord__base" d={cord} />
-        <path className="rp-cord__coil" d={cord} />
+        <path className="rp-cord__tube" d={cord} />
+        <path className="rp-cord__shine" d={cord} />
       </g>
 
       <g className="rp-shake">
-        <path d="M20 182 L28 168 H232 L240 182 Q242 198 224 198 H36 Q18 198 20 182 Z" fill={`url(#${id}-plinth)`} />
-        <path d={BODY} fill={`url(#${id}-body)`} />
-        <path d={BODY} fill={`url(#${id}-gloss)`} />
-        <path className="rp-rim" d="M40 152 C42 120 56 98 82 85" />
-        <path className="rp-rim rp-rim--soft" d="M221 158 C219 128 208 104 186 90" />
+        {/* plinth */}
+        <path d={PLINTH_TOP} fill={`url(#${id}-ptop)`} />
+        <path d={PLINTH_FRONT} fill={`url(#${id}-pfront)`} />
+        <path className="rp-chamfer" d="M27 184.6 H233" />
 
-        <g className="rp-cradle" fill={`url(#${id}-body)`}>
-          <path d="M52 90 V64 Q52 54 62 54 H70 Q80 54 80 64 V84 Z" />
-          <path d="M180 84 V64 Q180 54 190 54 H198 Q208 54 208 64 V90 Z" />
+        {/* body */}
+        <path d={BODY} fill={`url(#${id}-walls)`} />
+        <path d={DECK} fill={`url(#${id}-deck)`} />
+        <path d={FACE} fill={`url(#${id}-face)`} />
+        <g clipPath={`url(#${id}-body)`}>
+          <rect x="30" y="150" width="200" height="30" fill={`url(#${id}-ao)`} />
+          <ellipse cx="47" cy="146" rx="10" ry="26" transform="rotate(12 47 146)" fill={`url(#${id}-fur)`} />
+          <ellipse cx="86" cy="122" rx="28" ry="14" transform="rotate(-38 86 122)" fill={`url(#${id}-spec)`} />
         </g>
-        {/* hook-switch plungers: hidden under the handset, they pop up when it is lifted */}
+        <path className="rp-edge rp-edge--lit" d="M52 177 C50 152 58 126 74 108" />
+        <path className="rp-edge rp-edge--dark" d="M208 177 C210 152 202 126 186 108" />
+        <path className="rp-edge rp-edge--top" d="M74 108 C81 100 91 97 103 97 H157 C169 97 179 100 186 108" />
+        <path className="rp-window" d="M41 170 C39 147 47 121 64 101" />
+        <path className="rp-window rp-window--soft" d="M44 168 C42 147 50 123 66 104" />
+        <path className="rp-rim" d="M216 170 C217 145 210 121 197 104" />
+
+        {/* dial */}
+        <g transform={`translate(${DX} ${DY}) scale(1 ${TILT})`}>
+          <circle r="44" fill={`url(#${id}-well)`} />
+          <circle r="44" fill="none" stroke={`url(#${id}-lip)`} strokeWidth="1.8" />
+          <circle r="40" fill={`url(#${id}-plate)`} />
+          <circle className="rp-print" r="35" />
+          <circle className="rp-print" r="22" />
+          <g className="rp-digits">
+            {HOLES.map((h) => (
+              <text key={h.d} x={h.x} y={h.y} dy="2.5">
+                {h.d}
+              </text>
+            ))}
+          </g>
+          <path className="rp-wheel__side" d={WHEEL_SIDE} />
+          <g className="rp-wheel">
+            <circle r="39.5" fill={`url(#${id}-wheel)`} mask={`url(#${id}-holes)`} />
+            {HOLES.map((h) => (
+              <g key={h.d} transform={`translate(${h.x} ${h.y})`}>
+                <path className="rp-wall" d={WALL} />
+                <circle className="rp-hole" r="7" />
+              </g>
+            ))}
+          </g>
+          <path className="rp-wheel__gloss" d="M-35.2 -12.8 A37.5 37.5 0 0 1 -12.8 -35.2" />
+          <path className="rp-wheel__gloss rp-wheel__gloss--low" d="M35.2 12.8 A37.5 37.5 0 0 1 12.8 35.2" />
+          <path className="rp-stop" d="M27 14.5 Q35 12.8 42 16.8" stroke={`url(#${id}-brass)`} />
+          <path className="rp-stop__shine" d="M28 13.4 Q34 12.2 39 14" />
+          <circle r="13.5" fill={`url(#${id}-cap)`} />
+          <circle className="rp-cap__ring" r="13.5" stroke={`url(#${id}-brass)`} />
+          <g className="rp-cap__mark" transform="translate(-6.4 -7.6) scale(0.2)">
+            <path d={BUN} />
+            {BUN_EYES.map(([x, y]) => (
+              <ellipse key={x} className="rp-cap__eye" cx={x} cy={y} rx="4" ry="4.4" />
+            ))}
+          </g>
+        </g>
+
+        {/* cradle */}
+        {PRONGS.map((d) => (
+          <path key={d} d={d} fill={`url(#${id}-face)`} />
+        ))}
         <g className="rp-plungers">
-          <rect x="59" y="58" width="14" height="12" rx="3" />
-          <rect x="187" y="58" width="14" height="12" rx="3" />
+          <rect x="88" y="84" width="10" height="7" rx="2" />
+          <rect x="162" y="84" width="10" height="7" rx="2" />
         </g>
-
-        <circle cx={DIAL_X} cy={DIAL_Y} r="47" fill={`url(#${id}-well)`} />
-        <circle cx={DIAL_X} cy={DIAL_Y} r="42" fill={`url(#${id}-plate)`} />
-        <g className="rp-digits">
-          {HOLES.map((h) => (
-            <text key={h.d} x={h.x} y={h.y} dy="2.6">
-              {h.d}
-            </text>
-          ))}
-        </g>
-        <g className="rp-wheel">
-          <circle cx={DIAL_X} cy={DIAL_Y} r="41" fill={`url(#${id}-wheel)`} mask={`url(#${id}-holes)`} />
-          {HOLES.map((h) => (
-            <circle key={h.d} className="rp-hole" cx={h.x} cy={h.y} r="7.6" />
-          ))}
-          <circle className="rp-cap" cx={DIAL_X} cy={DIAL_Y} r="15" />
-          <text className="rp-cap__text" x={DIAL_X} y={DIAL_Y} dy="3">
-            面包
-          </text>
-        </g>
-        <path className="rp-stop" d="M163.5 143.5 L177 150" />
+        <ellipse className="rp-hs-shadow" cx="130" cy="91" rx="84" ry="6.5" fill={`url(#${id}-contact)`} />
 
         <g className="rp-hs-x">
           <g className="rp-hs-y">
             <g className="rp-hs-r">
               <g className="rp-handset">
-                <path d="M-88 12 Q-88 -1 -74 -1 H-54 Q-40 -1 -40 12 Q-40 26 -56 28 H-72 Q-88 26 -88 12 Z" fill={`url(#${id}-hs)`} />
-                <path d="M88 12 Q88 -1 74 -1 H54 Q40 -1 40 12 Q40 26 56 28 H72 Q88 26 88 12 Z" fill={`url(#${id}-hs)`} />
-                <ellipse className="rp-grille" cx="-64" cy="27" rx="17" ry="3.6" />
-                <ellipse className="rp-grille" cx="64" cy="27" rx="17" ry="3.6" />
-                <path d="M-70 4 C-56 -26 56 -26 70 4 L60 12 C46 -8 -46 -8 -60 12 Z" fill={`url(#${id}-hs)`} />
-                <path className="rp-shine" d="M-50 -9 C-30 -21 30 -21 50 -9" />
-                <path className="rp-shine rp-shine--cup" d="M-82 6 Q-80 1 -72 1" />
+                <path d={HANDSET} fill="#c8322b" />
+                <path d={HANDSET} fill={`url(#${id}-hs-run)`} className="rp-hs-light rp-hs-light--rest" />
+                <path d={HANDSET} fill={`url(#${id}-hs-rest)`} className="rp-hs-light rp-hs-light--rest" />
+                <path d={HANDSET} fill={`url(#${id}-hs-lift)`} className="rp-hs-light rp-hs-light--lift" />
+                <path className="rp-hs-rim" d="M-87 21 C-84 26.5 -58 26.5 -54 21 M87 21 C84 26.5 58 26.5 54 21" />
+                <g className="rp-hs-light rp-hs-light--rest">
+                  <path className="rp-shine" d="M-44 -9.5 C-20 -16 20 -16 44 -9.5" />
+                  <path className="rp-shine rp-shine--cup" d="M-85 -3 Q-81 -10 -70 -11" />
+                  <path className="rp-shine rp-shine--cup rp-shine--far" d="M56 -6 Q61 -11 71 -11" />
+                </g>
+                <g className="rp-hs-light rp-hs-light--lift">
+                  <path className="rp-shine" d="M-46 7 C-24 1 24 1 46 7" />
+                  <path className="rp-shine rp-shine--cup" d="M-88 14 Q-86 24 -74 27" />
+                </g>
+                <rect className="rp-plug" x="66" y="25.5" width="10" height="4" rx="1.5" />
               </g>
             </g>
           </g>
         </g>
+
+        {LIPS.map((d) => (
+          <path key={d} d={d} fill={`url(#${id}-face)`} />
+        ))}
+        <path className="rp-edge rp-edge--top" d="M57 86 C63 92 81 92 87 86 M203 86 C197 92 179 92 173 86" />
       </g>
 
       <g className="rp-bell">
-        <path d="M22 76 q-9 -12 0 -26" />
-        <path d="M10 82 q-14 -19 0 -38" />
-        <path d="M238 76 q9 -12 0 -26" />
-        <path d="M250 82 q14 -19 0 -38" />
+        <path d="M30 92 q-10 -14 0 -30" />
+        <path d="M18 98 q-16 -21 0 -42" />
+        <path d="M230 92 q10 -14 0 -30" />
+        <path d="M242 98 q16 -21 0 -42" />
       </g>
     </g>
   );
@@ -176,23 +391,23 @@ export function RedPhone({ pose = 'rest', className = '' }: { pose?: PhonePose; 
   return (
     <svg viewBox="0 0 260 220" className={`rp-svg ${className}`} data-pose={pose} aria-hidden="true" focusable="false">
       <PhoneFigure pose={pose} id={id} />
+      <path className="rp-hit" d={HIT} />
     </svg>
   );
 }
 
-/** A small, still version for pills and inline buttons: same phone, fewer layers. */
+/** A small, still version for pills and inline buttons: same phone and light, flat tones. */
 export function PhoneGlyph({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 260 220" className={`rp-glyph ${className}`} aria-hidden="true" focusable="false">
-      <path className="rp-glyph__base" d="M20 182 L28 168 H232 L240 182 Q242 198 224 198 H36 Q18 198 20 182 Z" />
-      <path className="rp-glyph__body" d={BODY} />
-      <circle className="rp-glyph__dial" cx={DIAL_X} cy={DIAL_Y} r="40" />
-      <circle className="rp-glyph__cap" cx={DIAL_X} cy={DIAL_Y} r="13" />
-      <path
-        className="rp-glyph__handset"
-        d="M42 58 Q42 44 56 44 H76 Q86 44 90 36 C112 18 148 18 170 36 Q174 44 184 44 H204 Q218 44 218 58 Q218 74 202 76 H184 Q170 74 168 60 C150 46 110 46 92 60 Q90 74 76 76 H58 Q42 74 42 58 Z"
-      />
-      <path className="rp-glyph__shine" d="M104 36 C120 28 140 28 156 36" />
+      <path className="rp-glyph__deep" d={PLINTH_FRONT} />
+      <path className="rp-glyph__mid" d={PLINTH_TOP} />
+      <path className="rp-glyph__mid" d={BODY} />
+      <path className="rp-glyph__lit" d={FACE} />
+      <ellipse className="rp-glyph__dial" cx={DX} cy={DY} rx="40" ry={40 * TILT} />
+      <ellipse className="rp-glyph__cap" cx={DX} cy={DY} rx="13" ry={13 * TILT} />
+      <path className="rp-glyph__handset" d={HANDSET} transform="translate(130 64) scale(1.06)" />
+      <path className="rp-glyph__shine" d="M92 59 C114 53 146 53 168 59" />
     </svg>
   );
 }

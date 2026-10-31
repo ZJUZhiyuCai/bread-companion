@@ -33,7 +33,14 @@ export function CallStage({ call, level, className = '' }: { call: CallState; le
       <svg className="cstage__svg" viewBox="0 0 1000 820" focusable="false">
         <ellipse className="cstage__pool" cx="500" cy="770" rx="470" ry="44" />
         {/* While connecting, 面包 watches the phone (down and to the right). */}
-        <PlushSvg state={buddyForCall(call)} level={level} lookAt={[0.8, 0.6]} frame={{ x: 30, y: 40, width: 720, height: 720 }} />
+        <PlushSvg
+          state={buddyForCall(call)}
+          level={level}
+          lookAt={[0.8, 0.6]}
+          lit
+          phoneLight
+          frame={{ x: 30, y: 40, width: 720, height: 720 }}
+        />
         <svg className="cstage__phone" x="600" y="490" width="380" height="321.54" viewBox="0 0 260 220" overflow="visible">
           <PhoneFigure pose={pose} id={id} />
         </svg>

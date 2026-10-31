@@ -102,7 +102,7 @@ export function buddyForActivity(a: AvatarState, typing = false): BuddyState {
     case 'error':
       return 'error';
     case 'ended':
-      return 'asleep';
+      return 'night';
     default:
       return typing ? 'attentive' : 'idle';
   }
@@ -125,7 +125,7 @@ export const BUDDY_LINE: Record<BuddyState, string> = {
   paused: '先停一下，不着急。',
   // No promise about what still works: that depends on what failed, and the notice says it exactly.
   error: '刚才出了点问题。',
-  asleep: '晚安。',
+  night: '晚安。',
 };
 
 /**

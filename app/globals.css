@@ -20,9 +20,13 @@
   --crust: #9c521c;
   --crust-fill: #d9934f;
   --crust-line: #8c4b1f;
-  /* the red phone */
-  --phone: #d3291f;
+  /* the red phone: lacquer, its light and its shade; ivory and brass on the dial */
+  --phone: #c8322b;
+  --phone-hi: #f07a5e;
+  --phone-deep: #6e1418;
   --phone-ink: #a8231d;
+  --ivory: #f4e8d2;
+  --brass: #c9a16a;
   --hangup: #d33f3a;
   --kraft: #ebd9ba;
   --kraft-2: #e0c9a1;
@@ -659,13 +663,42 @@ kbd {
 
 .wordmark {
   display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   font-family: var(--font-serif);
   font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--ink);
+}
+/* the logo: the bun keeps its own colours, the lettering is the page's ink */
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18em;
+  flex: none;
+  color: var(--ink);
+}
+.brand-mark,
+.brand-type {
+  display: block;
+  flex: none;
+  height: 1em;
+  width: auto;
+  overflow: visible;
+}
+.brand-logo__mark {
+  height: 1.6em;
+  margin-block: -0.2em;
+}
+.brand-logo__type {
+  height: 0.94em;
+}
+.wordmark__logo {
+  font-size: 1.35rem;
+}
+.wordmark--sm .wordmark__logo {
+  font-size: 1.12rem;
 }
 .wordmark__sub {
   font-family: var(--font-sans);
@@ -769,134 +802,134 @@ kbd {
   outline-offset: -4px;
 }
 
-/* State tunes these; the life loop adds --gx/--gy (gaze) and data-blink. */
+/*
+ * State tunes these; the life loop adds --gx/--gy (gaze), data-blink and data-curious.
+ * There are no lids: --pupil, --eye (how wide the beads read), --cheek, --smile and pose do the acting.
+ */
 .plush {
-  --lid: 0.14;
-  --lidb: 0;
-  --tilt: 0;
   --pupil: 1;
+  --eye: 1;
   --cheek: 0.22;
-  --shut: 0;
+  --smile: 0;
+  --bounce: 0.34;
 }
 .p-turn,
 .p-pose,
 .p-breathe,
 .p-ground {
   transform-box: view-box;
-  transform-origin: 627px 1196px;
+  transform-origin: 627px 1180px;
 }
 /* The eyes lead and the head follows, slowly. */
 .p-turn {
-  transform: translateX(calc(var(--gx, 0) * 20px)) rotate(calc(var(--gx, 0) * 2.4deg));
-  transition: transform 0.9s var(--ease);
+  transform: translateX(calc(var(--gx, 0) * 18px)) rotate(calc(var(--gx, 0) * 2deg));
+  transition: transform 1.1s var(--ease);
 }
 .p-pose {
-  transition: transform 0.6s var(--ease);
+  transition: transform 0.7s var(--ease);
 }
 .p-breathe {
-  animation: breathe 4.8s ease-in-out infinite;
+  animation: breathe 5.2s ease-in-out infinite;
 }
 
+/* the room's light on the fur, cut to the plush's own outline */
+.p-light {
+  pointer-events: none;
+}
+.p-light--key {
+  mix-blend-mode: soft-light;
+}
+.p-light--shade {
+  mix-blend-mode: multiply;
+}
+.p-light--bounce {
+  mix-blend-mode: soft-light;
+  opacity: var(--bounce);
+  transition: opacity 0.6s;
+}
+
+/* Glass bead eyes. Origin = the socket's centre; a blink flattens the bead toward its lower edge. */
+.p-size,
+.p-ball,
+.p-closed {
+  transform-box: view-box;
+  transform-origin: 0 58px;
+}
+.p-size {
+  transform: scale(var(--eye));
+  transition: transform 0.5s var(--ease);
+}
+/* A fixation: one quick, eased jump, then stillness. */
 .p-look {
-  transform: translate(calc(var(--gx, 0) * 27px), calc(var(--gy, 0) * 19px));
-  transition: transform 0.14s cubic-bezier(0.3, 0.7, 0.3, 1);
-}
-.p-iris__fiber {
-  fill: none;
-  stroke: #fff3d2;
-  stroke-width: 30;
-  stroke-dasharray: 1.6 4.4;
-  opacity: 0.2;
-}
-.p-iris__inner {
-  fill: none;
-  stroke: #7a3c12;
-  stroke-width: 7;
-  opacity: 0.45;
-}
-.p-iris__limbal {
-  fill: none;
-  stroke: #2b1206;
-  stroke-width: 6;
-  opacity: 0.8;
+  transform: translate(calc(var(--gx, 0) * 24px), calc(var(--gy, 0) * 18px));
+  transition: transform 0.2s cubic-bezier(0.25, 0.9, 0.3, 1);
 }
 .p-pupil {
-  fill: #120904;
+  fill: #0a0503;
   transform-box: fill-box;
   transform-origin: center;
   transform: scale(var(--pupil));
-  transition: transform 0.6s var(--ease);
+  transition: transform 0.7s var(--ease);
 }
-.p-iris__glint {
-  fill: #fff;
-  opacity: 0.55;
+.p-caustic {
+  transform: translate(calc(var(--gx, 0) * 5px), calc(var(--gy, 0) * 3px));
+  transition: transform 0.4s var(--ease);
 }
 /* the room's reflections drift only slightly against the gaze — glass, not paint */
 .p-shine {
-  transform: translate(calc(var(--gx, 0) * -5px), calc(var(--gy, 0) * -4px));
-  transition: transform 0.3s var(--ease);
+  transform: translate(calc(var(--gx, 0) * -4px), calc(var(--gy, 0) * -3px));
+  transition: transform 0.4s var(--ease);
 }
 .p-shine ellipse {
   fill: #fff;
-  opacity: 0.92;
+  opacity: 0.94;
 }
 .p-shine circle {
   fill: #fff;
-  opacity: 0.7;
+  opacity: 0.72;
 }
 .p-shine path {
   fill: none;
-  stroke: #fff;
+  stroke: #ffeeda;
   stroke-width: 6;
   stroke-linecap: round;
-  opacity: 0.32;
-}
-.p-rimlight {
-  fill: none;
-  stroke: #ffe9cf;
-  stroke-width: 5;
-  stroke-linecap: round;
-  opacity: 0.28;
-}
-
-/* Lids are fur. Origin = the socket's centre. Looking down lowers them a little, as real lids do. */
-.p-lid {
-  transform-box: view-box;
-  transform-origin: 0 0;
-  transition: transform 0.16s ease-out;
-}
-.p-lid--t {
-  transform: rotate(calc(var(--tilt) * -1deg))
-    translateY(calc((min(1, max(var(--shut), var(--lid) + var(--gy, 0) * 0.12)) - 1) * 190px));
-}
-.p-eye--r .p-lid--t {
-  transform: rotate(calc(var(--tilt) * 1deg))
-    translateY(calc((min(1, max(var(--shut), var(--lid) + var(--gy, 0) * 0.12)) - 1) * 190px));
-}
-.p-lid--b {
-  transform: translateY(calc((1 - var(--lidb)) * 170px));
-}
-.plush[data-blink] {
-  --shut: 1;
-}
-.plush[data-blink] .p-lid--t {
-  transition-duration: 0.06s;
-}
-.p-lid__edge {
-  fill: none;
-  stroke: #5b3a20;
-  stroke-width: 5;
-  stroke-linecap: round;
-  opacity: 0.55;
-}
-.p-lid__edge--b {
-  stroke-width: 4;
   opacity: 0.3;
+}
+.p-closed {
+  fill: none;
+  stroke: #3a2214;
+  stroke-width: 9;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.p-patch {
+  opacity: 0;
+}
+.plush[data-blink] .p-patch {
+  animation: p-blink-patch 0.19s linear;
+}
+.plush[data-blink] .p-ball {
+  animation: p-blink 0.19s ease-in-out;
+}
+.plush[data-blink] .p-closed {
+  animation: p-blink-line 0.19s ease-in-out;
 }
 
 .p-blush {
   opacity: var(--cheek);
   transition: opacity 0.5s;
+}
+/* An open smile drawn over the stitched one; shown for hellos and pats. */
+.p-smile {
+  fill: #4a2312;
+  opacity: var(--smile);
+  transform-box: view-box;
+  transform-origin: 615px 628px;
+  transform: scale(calc(0.6 + var(--smile) * 0.4));
+  transition: opacity 0.25s, transform 0.35s var(--ease);
+}
+.p-smile .p-smile__tongue {
+  fill: #c45a4c;
 }
 .p-mouth ellipse {
   fill: #4a2312;
@@ -910,11 +943,13 @@ kbd {
   animation: p-talk 0.78s ease-in-out infinite;
 }
 
-/* What 面包 is doing — never what the user feels. Lid/pupil values are its own expression. */
+/*
+ * What 面包 is doing — never what the user feels. Eyes stay open and friendly in every state:
+ * attention widens them a touch, rest is a posture, trouble is a tilt and a small prop.
+ */
 .plush[data-state='wave'] {
-  --lid: 0.08;
-  --lidb: 0.52;
   --cheek: 0.55;
+  --smile: 1;
 }
 .plush[data-state='wave'] .p-pose {
   animation: hop 0.9s ease-in-out 2;
@@ -922,52 +957,40 @@ kbd {
 .plush[data-state='wave'] .p-ground {
   animation: ground-hop 0.9s ease-in-out 2;
 }
-.plush[data-state='wave'] .p-mouth {
-  animation: none;
-  transform: scale(0.8, 0.62);
-}
 .plush[data-state='attentive'] {
-  --lid: 0.1;
-  --pupil: 1.1;
+  --pupil: 1.08;
+  --eye: 1.02;
 }
 .plush[data-state='attentive'] .p-pose {
   transform: rotate(-3deg);
 }
 .plush:is([data-state='listening'], [data-state='recording']) {
-  --lid: 0.04;
-  --pupil: 1.16;
+  --pupil: 1.14;
+  --eye: 1.03;
 }
 /* leaning in; a voice adds a small nod — loudness only, never meaning */
 .plush:is([data-state='listening'], [data-state='hearing'], [data-state='recording']) .p-pose {
   transform: translateY(calc(var(--lvl, 0) * 16px)) scale(1.03);
-  transition-duration: 0.14s;
+  transition-duration: 0.18s;
 }
 .plush[data-state='hearing'] {
-  --lid: 0;
-  --pupil: calc(1.18 + var(--lvl, 0) * 0.1);
+  --pupil: calc(1.16 + var(--lvl, 0) * 0.08);
+  --eye: 1.03;
   --cheek: 0.38;
 }
 .plush[data-state='hearing'] .p-breathe {
-  animation: nod 1.5s ease-in-out infinite;
-}
-.plush[data-state='transcribing'] {
-  --lid: 0.2;
-  --pupil: 0.96;
+  animation: nod 1.6s ease-in-out infinite;
 }
 .plush[data-state='transcribing'] .p-pose {
   transform: rotate(-1.5deg);
 }
 .plush[data-state='thinking'] {
-  --lid: 0.24;
-  --pupil: 0.9;
-  --tilt: -5;
+  --pupil: 0.96;
 }
 .plush[data-state='thinking'] .p-pose {
-  animation: ponder 3.2s ease-in-out infinite;
+  animation: ponder 3.6s ease-in-out infinite;
 }
 .plush[data-state='speaking'] {
-  --lid: 0.1;
-  --lidb: 0.16;
   --cheek: 0.42;
 }
 .plush[data-state='speaking'] .p-breathe {
@@ -975,63 +998,62 @@ kbd {
 }
 /* turned toward the phone that is ringing beside it */
 .plush[data-state='connecting'] {
-  --lid: 0.03;
-  --pupil: 1.16;
+  --pupil: 1.14;
+  --eye: 1.03;
 }
 .plush[data-state='connecting'] .p-pose {
   transform: rotate(4deg) translateX(24px);
 }
 .plush[data-state='asking'] {
-  --lid: 0.05;
-  --pupil: 1.1;
-  --tilt: 6;
+  --pupil: 1.08;
 }
 .plush[data-state='asking'] .p-pose {
   transform: rotate(-3deg);
 }
-.plush[data-state='muted'] {
-  --lid: 0.36;
-  --lidb: 0.12;
-}
-.plush[data-state='paused'] {
-  --lid: 0.4;
-  --lidb: 0.18;
+/* Resting: sits down into itself and leans back a little; still looking at you. */
+.plush:is([data-state='muted'], [data-state='paused']) {
   --cheek: 0.3;
 }
 .plush:is([data-state='muted'], [data-state='paused']) .p-pose {
-  transform: scale(1.01, 0.985);
+  transform: translateY(10px) rotate(-1.5deg) scale(1.02, 0.975);
 }
+.plush:is([data-state='muted'], [data-state='paused']) .p-breathe {
+  animation-duration: 6.4s;
+}
+/* Trouble: a small head tilt and a drop of sweat; eyes on you, earnest rather than sad. */
 .plush[data-state='error'] {
-  --lid: 0.28;
-  --tilt: 13;
-  --pupil: 0.88;
+  --pupil: 1.04;
 }
 .plush[data-state='error'] .p-pose {
-  transform: rotate(-3deg);
+  transform: rotate(-5deg) translateX(-10px);
 }
-.plush[data-state='asleep'] {
-  --lid: 1;
-  --cheek: 0.3;
+/* Goodnight: settled, warm cheeks, a small moon; eyes open, unhurried. */
+.plush[data-state='night'] {
+  --cheek: 0.42;
+  --bounce: 0.18;
 }
-.plush[data-state='asleep'] .p-breathe {
-  animation: doze 7s ease-in-out infinite;
+.plush[data-state='night'] .p-pose {
+  transform: translateY(8px) rotate(-2deg) scale(1.015, 0.985);
 }
-/* The phone is being hovered or focused: a little more interest. */
+.plush[data-state='night'] .p-breathe {
+  animation-duration: 7s;
+}
+/* The phone is being hovered or focused: a little more interest, once. */
 .plush[data-curious] {
-  --pupil: 1.24;
+  --pupil: 1.18;
+  --eye: 1.04;
 }
 .plush[data-curious] .p-pose {
-  transform: rotate(2.5deg) translateY(-22px) scale(1.01, 1.02);
+  transform: rotate(2.5deg) translateY(-14px) scale(1.01, 1.02);
 }
 /* A pat: either a squishy smile or a surprised wiggle. */
 .plush[data-poke='smile'] {
-  --lid: 0.12;
-  --lidb: 0.58;
   --cheek: 0.65;
+  --smile: 1;
 }
 .plush[data-poke='wiggle'] {
-  --lid: 0;
-  --pupil: 1.3;
+  --pupil: 1.24;
+  --eye: 1.05;
 }
 .plush[data-poke='smile'] .p-pose {
   animation: squish 0.6s var(--ease);
@@ -1054,13 +1076,34 @@ kbd {
 .p-x--dots circle:nth-child(3) {
   animation-delay: 0.5s;
 }
-.p-x--zz text {
-  fill: var(--ink-3);
-  font: 600 110px var(--font-serif);
-  animation: zz 3s ease-in-out infinite;
+.p-x--moon path {
+  fill: var(--lamp);
+  stroke: color-mix(in srgb, var(--crust) 55%, transparent);
+  stroke-width: 6;
 }
-.p-x--zz text:nth-child(2) {
-  animation-delay: 0.6s;
+.p-x--moon,
+.p-x--drop {
+  animation: pop 0.6s 0.4s var(--ease) both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.p-x__star {
+  fill: var(--lamp);
+  animation: twinkle 3.6s ease-in-out infinite;
+}
+.p-x__star + .p-x__star {
+  animation-delay: 1.4s;
+}
+.p-x--drop path {
+  fill: #d9eaf8;
+  stroke: #7fa6cc;
+  stroke-width: 7;
+}
+.p-x--drop .p-x__glint {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 8;
+  stroke-linecap: round;
 }
 .p-badge {
   transform-box: fill-box;
@@ -1091,26 +1134,23 @@ kbd {
   stroke: none;
 }
 
-/* the small face beside messages: same eyes, flat colours so they still read at 30px */
-.pm-glass,
-.pm-pupil {
-  fill: #140a05;
+/* the small face beside messages: same glass eyes, flat tones so they still read at 30px */
+.pm-glass {
+  fill: #1c100a;
 }
 .pm-iris {
-  fill: #d98a38;
+  fill: #5f321a;
+}
+.pm-pupil {
+  fill: #0a0503;
 }
 .pm-shine {
   fill: #fff;
-  opacity: 0.9;
+  opacity: 0.95;
 }
-.pm-lid {
-  fill: #efdcbc;
-}
-.pm-crease {
-  fill: none;
-  stroke: #5b3a20;
-  stroke-width: 16;
-  stroke-linecap: round;
+.pm-dot {
+  fill: #fff;
+  opacity: 0.7;
 }
 .pm-look {
   transform-box: view-box;
@@ -1160,12 +1200,12 @@ kbd {
 .nook.is-lit .nook__glow {
   animation: lamp-warm 7s ease-in-out infinite;
 }
-/* Lights out: the end scene starts lit and dims once. */
+/* Goodnight: the lamp turns down once to a small night light; 面包 and the phone stay in it. */
 .nook.is-out .nook__glow {
   animation: lights-out 1.8s 0.5s ease-in both;
 }
 .nook.is-out .nook__phone {
-  filter: saturate(0.7) brightness(0.88);
+  filter: brightness(0.92);
 }
 
 /* ==========================================================================
@@ -1179,8 +1219,25 @@ kbd {
   height: auto;
   overflow: visible;
 }
+/* Only the static outline takes the pointer; nothing that moves can slide out from under a hand. */
+.rp-svg * {
+  pointer-events: none;
+}
+.rp-svg .rp-hit {
+  fill: transparent;
+  pointer-events: none;
+}
+
+/* The dial angle is a real property, so the holes' inner walls can turn back against it. */
+@property --dial {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
 .rp-shake,
 .rp-wheel,
+.rp-wall,
 .rp-hs-x,
 .rp-hs-y,
 .rp-hs-r,
@@ -1189,12 +1246,20 @@ kbd {
   transform-box: view-box;
 }
 .rp-shake {
-  transform-origin: 130px 198px;
+  transform-origin: 130px 199px;
+}
+.rp-wheel,
+.rp-wall {
+  transform-origin: 0 0;
 }
 .rp-wheel {
-  transform-origin: 130px 128px;
+  transform: rotate(var(--dial));
 }
-.rp-hs-r {
+.rp-wall {
+  transform: rotate(calc(var(--dial) * -1));
+}
+.rp-hs-r,
+.rp-handset {
   transform-origin: 0 0;
 }
 /*
@@ -1206,116 +1271,226 @@ kbd {
   transition: transform 0.8s cubic-bezier(0.5, 0, 0.25, 1);
 }
 .rp-hs-y {
-  transform: translateY(46px);
-  transition: transform 0.8s cubic-bezier(0.2, 1.3, 0.4, 1);
+  transform: translateY(66px);
+  transition: transform 0.8s cubic-bezier(0.2, 1.25, 0.4, 1);
 }
 .rp-hs-r {
   transform: rotate(0deg);
   transition: transform 0.85s cubic-bezier(0.45, 0, 0.2, 1);
 }
 .rp[data-pose='lifted'] .rp-hs-x {
-  transform: translateX(1px);
+  transform: translateX(-2px);
 }
 .rp[data-pose='lifted'] .rp-hs-y {
-  transform: translateY(-43px);
+  transform: translateY(-46px);
 }
 .rp[data-pose='lifted'] .rp-hs-r {
-  transform: rotate(113deg);
+  transform: rotate(112deg);
 }
 .rp[data-pose='hold'] .rp-hs-y {
-  transform: translateY(42px);
+  transform: translateY(63px);
 }
 .rp[data-pose='hold'] .rp-hs-r {
-  transform: rotate(-6deg);
+  transform: rotate(-5deg);
+}
+/* each pose keeps the lamp where it is: turned up against 面包, the handset swaps to its other light */
+.rp-hs-light {
+  transition: opacity 0.6s 0.2s;
+}
+.rp-hs-light--lift,
+.rp[data-pose='lifted'] .rp-hs-light--rest {
+  opacity: 0;
+}
+.rp[data-pose='lifted'] .rp-hs-light--lift {
+  opacity: 1;
+}
+/* its shadow on the deck goes when it leaves the cradle */
+.rp-hs-shadow {
+  transition: opacity 0.3s;
+}
+.rp[data-pose='lifted'] .rp-hs-shadow {
+  opacity: 0;
+}
+.rp[data-pose='hold'] .rp-hs-shadow {
+  opacity: 0.7;
 }
 .rp-plungers rect {
-  fill: #f4ead8;
-  stroke: #9b1a14;
-  stroke-width: 1.2;
+  fill: var(--ivory);
+  stroke: #7a1719;
+  stroke-width: 0.8;
   transition: transform 0.25s var(--ease) 0.12s;
 }
 .rp[data-pose='lifted'] .rp-plungers rect {
-  transform: translateY(-8px);
+  transform: translateY(-6px);
 }
 .rp[data-pose='hold'] .rp-plungers rect:first-child {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
 }
 
+/* the cord: a dark tube, the lacquer, and one line of light along the top */
 .rp-cord path {
   fill: none;
   stroke-linecap: round;
+  stroke-linejoin: round;
   transition: d 0.8s cubic-bezier(0.5, 0, 0.25, 1);
 }
 .rp-cord__base {
-  stroke: #7e0e0c;
-  stroke-width: 7;
+  stroke: #4a0c10;
+  stroke-width: 3.8;
 }
-.rp-cord__coil {
-  stroke: #e0473b;
-  stroke-width: 6;
-  stroke-dasharray: 2.2 2.8;
+.rp-cord__tube {
+  stroke: #b52c27;
+  stroke-width: 2.4;
+}
+.rp-cord__shine {
+  stroke: #ffa48c;
+  stroke-width: 0.8;
+  opacity: 0.75;
+  transform: translate(-0.5px, -0.6px);
+}
+
+/* lacquer edges and reflections */
+.rp-chamfer {
+  fill: none;
+  stroke: #ff9c84;
+  stroke-width: 1.2;
+  opacity: 0.55;
+}
+.rp-edge {
+  fill: none;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.rp-edge--lit {
+  stroke: #ffb9a5;
+  opacity: 0.45;
+}
+.rp-edge--dark {
+  stroke: #3e0a0d;
+  opacity: 0.4;
+}
+.rp-edge--top {
+  stroke: #ffcbb8;
+  opacity: 0.5;
+}
+/* the window behind the lamp, bent along the left shoulder */
+.rp-window {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  opacity: 0.6;
+}
+.rp-window--soft {
+  stroke-width: 8;
+  opacity: 0.1;
 }
 .rp-rim {
   fill: none;
-  stroke: #ffd1c8;
-  stroke-width: 3;
+  stroke: #ffb7a0;
+  stroke-width: 1.4;
   stroke-linecap: round;
-  opacity: 0.55;
+  opacity: 0.35;
 }
-.rp-rim--soft {
-  opacity: 0.22;
+
+/* the dial */
+.rp-print {
+  fill: none;
+  stroke: #b89a6c;
+  stroke-width: 0.5;
+  opacity: 0.6;
 }
 .rp-digits text {
-  fill: #8b2318;
-  font: 700 8px var(--font-sans);
+  fill: #7a2a1e;
+  font: 700 7.2px var(--font-sans);
   text-anchor: middle;
+}
+.rp-wheel__side {
+  fill: #5c1014;
+}
+.rp-wall {
+  fill: #4f0d10;
+  opacity: 0.85;
 }
 .rp-hole {
   fill: none;
-  stroke: #c9b593;
-  stroke-width: 1.4;
+  stroke: #3e0a0d;
+  stroke-width: 0.8;
+  opacity: 0.6;
 }
-.rp-cap {
-  fill: #fff8ec;
-  stroke: #d7c4a2;
-  stroke-width: 1.2;
+.rp-wheel__gloss {
+  fill: none;
+  stroke: #ffd0c2;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  opacity: 0.7;
 }
-.rp-cap__text {
-  fill: #b3261e;
-  font: 700 8.5px var(--font-serif);
-  text-anchor: middle;
+.rp-wheel__gloss--low {
+  opacity: 0.18;
 }
 .rp-stop {
   fill: none;
-  stroke: #ece6dd;
-  stroke-width: 4;
+  stroke-width: 4.2;
   stroke-linecap: round;
 }
-.rp-grille {
-  fill: #5a0909;
-  opacity: 0.75;
+.rp-stop__shine {
+  fill: none;
+  stroke: #fff6e0;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0.8;
+}
+.rp-cap__ring {
+  fill: none;
+  stroke-width: 1.1;
+}
+.rp-cap__mark {
+  fill: #c98a52;
+}
+.rp-cap__mark .rp-cap__eye {
+  fill: #3a2214;
+}
+
+/* the handset */
+.rp-hs-rim {
+  fill: none;
+  stroke: #3e0a0d;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.5;
 }
 .rp-shine {
   fill: none;
   stroke: #fff;
-  stroke-width: 3.2;
+  stroke-width: 2.4;
   stroke-linecap: round;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 .rp-shine--cup {
-  stroke-width: 2.4;
-  opacity: 0.45;
+  stroke-width: 2;
+  opacity: 0.5;
 }
+.rp-shine--far {
+  opacity: 0.25;
+}
+.rp-plug {
+  fill: #4a0c10;
+}
+
 .rp-bell path {
   fill: none;
-  stroke: var(--coral);
-  stroke-width: 3;
+  stroke: color-mix(in srgb, var(--phone) 70%, var(--lamp));
+  stroke-width: 2.2;
   stroke-linecap: round;
   opacity: 0;
 }
+.rp-redglow {
+  opacity: 0.5;
+  transition: opacity 0.6s;
+}
 
 /* Dialling: the wheel is pulled round twice; then the phone rings until the call phase moves on. */
-.rp[data-pose='dialing'] .rp-wheel {
+.rp[data-pose='dialing'] {
   animation: rp-dial 1.9s both;
 }
 .rp[data-pose='dialing'] .rp-shake {
@@ -1330,50 +1505,67 @@ kbd {
 .rp[data-pose='dialing'] .rp-bell path:nth-child(even) {
   animation-delay: 2s;
 }
+.rp[data-pose='dialing'] .rp-redglow {
+  animation: glow-breathe 2.2s 1.9s ease-in-out infinite;
+}
 .rp-svg[data-pose='down'] {
   filter: saturate(0.3);
 }
+.rp[data-pose='down'] .rp-redglow {
+  opacity: 0;
+}
 
-/* As a button: hover or focus lifts the handset a little and nudges the wheel. */
+/*
+ * As a button: hover or focus raises the handset a few units in its cradle, as if about to be picked
+ * up, and the phone's light on the table comes up. One transition each way, nothing that loops.
+ */
 .phone-door__btn:not([aria-disabled='true']):is(:hover, :focus-visible) .rp-hs-y {
-  transform: translateY(36px);
+  transform: translateY(60px);
 }
 .phone-door__btn:not([aria-disabled='true']):is(:hover, :focus-visible) .rp-hs-r {
-  transform: rotate(-5deg);
+  transform: rotate(-3deg);
 }
-.phone-door__btn:not([aria-disabled='true']):is(:hover, :focus-visible) .rp-wheel {
-  animation: rp-nudge 0.9s var(--ease);
+.phone-door__btn:not([aria-disabled='true']):is(:hover, :focus-visible) .rp-hs-shadow {
+  opacity: 0.6;
+}
+.phone-door__btn:not([aria-disabled='true']):is(:hover, :focus-visible) .rp-redglow {
+  opacity: 1;
 }
 .phone-door__btn:not([aria-disabled='true']):active .rp-hs-y {
-  transform: translateY(24px);
+  transform: translateY(54px);
 }
 .phone-door__btn:not([aria-disabled='true']):active .rp-hs-r {
-  transform: rotate(-10deg);
+  transform: rotate(-6deg);
 }
 
 /* the still, small one */
-.rp-glyph__base {
-  fill: #8f1410;
+.rp-glyph__deep {
+  fill: #5c1014;
 }
-.rp-glyph__body,
-.rp-glyph__cap {
-  fill: #d62e24;
+.rp-glyph__mid {
+  fill: #a52423;
 }
-.rp-glyph__dial {
-  fill: #fbf1e1;
+.rp-glyph__lit,
+.rp-glyph__handset {
+  fill: #d23d30;
 }
 .rp-glyph__handset {
-  fill: #e8392e;
-  stroke: #8f1410;
-  stroke-width: 6;
+  stroke: #7a171a;
+  stroke-width: 5;
   stroke-linejoin: round;
+}
+.rp-glyph__dial {
+  fill: var(--ivory);
+}
+.rp-glyph__cap {
+  fill: #c8322b;
 }
 .rp-glyph__shine {
   fill: none;
   stroke: #fff;
-  stroke-width: 8;
+  stroke-width: 6;
   stroke-linecap: round;
-  opacity: 0.6;
+  opacity: 0.65;
 }
 .btn .rp-glyph {
   flex: none;
@@ -3863,13 +4055,10 @@ kbd {
 .phone-door__btn:focus-visible {
   outline-offset: 0;
 }
+/* Its shadows are drawn in the same light as 面包's, inside the SVG; the box itself never moves. */
 .phone-door__phone {
   width: 100%;
-  filter: drop-shadow(0 12px 14px rgba(120, 22, 10, 0.2));
-  transition: transform 0.35s var(--ease), filter 0.3s;
-}
-.phone-door__btn:not([aria-disabled='true']):hover .phone-door__phone {
-  transform: translateY(-2px) rotate(-1.5deg);
+  transition: filter 0.3s, opacity 0.3s;
 }
 .phone-door__text {
   display: flex;
@@ -3906,19 +4095,19 @@ kbd {
   width: 42%;
 }
 /*
- * Its box overlaps 面包, so only the phone itself and its name take a click — patting 面包's side
- * must never start a call. Keyboard focus is unaffected.
+ * Its box overlaps 面包, so only the phone's outline and its name take a click — patting 面包's side
+ * must never start a call. The outline is a fixed shape outside every moving layer: hovering raises
+ * the handset, but the area under the hand stays exactly where it was. Keyboard focus is unaffected.
  */
 .phone-door--hero .phone-door__btn,
 .phone-door--hero .phone-door__phone {
   pointer-events: none;
 }
-.phone-door--hero .phone-door__phone *,
 .phone-door--hero .phone-door__text {
   pointer-events: auto;
 }
-.phone-door--hero .rp-shadow {
-  pointer-events: none;
+.phone-door--hero .rp-svg .rp-hit {
+  pointer-events: all;
 }
 /* the corner and the empty chat: the phone next to its name */
 .phone-door--panel .phone-door__btn {
@@ -3931,7 +4120,6 @@ kbd {
   text-align: left;
 }
 .phone-door--panel .phone-door__btn:not([aria-disabled='true']):hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--phone) 55%, var(--line));
 }
 .phone-door--panel .phone-door__phone {
@@ -4592,6 +4780,13 @@ body:has(.session.is-calling) .toasts {
   :root {
     --corner-w: 272px;
   }
+  /* Resize immediately, before the media-query hook removes the desktop transcript. */
+  .callroom--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .callroom--wide .callroom__side {
+    display: none;
+  }
 }
 
 @media (max-width: 900px) {
@@ -4897,6 +5092,13 @@ body:has(.session.is-calling) .toasts {
   }
 }
 
+/* The narrowest bars keep the bun; its name is still there for screen readers and in 面包's own line. */
+@media (max-width: 360px) {
+  .topbar .brand-logo__type {
+    display: none;
+  }
+}
+
 @media (pointer: coarse) {
   .btn--sm,
   .pill,
@@ -5038,7 +5240,7 @@ body:has(.session.is-calling) .toasts {
     transform: rotate(1deg) scale(1.01, 1.02);
   }
 }
-/* hop, doze and p-bob move the plush, so their lengths are in its 1254-unit space */
+/* hop and p-bob move the plush, so their lengths are in its 1254-unit space */
 @keyframes hop {
   0%,
   100% {
@@ -5055,15 +5257,6 @@ body:has(.session.is-calling) .toasts {
   }
   80% {
     transform: scale(0.99, 1.01);
-  }
-}
-@keyframes doze {
-  0%,
-  100% {
-    transform: rotate(-3deg) translateY(10px);
-  }
-  50% {
-    transform: rotate(-3deg) translateY(10px) scale(1.012, 1.03);
   }
 }
 @keyframes p-bob {
@@ -5151,28 +5344,29 @@ body:has(.session.is-calling) .toasts {
 }
 
 /* the red phone */
+/* pulled round by a finger, then let go: the wheel runs back on its governor at an even speed */
 @keyframes rp-dial {
   0% {
-    transform: rotate(0deg);
+    --dial: 0deg;
     animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1);
   }
   24%,
   30% {
-    transform: rotate(152deg);
+    --dial: 152deg;
     animation-timing-function: linear;
   }
   56%,
   62% {
-    transform: rotate(0deg);
+    --dial: 0deg;
     animation-timing-function: cubic-bezier(0.45, 0, 0.3, 1);
   }
   80%,
   85% {
-    transform: rotate(96deg);
+    --dial: 96deg;
     animation-timing-function: linear;
   }
   100% {
-    transform: rotate(0deg);
+    --dial: 0deg;
   }
 }
 @keyframes rp-ring {
@@ -5225,13 +5419,46 @@ body:has(.session.is-calling) .toasts {
     opacity: 0;
   }
 }
-@keyframes rp-nudge {
+/* the bead flattens toward its lower edge and the closed line shows only at the bottom */
+@keyframes p-blink {
   0%,
   100% {
-    transform: rotate(0deg);
+    transform: scaleY(1);
   }
-  40% {
-    transform: rotate(16deg);
+  42%,
+  56% {
+    transform: scaleY(0.06);
+  }
+}
+@keyframes p-blink-patch {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8%,
+  92% {
+    opacity: 1;
+  }
+}
+@keyframes p-blink-line {
+  0%,
+  32%,
+  70%,
+  100% {
+    opacity: 0;
+  }
+  44%,
+  56% {
+    opacity: 1;
+  }
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
   }
 }
 @keyframes bubble {
@@ -5331,17 +5558,6 @@ body:has(.session.is-calling) .toasts {
     opacity: 0;
   }
 }
-@keyframes zz {
-  0%,
-  100% {
-    opacity: 0.35;
-    transform: translateY(0);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-}
 @keyframes dot {
   0%,
   100% {
@@ -5362,12 +5578,13 @@ body:has(.session.is-calling) .toasts {
     opacity: 0.86;
   }
 }
+/* down to a night light, not to dark */
 @keyframes lights-out {
   from {
     opacity: 1;
   }
   to {
-    opacity: 0;
+    opacity: 0.38;
   }
 }
 @keyframes glow-breathe {
@@ -5401,5 +5618,9 @@ body:has(.session.is-calling) .toasts {
   /* The phone still says "ringing" without shaking: the bell marks simply stay on. */
   .rp[data-pose='dialing'] .rp-bell path {
     opacity: 0.75;
+  }
+  /* Never blinks; this only guards against a blink that started just before the setting changed. */
+  .p-closed {
+    opacity: 0 !important;
   }
 }

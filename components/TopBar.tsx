@@ -2,6 +2,7 @@
 
 import { Archive, Moon, PanelRight, Square } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
+import { BrandLogo } from './Brand';
 import { AiStamp } from './ServiceStatus';
 import { ACTIVITY_META, type AvatarState } from './labels';
 
@@ -44,7 +45,10 @@ export function TopBar(props: TopBarProps) {
     return (
       <header className="topbar topbar--call">
         <div className="topbar__id">
-          <p className="wordmark wordmark--sm">面包</p>
+          <p className="wordmark wordmark--sm">
+            <BrandLogo className="wordmark__logo" />
+            <span className="sr-only">面包</span>
+          </p>
           <AiStamp caps={caps} onClick={onOpenAbout} />
         </div>
         <div className="topbar__controls" role="group" aria-label="会话控制">
@@ -66,7 +70,10 @@ export function TopBar(props: TopBarProps) {
   return (
     <header className="topbar">
       <div className="topbar__id">
-        <p className="wordmark wordmark--sm">面包</p>
+        <p className="wordmark wordmark--sm">
+          <BrandLogo className="wordmark__logo" />
+          <span className="sr-only">面包</span>
+        </p>
         <AiStamp caps={caps} onClick={onOpenAbout} />
       </div>
 
