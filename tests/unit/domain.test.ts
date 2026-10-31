@@ -16,7 +16,7 @@ describe('controller authority and evidence', () => {
   it('repeated action requests do not crowd interview evidence out of the context window', () => {
     const state=initialState();state.sources=[sampleSource,...Array.from({length:30},(_,i)=>({...sampleSource,id:`request_source_${i}`,label:'本次请求',text:'陪我练一题，请根据我们聊过的内容选一个问题。'}))];
     const turn=buildTurn(state,'陪我练一题','run_next','request_next');
-    expect(turn.context.sources).toEqual([sampleSource]);expect(selectSegments(state.sources,'陪我练一题').every(s=>s.sourceId===sampleSource.id)).toBe(true);
+    expect(turn.context.sourceSegments?.map(s => s.sourceId)).toContain(sampleSource.id);expect(turn.context.sources).toEqual([]);expect(selectSegments(state.sources,'陪我练一题').every(s=>s.sourceId===sampleSource.id)).toBe(true);
   });
   it('negation/quotation is not review consent', () => {
     expect(explicitIntent('请直接复盘')).toBe('review'); expect(explicitIntent('今晚不想复盘')).toBe('listen');

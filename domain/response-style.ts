@@ -1,10 +1,11 @@
 import type { TurnRequest } from './types';
 
 /** Enforce observable output constraints. This is not a general empathy/safety classifier. */
-export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode' | 'channel'>, supportGuidance = false): string[] {
+export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode' | 'channel'> & Partial<Pick<TurnRequest, 'context' | 'userMessage'>>, supportGuidance = false): string[] {
   const errors: string[] = [];
   const max = supportGuidance ? 240 : input.channel === 'call' ? 100 : input.mode === 'listen' ? 180 : 240;
   if ([...text].length > max) errors.push(`STYLE_LENGTH_MAX_${max}`);
+  if (!supportGuidance && input.mode === 'listen' && input.context?.preferences?.questions === 'avoid' && /[？?]/.test(text) && !/(?:可以问|问我(?:一个|个)?问题)/.test(input.userMessage ?? '')) errors.push('STYLE_RESPECT_NO_QUESTIONS');
   if ((text.match(/[？?]/g) ?? []).length > 1) errors.push('STYLE_ONE_QUESTION');
   if (/```|\*\*|^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)、]\s*)|<\/?[a-z][^>]*>/im.test(text)) errors.push('STYLE_PLAIN_TEXT');
   if (/[（(](?:叹气|微笑|拥抱|抱住|摸头|轻声|温柔地)[^）)]*[）)]/.test(text)) errors.push('STYLE_NO_STAGE_DIRECTIONS');

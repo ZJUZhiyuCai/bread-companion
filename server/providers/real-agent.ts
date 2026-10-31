@@ -1,6 +1,6 @@
 import type { TurnCandidate, TurnRequest } from '@/domain/types';
 import { candidateSchema, modelContentSchema } from '@/domain/schemas';
-import { selectSegments } from '@/domain/context-builder';
+import { requestSegments } from '@/domain/context-builder';
 import { validateCandidate } from '@/domain/evidence';
 import { needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
 import { systemPrompt } from '@/prompts/agent';
@@ -28,11 +28,11 @@ export class RealProvider implements AgentProvider {
       if (historyBytes + size > 12000) break;
       history.unshift(m); historyBytes += size;
     }
-    const segments = selectSegments(input.context.sources, input.userMessage);
+    const segments = requestSegments(input);
     // Listening already has the recent utterances: don't send the same text a third time as evidence.
     const sourceSegments = input.mode === 'listen' ? segments.filter(s => !history.some(m => m.role === 'user' && m.text.includes(s.text)) && !input.userMessage.includes(s.text)) : segments;
     const recentMessages = history.at(-1)?.role === 'user' && history.at(-1)?.text === input.userMessage ? history.slice(0, -1) : history;
-    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages, sourceSegments, selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
+    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages, sourceSegments, preferences: input.context.preferences, selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
     // Conservative UTF-8 byte ceiling for variable-tokenizer providers; never called an exact token count.
     // Actual generated tokens are independently limited by max_tokens; no unbounded history or audio is sent.
     if (Buffer.byteLength(data, 'utf8') > 36000) throw new AppError('INVALID_INPUT', 413);
@@ -46,7 +46,7 @@ export class RealProvider implements AgentProvider {
         : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await this.fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'error', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
-      const payload = await readProviderJson(response, 160000) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
+      const payload = await readProviderJson(response, 160000, signal) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
       let content: unknown;
       try {
         const text = anthropic ? payload.content?.filter(b => b.type === 'text').map(b => b.text ?? '').join('') : payload.choices?.[0]?.message?.content;

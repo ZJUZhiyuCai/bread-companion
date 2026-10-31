@@ -45,7 +45,7 @@ export function validateCandidate(candidate: TurnCandidate, input: TurnRequest):
     if (f.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');
     if (['reported_fact', 'inference'].includes(f.kind) && !f.evidenceRefs.length) errors.push('EVIDENCE_REQUIRED');
     if (f.kind === 'practice_suggestion' && !f.evidenceRefs.length && !/通用|材料有限|材料不足/.test(f.text)) errors.push('EVIDENCE_REQUIRED');
-    for (const ref of f.evidenceRefs) if (!locateEvidence(input.context.sources, ref, input.mode === 'review' || input.mode === 'practice')) errors.push('EVIDENCE_MISMATCH');
+    for (const ref of f.evidenceRefs) if (!(input.context.sourceSegments ? input.context.sourceSegments.some(s => s.sourceId === ref.sourceId && s.sourceRevision === ref.sourceRevision && s.segmentId === ref.segmentId && s.text.includes(ref.quote) && (!['review', 'practice'].includes(input.mode) || s.confirmed)) : locateEvidence(input.context.sources, ref, input.mode === 'review' || input.mode === 'practice'))) errors.push('EVIDENCE_MISMATCH');
   }
   if (candidate.cardDraft) {
     if (candidate.cardDraft.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');

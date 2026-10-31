@@ -19,6 +19,7 @@ export class CallController {
   private clock: ReturnType<typeof setInterval> | null = null;
   private idle: ReturnType<typeof setTimeout> | null = null;
   private startedAt = 0;
+  private lastMeterAt = -Infinity;
   private untranscribed: Promise<File> | null = null;
   private continuation: Promise<File> | null = null;
   constructor(private deps: CallDeps, private audio: CallAudioPort = new BrowserCallAudio()) {}
@@ -42,7 +43,13 @@ export class CallController {
     this.patch({ phase: 'connecting', error: '', level: 0, heardSpeech: false });
     try {
       const opened = await this.audio.open({
-        meter: (level, heardSpeech) => { if (valid()) this.patch({ level, heardSpeech }); },
+        meter: (level, heardSpeech) => {
+          const now = performance.now();
+          // Audio/VAD still runs every frame. Only decorative UI levels are limited to 12.5 Hz.
+          if (valid() && (heardSpeech !== this.state.heardSpeech || now - this.lastMeterAt >= 80)) {
+            this.lastMeterAt = now; this.patch({ level, heardSpeech });
+          }
+        },
         utterance: file => { if (valid() && this.state.phase === 'listening' && !this.state.muted) void this.process(file); },
         failure: message => { if (valid()) this.fail(new Error(message)); },
         speechStart: () => { if (valid()) this.onSpeechStart(); },

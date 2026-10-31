@@ -1,5 +1,7 @@
 # 实现决定 · 2026-10-31
 
+当前选型和 Harness 升级见 [产品与 Harness](product-harness.md) 及 [升级验收](upgrade-validation.md)。下文保留各轮决策经过；2026-10-31 最新用户要求低延迟文字后，文字倾听由 Gemini 切为 DeepSeek。
+
 - 用户指定前端通过“Claude 控制”项目由 Claude 设计，后端由 Codex 实现；用户随后明确要求给予 Claude 创意自由。原配色与布局仅作参考，没有作为设计约束。
 - 首轮从空目录新建 Next.js App Router / TypeScript 项目，CSS 与组件由 Claude 设计。先验证 Mock 的数据与取消规则，再接入已有真实服务，不设置额外阶段批准。
 - 首轮文本使用本机 Magpie 的 `wanjie/deepseek-v4.1-flash-1017`，通过 Anthropic 兼容接口调用；协议也支持 OpenAI Chat Completions。服务端统一生成控制元数据，模型只返回内容。

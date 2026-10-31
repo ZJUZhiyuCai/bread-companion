@@ -3,6 +3,8 @@ export type Activity = 'idle' | 'requesting_mic' | 'recording' | 'recorded' | 't
 export type Origin = 'source_quote' | 'user_recollection' | 'explicit_feedback';
 export type Validity = 'draft' | 'confirmed' | 'stale' | 'disputed';
 export interface Source { id: string; revision: number; origin: Origin; label: string; text: string; confirmed: boolean; }
+export interface SourceSegment { sourceId: string; sourceRevision: number; segmentId: string; origin: Origin; label: string; text: string; confirmed: boolean; }
+export interface ConversationPreferences { advice?: 'on_request' | 'welcome'; questions?: 'avoid' | 'allowed'; }
 export interface EvidenceRef { sourceId: string; sourceRevision: number; segmentId: string; quote: string; }
 export interface EvidenceSnapshot extends EvidenceRef { origin: Origin; confirmed: boolean; }
 export interface Finding { id: string; kind: 'reported_fact' | 'inference' | 'unknown' | 'practice_suggestion'; text: string; evidenceRefs: EvidenceRef[]; validity: Validity; }
@@ -12,7 +14,7 @@ export interface EndSnapshot { id: string; sessionId: string; card: Card; findin
 export interface Message { id: string; role: 'user' | 'assistant'; text: string; sourceId?: string; serviceMode?: 'mock' | 'real'; }
 export interface RunToken { sessionId: string; runId: string; epoch: number; contextRevision: number; }
 export interface SessionState { sessionId: string; caseId: string; started: boolean; mode: Mode; lifecycle: 'active' | 'ended'; activity: Activity; supportState: 'normal' | 'support_guidance'; epoch: number; activeRunId: string | null; contextRevision: number; messages: Message[]; sources: Source[]; findings: Finding[]; cards: Card[]; currentCardId: string | null; selectedQuestion: string; practiceCriteria: string[]; endSnapshot: EndSnapshot | null; }
-export interface TurnRequest extends RunToken { requestId: string; mode: Mode; channel?: 'text' | 'call'; userMessage: string; context: { summary: string; recentMessages: { role: 'user' | 'assistant'; text: string }[]; sources: Source[]; selectedQuestion?: string; practiceCriteria?: string[] }; }
+export interface TurnRequest extends RunToken { requestId: string; mode: Mode; channel?: 'text' | 'call'; userMessage: string; context: { summary: string; recentMessages: { role: 'user' | 'assistant'; text: string }[]; sources: Source[]; sourceSegments?: SourceSegment[]; preferences?: ConversationPreferences; selectedQuestion?: string; practiceCriteria?: string[] }; }
 export type CallPhase = 'idle' | 'connecting' | 'listening' | 'transcribing' | 'thinking' | 'speaking' | 'muted' | 'paused' | 'error';
 export interface CallState { active: boolean; phase: CallPhase; muted: boolean; elapsedSeconds: number; level: number; heardSpeech: boolean; lastHeard: string; caption: string; error: string; }
 export interface PracticeSetup { question: string; criteria: string[]; }

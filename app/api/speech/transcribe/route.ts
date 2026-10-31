@@ -1,11 +1,13 @@
 import { idSchema } from '@/domain/schemas';
 import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
-import { assertLocalRequest, errorResponse, NO_STORE, readBytes } from '@/server/http';
-import { acquireBudget, timeoutSignal } from '@/server/limits';
+import { assertLocalRequest, errorResponse, readBytes, timingHeaders } from '@/server/http';
+import { acquireBudget, claimRequest, timeoutSignal } from '@/server/limits';
 import { transcribe } from '@/server/providers/speech';
+import { withAbort } from '@/lib/abort';
 export const runtime = 'nodejs';
 export async function POST(req: Request) {
+  const started = performance.now();
   let requestId = crypto.randomUUID() as string; let release: (() => void) | undefined;
   try {
     assertLocalRequest(req); release = acquireBudget('speech');
@@ -17,7 +19,11 @@ export async function POST(req: Request) {
     const parsed = idSchema.safeParse(form.get('requestId'));
     if (!parsed.success) throw new AppError('INVALID_INPUT'); requestId = parsed.data;
     const file = form.get('file'); if (!(file instanceof File)) throw new AppError('INVALID_INPUT');
-    const text = await transcribe(file, timeoutSignal(req.signal, config().speechTimeout));
-    return Response.json({ requestId, text, confirmed: false }, { headers: NO_STORE });
+    claimRequest('transcribe', requestId);
+    const signal = timeoutSignal(req.signal, config().speechTimeout);
+    const providerStart = performance.now();
+    const text = await withAbort(transcribe(file, signal), signal);
+    signal.throwIfAborted();
+    return Response.json({ requestId, text, confirmed: false }, { headers: timingHeaders(started, requestId, performance.now() - providerStart) });
   } catch (e) { return errorResponse(e, requestId, 'transcribe'); } finally { release?.(); }
 }

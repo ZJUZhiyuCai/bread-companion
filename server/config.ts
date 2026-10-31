@@ -11,6 +11,7 @@ export function config() {
     callModel: process.env.AGENT_CALL_MODEL || '',
     callProtocol: process.env.AGENT_CALL_PROTOCOL === 'anthropic' ? 'anthropic' as const : 'openai' as const,
     agentTimeout: Math.min(90000, Math.max(1000, Number(process.env.AGENT_TIMEOUT_MS) || 45000)),
+    companionTimeout: Math.min(30000, Math.max(1000, Number(process.env.COMPANION_TIMEOUT_MS) || 15000)),
     miniKey: process.env.MINIMAX_API_KEY || '',
     miniBaseUrl: process.env.MINIMAX_BASE_URL || 'https://api.minimax.cn/v1',
     tts: process.env.TTS_PROVIDER === 'minimax', asr: process.env.ASR_PROVIDER === 'minimax',

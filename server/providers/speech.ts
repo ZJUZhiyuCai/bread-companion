@@ -6,7 +6,7 @@ export async function synthesize(text: string, signal: AbortSignal, fetcher: typ
   if (!c.tts || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
   const res = await fetcher(`${c.miniBaseUrl.replace(/\/$/, '')}/t2a_v2`, { method: 'POST', headers: { Authorization: `Bearer ${c.miniKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: c.speechModel, text, stream: false, output_format: 'hex', voice_setting: { voice_id: c.voice, speed: c.speechSpeed, vol: 1, pitch: 0 }, audio_setting: { sample_rate: 32000, bitrate: 128000, format: 'mp3', channel: 1 }, language_boost: 'Chinese' }), signal, redirect: 'error', cache: 'no-store' });
   if (!res.ok) throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true);
-  const data = await readProviderJson(res, 21 * 1024 * 1024) as { data?: { audio?: unknown; status?: number }; base_resp?: { status_code?: number } };
+  const data = await readProviderJson(res, 21 * 1024 * 1024, signal) as { data?: { audio?: unknown; status?: number }; base_resp?: { status_code?: number } };
   const hex = data.data?.audio;
   if (data.base_resp?.status_code !== 0 || data.data?.status !== 2 || typeof hex !== 'string' || !hex.length || hex.length % 2 || !/^[\da-fA-F]+$/.test(hex) || hex.length > 20 * 1024 * 1024) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
   signal.throwIfAborted(); return new Uint8Array(Buffer.from(hex, 'hex'));
@@ -40,7 +40,7 @@ export async function transcribe(file: File, signal: AbortSignal, fetcher: typeo
   const data = new FormData(); data.append('model', c.asrModel); data.append('file', file); data.append('response_format', 'json'); data.append('stream', 'false');
   const res = await fetcher(`${c.miniBaseUrl.replace(/\/$/, '')}/speech_to_text`, { method: 'POST', headers: { Authorization: `Bearer ${c.miniKey}`, language: 'zh' }, body: data, signal, redirect: 'error', cache: 'no-store' });
   if (!res.ok) throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true);
-  const payload = await readProviderJson(res, 64 * 1024) as { text?: unknown; duration?: number };
+  const payload = await readProviderJson(res, 64 * 1024, signal) as { text?: unknown; duration?: number };
   if (typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 4000) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
   if (typeof payload.duration === 'number' && payload.duration > 65) throw new AppError('UNSUPPORTED_MEDIA', 415);
   signal.throwIfAborted(); return payload.text.trim();

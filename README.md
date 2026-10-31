@@ -15,7 +15,7 @@ npm run dev
 
 本机已配置服务端 `.env.local`：
 
-- 文字倾听：Magpie → MFAPI / Gemini 3.8 Flash（`mfapi/gemini-3.8-flash`）；电话聊天、整理、复盘和练习：万界方舟 / DeepSeek V4.1 Flash（`wanjie/deepseek-v4.1-flash-1017`）。这是本机路由中的模型标识。需要 Magpie 在 `127.0.0.1:3425` 运行。
+- 文字与电话聊天、整理、复盘和练习：Magpie → 万界方舟 / DeepSeek V4.1 Flash（`wanjie/deepseek-v4.1-flash-1017`）。这是本机路由中的模型标识。需要 Magpie 在 `127.0.0.1:3425` 运行。
 - 播报：MiniMax Speech 2.8 HD，沿用已配置的 `Chinese (Mandarin)_Warm_Bestie`，语速 1。
 - 转写：MiniMax asr-1.0；浏览器录音先在本机转为 16 kHz 单声道 WAV。
 
@@ -41,12 +41,15 @@ npm run start
 ## 可以验收的行为
 
 - 直接写下第一句就能开始；也可以先听一小段，或直接说想复盘什么。
+- 连接失败后可原地重试上一句，聊天不重复；长会话自动限制上下文，记住本次明确的交流偏好。
 - 无须配置模式或材料类型：点击“看看那段回答”“留个记号”“练一题”，agent 接着已有内容处理；练习题和关注点自动准备，想改时再展开。
 - 首页点“给面包打个电话”，允许麦克风后直接说：停顿会自动转写、发送、回复和播报，接着听下一句。直接开口即可中止旧回复并继续说，按钮可备用；支持静音、暂停和挂断；挂断后保留当前文字对话，也保留未发出的草稿。
 - 通话切到后台或安静一分钟会暂停并关闭麦克风，需要主动继续。挂断、结束和迟到回包不会重新打开麦克风或播放。
 - 文字聊天仍保留单段录音：转写可修改后再发，回复点“听”才播放。
 - 卡片可改字、删栏、展开依据；保存预览里一次点击“就留下这些”，才存到当前浏览器。支持按案例删除、MD/JSON 导出和 JSON 导入。
 - 改正原话或否认判断会使相关旧卡片失效；不重复要求核对已提交的文字。结束清除原始聊天，只保留已展示有效卡片的最小只读快照，仍可主动保存或导出。
+
+本轮按痛点、完整旅程和 Harness 升级的说明：[产品与 Harness](docs/product-harness.md)，实测与限制：[升级验收](docs/upgrade-validation.md)。
 
 具体步骤：[演示与验收路径](docs/demo.md)。测试结果、兼容矩阵和剩余限制见 [验收记录](docs/acceptance.md)。数据说明见 [数据处理](docs/data-handling.md)，架构取舍见 [实现决定](docs/decisions.md)。设计参考见 [案例研究](docs/companion-research.md)，文本模型选择及输出约束见 [陪伴模型评估](docs/model-evaluation.md) 和 [电话延迟评估](docs/natural-call-evaluation.md)，本轮心理学依据见 [电话体验研究](docs/call-research.md)。
 
@@ -59,7 +62,9 @@ npm run test:e2e
 npm run build
 ```
 
-E2E 使用本机 Chrome，单独在 3211 端口启动 Mock 服务，产物写入 `.next-e2e`，不调用收费模型。端口被其他本机任务占用时，可用 `BREAD_E2E_PORT=3213 npm run test:e2e` 指定空闲端口，不关闭其他任务。Playwright 浏览器验收截图在 `output/playwright/`。
+GitHub Actions 自动检查类型、单元/集成测试、生产构建与 Chromium 用户流程，不调用收费模型。
+
+本机 E2E 使用 Chrome，单独在 3211 端口启动 Mock 服务，产物写入 `.next-e2e`，不调用收费模型。端口被其他本机任务占用时，可用 `BREAD_E2E_PORT=3213 npm run test:e2e` 指定空闲端口，不关闭其他任务。Playwright 浏览器验收截图在 `output/playwright/`。
 
 以下命令会调用本机已配置的真实模型；测试文本均为虚构。`--speech` 额外生成一条短语音样本，请按需执行：
 

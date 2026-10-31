@@ -1,7 +1,7 @@
 import type { BreadViewModel } from '@/domain/view-model';
 import type { Activity, Card, EndSnapshot, Mode, Origin, RunToken, SavedCase, Source } from '@/domain/types';
 import { candidateSchema, sourceSchema, turnRequestSchema } from '@/domain/schemas';
-import { buildTurn } from '@/domain/context-builder';
+import { buildTurn, materialSources } from '@/domain/context-builder';
 import { cardCanConfirm, refKey, validateCandidate } from '@/domain/evidence';
 import { explicitIntent, isActionOnly } from '@/domain/policy';
 import { currentCard, initialState, isCurrent, makeEndSnapshot, reducer, uid, type Event } from '@/domain/reducer';
@@ -11,6 +11,7 @@ import { MediaController, normalizeRecording } from './media-controller';
 import { RunController } from './run-controller';
 import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
+import { fetchComplete } from './http';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -21,11 +22,14 @@ export class BreadController {
   private recording: { token: RunToken; signal: AbortSignal; blob: Blob | null; submitted: boolean } | null = null;
   private run = new RunController(); private disposed = false;
   private artifactVersion = 0;
+  private failedTurn: { text: string; sessionId: string; epoch: number; contextRevision: number; mode: Mode } | null = null;
+  private initialization = 0;
   private listeners = new Set<() => void>();
   private view: BreadViewModel;
   private call = idleCall();
   private callController: CallController;
   constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController(), callAudio?: CallAudioPort) {
+    this.fetcher = (input, init) => fetchComplete(fetcher, input, init, String(input).includes('/capabilities') ? 8000 : 60000);
     this.callController = new CallController({
       update: call => { this.call = call; this.publish(); },
       cancelReply: () => this.stopWork(),
@@ -58,18 +62,19 @@ export class BreadController {
   private publish() { this.view = this.buildView(); for (const f of this.listeners) f(); }
   private dispatch(event: Event) { this.state = reducer(this.state, event); this.publish(); }
   private buildView(): BreadViewModel {
-    return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds,
+    return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds, canRetry: this.canRetry(), retryLastTurn: this.retryLastTurn,
       call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.callController.resume,
       busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice };
   }
   async initialize() {
     this.disposed = false;
-    try { const res = await this.fetcher('/api/capabilities', { cache: 'no-store' }); if (!res.ok) throw new Error(); const caps = await res.json(); if (!this.disposed) { this.capabilities = caps; this.publish(); } }
-    catch { if (!this.disposed) { this.error = '暂时无法读取服务状态，请刷新重试。'; this.publish(); } }
+    const initialization = ++this.initialization;
+    try { const res = await this.fetcher('/api/capabilities', { cache: 'no-store' }); if (!res.ok) throw new Error(); const caps = await res.json(); if (!this.disposed && initialization === this.initialization) { this.capabilities = caps; this.publish(); } }
+    catch { if (!this.disposed && initialization === this.initialization) { this.error = '暂时没连上面包，刷新再试一下。'; this.publish(); } }
     await this.refreshSaved();
   }
-  dispose() { this.disposed = true; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
-  private cancelResources() { this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
+  dispose() { this.disposed = true; this.initialization++; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
+  private cancelResources() { this.failedTurn = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。') { this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   clearNotice = () => { this.notice = ''; this.error = ''; this.publish(); };
   start = (mode: Mode = 'listen', welcome = false) => {
@@ -115,28 +120,44 @@ export class BreadController {
     const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。' };
     await this.send(requests[mode]);
   };
+  private canRetry() {
+    const failed = this.failedTurn;
+    return !!failed && !!this.error && !this.call.active && this.state.lifecycle === 'active' && this.state.activity === 'error'
+      && failed.sessionId === this.state.sessionId && failed.epoch === this.state.epoch && failed.contextRevision === this.state.contextRevision && failed.mode === this.state.mode;
+  }
+  retryLastTurn = async () => {
+    if (!this.canRetry()) return;
+    const text = this.failedTurn!.text;
+    await this.requestTurn(text);
+  };
   private async requestTurn(text: string, channel: 'text' | 'call' = 'text') {
     if (this.state.lifecycle !== 'active') return;
+    this.failedTurn = null; this.error = '';
     const { token, signal } = this.run.begin(this.state);
     this.dispatch({ type: 'RUN', runId: token.runId, activity: 'generating' });
     const request = { ...buildTurn(this.state, text, token.runId, uid('request')), channel };
+    let retryable = true;
     try {
-      const validated = turnRequestSchema.safeParse(request); if (!validated.success) throw new Error('这段内容有点长，可以分几段发送。');
+      const validated = turnRequestSchema.safeParse(request); if (!validated.success) { retryable = false; throw new Error('这段内容有点长，可以分几段发送。'); }
       const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
       const json = await res.json(); if (!isCurrent(this.state, token) || signal.aborted) return;
-      if (!res.ok) throw new Error(json.error?.userMessage || '回复没有完成，可以稍后重试。');
+      if (!res.ok) { retryable = json.error?.retryable !== false; throw new Error(json.error?.userMessage || '回复没有接上，再试一次？'); }
       this.dispatch({ type: 'ACTIVITY', token, activity: 'validating' });
       const candidate = candidateSchema.parse(json);
       if (validateCandidate(candidate, request).length) throw new Error('这次回复没有通过引用与版本检查，已丢弃。');
       if (!isCurrent(this.state, token) || signal.aborted) return;
       this.dispatch({ type: 'CANDIDATE', candidate });
-    } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) { this.dispatch({ type: 'FINISH', token, activity: 'error' }); this.fail(e); } }
+    } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) {
+      if (channel === 'text' && retryable) this.failedTurn = { text, sessionId: token.sessionId, epoch: token.epoch, contextRevision: token.contextRevision, mode: request.mode };
+      this.dispatch({ type: 'FINISH', token, activity: 'error' });
+      this.fail(e instanceof TypeError ? new Error('刚才没连上，你的话还在。') : e);
+    } }
   }
   addMaterial = (text: string) => {
     if (this.state.lifecycle !== 'active') return false;
     const source = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin: 'user_recollection', label: `粘贴的材料 ${this.state.sources.filter(s => s.label.startsWith('粘贴的材料')).length + 1}`, text: text.trim(), confirmed: true });
     if (!source.success) { this.fail(new Error('可以粘贴 1—20,000 字符的片段。')); return false; }
-    if (this.state.sources.length >= 24) { this.fail(new Error('这次已有不少材料了，可以先留下卡片，再开始新的会话。')); return false; }
+    if (materialSources(this.state).length >= 24) { this.fail(new Error('这次已有不少材料了，可以先留下卡片，再开始新的会话。')); return false; }
     this.hangupCall(); this.dispatch({ type: 'ADD_SOURCE', source: source.data }); this.cancelResources();
     this.notice = '材料收到了。你可以直接说想一起看看什么。'; this.error = ''; this.publish(); return true;
   };
@@ -144,7 +165,7 @@ export class BreadController {
     if (this.state.lifecycle !== 'active') return;
     const s = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin, label: label.trim() || '补充材料', text: text.trim(), confirmed: false });
     if (!s.success) { this.fail(new Error('材料需为 1—20,000 字符，标题最多 100 字符。')); return; }
-    if (this.state.sources.length >= 24) { this.fail(new Error('当前案例材料已较多，请先结束并开始新案例。')); return; }
+    if (materialSources(this.state).length >= 24) { this.fail(new Error('当前案例材料已较多，请先结束并开始新案例。')); return; }
     this.hangupCall(); this.dispatch({ type: 'ADD_SOURCE', source: s.data }); this.cancelResources(); this.publish();
   };
   correctSource = (id: string, text: string) => {

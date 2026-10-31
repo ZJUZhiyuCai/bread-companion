@@ -98,9 +98,8 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   // Quiet announcements: what the loaf is doing, a new card, a new piece of material.
   // During a call the room announces its own phases.
   useEffect(() => {
-    if (activity !== 'idle' && !inCall) setLive(`面包${ACTIVITY_META[activity].label}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activity]);
+    if (!inCall) setLive(activity === 'idle' ? '' : `面包${ACTIVITY_META[activity].label}`);
+  }, [activity, inCall]);
 
   // Calls leave a mark in the transcript: where they started and how long they lasted.
   const wasInCall = useRef(false);

@@ -10,6 +10,9 @@ export interface BreadViewModel {
   transcriptDraft: string;
   recordedSeconds: number;
   busy: boolean;
+  canRetry: boolean;
+  /** Retries the failed text turn without adding a second user message or source. */
+  retryLastTurn: () => Promise<void>;
   call: CallState;
   /** User initiated, continuous voice conversation; never a real telephone/PSTN call. */
   startCall: () => Promise<void>;
