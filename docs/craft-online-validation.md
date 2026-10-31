@@ -48,4 +48,11 @@ node scripts/smoke-online.mjs --live --origin https://your-site.example --audio 
 
 语音仍是 ASR → 文本 → TTS 顺序；并联没有通过重复付费请求竞争速度。物理麦克风、外放回声、蓝牙、真实 iPhone Safari / Android 和低端机长时间帧率尚未验证。匿名共享配额限制调用数量，不是完整反机器人服务；全站 1,200 次滚动请求预算也不是无限在线承诺。全文质量、长时记忆与跨天关系连续性仍见路线图。
 
-最终在线版本为 Sites version 3（源码 `d091f521a46681ce9f35ea8d76a5d4ee396178ef`）；原生发布状态 succeeded，环境 revision 1。发布后实际 HTML 响应确认 `nosniff`、`no-referrer`、仅自身 microphone 权限与禁止框架嵌入。188 个发布应用文件与本仓库对应文件逐一 SHA-256 相同。
+最终在线版本为 Sites version 4（源码 `c0ce710f41beea52886df546f97fa28f5ceed36b`）；原生发布状态 succeeded，环境 revision 1。发布后实际 HTML 响应确认 `nosniff`、`no-referrer`、仅自身 microphone 权限与禁止框架嵌入。188 个发布应用文件与本仓库对应文件逐一 SHA-256 相同。
+
+
+## 托管框架更新后的复测
+
+03:29（北京时间）更新 Vinext / Vite / Cloudflare 依赖后，本地 Worker 重新构建并实际完成一轮 Mock 文字对话；生产 v4 再跑一次相同合成 WAV：ASR 3,626 ms、文本 2,751 ms、TTS 2,742 ms，全部 HTTP 200，三段总计约 9.12 秒。403 / 400 / 409 边界结果与之前一致。[完整记录](craft-online-smoke-v4.json) 单独保留，不用新的慢样本覆盖先前记录，也不把两次样本当作分位数指标。
+
+最终线上首页电话可点击，Bread Voice 实际加载，1280px 页面没有横向溢出，浏览器错误记录为空，安全响应头仍全部生效。静态字体缓存限制依旧存在。托管依赖高危项由 9 降至 0，20 条中危包记录来自两个开发工具问题，处置范围见[依赖复核](hosting-dependencies.md)。

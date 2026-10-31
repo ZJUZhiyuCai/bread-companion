@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-01",
+  "scope": "deployment/sites package-lock; npm audit including development dependencies",
+  "before": {
+    "info": 0,
+    "low": 0,
+    "moderate": 22,
+    "high": 9,
+    "critical": 0,
+    "total": 31
+  },
+  "after": {
+    "info": 0,
+    "low": 0,
+    "moderate": 20,
+    "high": 0,
+    "critical": 0,
+    "total": 20
+  },
+  "remainingRootIssues": [
+    {
+      "package": "esbuild",
+      "severity": "moderate",
+      "title": "esbuild enables any website to send any requests to the development server and read the response",
+      "url": "https://github.com/advisories/GHSA-67mh-4wv8-2f99",
+      "paths": [
+        "node_modules/@esbuild-kit/core-utils/node_modules/esbuild"
+      ]
+    },
+    {
+      "package": "minimatch",
+      "severity": "moderate",
+      "title": "minimatch has potential denial of service via globparts amplification",
+      "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+      "paths": [
+        "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch",
+        "node_modules/minimatch"
+      ]
+    }
+  ],
+  "interpretation": "20 moderate affected-package entries derive from two development-tool issues. This count is not 20 independently exploitable production vulnerabilities. Do not blindly downgrade or force a major transitive override."
+}

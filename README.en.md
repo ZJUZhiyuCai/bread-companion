@@ -26,7 +26,7 @@ After an interview rejection, stay for a moment without having to explain. When 
 - Explicit save preview, browser-local storage, Markdown/JSON export and JSON import.
 - Bounded context, in-session preferences, timeouts, deduplication, cancellation and retry without duplicate messages.
 
-**Version 0.4.0 preview, available locally and as an HTTPS online trial.** The hosted version uses automatic, signed anonymous visit cookies and shared D1 admission budgets. Chats and saved cards remain browser-local. There are no accounts, cross-device sync or persistent relationship memories; the trial is capacity-limited, not an availability guarantee. See [deployment](docs/deployment.md) and [data handling](docs/data-handling.md). Calls use sequential ASR → text generation → TTS, not a native full-duplex speech model.
+**Version 0.4.0 preview, available locally and as an HTTPS online trial.** The hosted version uses automatic, signed anonymous visit cookies and shared D1 admission budgets. Chats and saved cards remain browser-local. There are no accounts, cross-device sync or persistent relationship memories; the trial is capacity-limited, not an availability guarantee. See [deployment](docs/deployment.md), [data handling](docs/data-handling.md) and [hosting dependency review](docs/hosting-dependencies.md). Calls use sequential ASR → text generation → TTS, not a native full-duplex speech model.
 
 ## Run without API keys
 
