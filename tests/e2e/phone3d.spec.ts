@@ -207,14 +207,21 @@ for (const fault of ['construct', 'draw', 'context'] as const) {
 
 test('SVG comparison skips the model and WebGL while retaining keyboard calling', async ({ page }) => {
   await instrument(page);
+  let greetingRequests = 0;
+  await page.route('**/companion/hello-warm-bestie.mp3*', async route => {
+    greetingRequests++;
+    await route.fulfill({ status: 503, body: 'Opening asset unavailable' });
+  });
   let requests = 0;
   page.on('request', request => { if (request.url().includes('.glb')) requests++; });
   await home(page, '?phone=svg');
   await phone(page).focus();
   await page.keyboard.press('Enter');
-  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking', { timeout: 8000 });
   expect(requests).toBe(0);
+  expect(greetingRequests).toBe(0);
   expect((await audit(page)).contexts).toBe(0);
+  expect((await audit(page)).greetings).toBe(1);
   await hangup(page);
 });
 

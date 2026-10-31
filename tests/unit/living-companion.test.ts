@@ -1,4 +1,6 @@
 import 'fake-indexeddb/auto';
+import { readFileSync } from 'node:fs';
+import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { farewellReply } from '@/domain/policy';
@@ -48,15 +50,21 @@ describe('a real connection before the welcome', () => {
     expect(audio.play).toHaveBeenCalledTimes(1);
     controller.hangupCall(); await controller.startCall();
     expect(audio.play).toHaveBeenCalledTimes(2);
-    expect(requests.filter(url => url === CALL_GREETING.url)).toHaveLength(2);
+    expect(requests.filter(url => url === CALL_GREETING.url)).toHaveLength(0);
     expect(requests.some(url => url.includes('/synthesize'))).toBe(false);
   });
 
-  it('falls back once to the configured voice when a static opening is missing', async () => {
+  it('embeds exactly the published synthetic recording', async () => {
+    const clip = embeddedCallGreeting();
+    expect(clip.type).toBe('audio/mpeg');
+    expect(Buffer.from(await clip.arrayBuffer())).toEqual(readFileSync('public/companion/hello-warm-bestie.mp3'));
+  });
+
+  it('uses the configured voice when it does not match the bundled recording', async () => {
     const requests: string[] = []; const audio = new AudioFake();
     const controller = new BreadController(async (url, init) => {
       requests.push(String(url));
-      if (String(url).endsWith('/capabilities')) return Response.json(caps());
+      if (String(url).endsWith('/capabilities')) { const c = caps(); delete c.tts.greeting; return Response.json(c); }
       if (url === CALL_GREETING.url) return new Response('missing', { status: 404 });
       expect(JSON.parse(init!.body as string).text).toBe(CALL_GREETING.text);
       return new Response('synthetic fixture', { headers: { 'Content-Type': 'audio/mpeg' } });
@@ -66,18 +74,17 @@ describe('a real connection before the welcome', () => {
     expect(audio.play).toHaveBeenCalledTimes(1);
   });
 
-  it('hangup cancels a delayed opening without late sound or a paid fallback', async () => {
-    const cached = deferred<Response>(); const audio = new AudioFake(); const paid = vi.fn();
+  it('hangup before microphone permission prevents the prepared opening and paid fallback', async () => {
+    const permission = deferred<boolean>(); const audio = new AudioFake(); const paid = vi.fn();
+    audio.open.mockImplementationOnce(async events => { audio.events = events; return permission.promise; });
     const controller = new BreadController(async url => {
       if (String(url).endsWith('/capabilities')) return Response.json(caps());
-      if (url === CALL_GREETING.url) return cached.promise;
-      paid(); throw new Error('Unexpected paid fallback');
+      paid(); throw new Error('Unexpected network opening');
     }, undefined, audio);
     controllers.push(controller); await controller.initialize();
     const opening = controller.startCall(); await tick();
     expect(controller.getSnapshot().call.phase).toBe('connecting');
-    controller.hangupCall(); cached.resolve(new Response('late', { headers: { 'Content-Type': 'audio/mpeg' } }));
-    await opening;
+    controller.hangupCall(); permission.resolve(true); await opening;
     expect(controller.getSnapshot().call.phase).toBe('idle');
     expect(audio.play).not.toHaveBeenCalled(); expect(paid).not.toHaveBeenCalled();
   });

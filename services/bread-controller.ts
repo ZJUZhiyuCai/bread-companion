@@ -13,6 +13,7 @@ import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
 import { CALL_GREETING } from '@/domain/call-greeting';
+import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -51,14 +52,8 @@ export class BreadController {
       },
       prepareGreeting: async signal => {
         if (this.capabilities?.tts.greeting !== CALL_GREETING.url) return null;
-        try {
-          const cached = await fetchComplete(this.fetcher, CALL_GREETING.url, { signal, cache: 'force-cache' }, 1200);
-          if (cached.ok && cached.headers.get('Content-Type')?.startsWith('audio/')) {
-            const blob = await cached.blob(); signal.throwIfAborted();
-            if (blob.size > 0) return blob;
-          }
-        } catch { signal.throwIfAborted(); }
-        return null;
+        signal.throwIfAborted();
+        return embeddedCallGreeting();
       },
       synthesize: async (text, signal) => {
         signal.throwIfAborted();

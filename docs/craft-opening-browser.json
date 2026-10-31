@@ -1,0 +1,7 @@
+{
+  "clickToActualAudioMs": 401.29999923706055,
+  "audioDurationSeconds": 3.1463125,
+  "syntheses": 0,
+  "transcripts": 0,
+  "conditions": "Chromium, silent virtual microphone, real local MiniMax recording, mocked capability availability. Not physical-device or cloud-response latency."
+}

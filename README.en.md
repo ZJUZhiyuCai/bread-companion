@@ -49,7 +49,7 @@ The telephone falls back to a callable SVG on loading or graphics failures. See 
 
 ## Evidence, not an EQ badge
 
-174 unit/integration checks and 42 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+175 unit/integration checks and 42 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening needs no synthesis round trip; subsequent replies still do. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 
@@ -73,7 +73,7 @@ See the [synthetic cases and published outputs](evaluations/README.md), [current
 
 Two hosted synthetic rounds took **7.89 / 9.12 s** for the combined ASR, text and TTS HTTP requests; this is not browser time-to-first-audio. The slower final-framework result is published alongside the first sample. These public measurements should not be confused with the faster local measurements above.
 
-Current shared-budget, concurrency and deployment evidence is in [0.4.0 validation](docs/craft-online-validation.md). Fixed greeting loading overlaps microphone preparation; local archive loading overlaps capability discovery. Paid generation is never hedged across duplicate requests.
+Current shared-budget, concurrency and deployment evidence is in [0.4.0 validation](docs/craft-online-validation.md). Bundled greeting preparation overlaps microphone permission; local archive loading overlaps capability discovery. Paid generation is never hedged across duplicate requests.
 
 ## Architecture and participation
 
