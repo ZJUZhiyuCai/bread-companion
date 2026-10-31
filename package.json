@@ -14,7 +14,7 @@
     "check:models": "node scripts/inspect-companion-glb.mjs public/companion/3d/bread-phone.glb"
   },
   "dependencies": {
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.63.0",
     "next": "16.4.3",
     "react": "19.3.1",
     "react-dom": "19.3.1",
