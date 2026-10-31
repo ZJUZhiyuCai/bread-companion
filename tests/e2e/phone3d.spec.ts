@@ -95,7 +95,9 @@ const phone = (page: Page) => page.getByRole('button', { name: /给面包打个�
 const canvas = (page: Page) => page.locator('.phone3d[data-state="ready"] canvas');
 async function home(page: Page, query = '') {
   await page.goto('/' + query);
-  await expect(phone(page)).not.toHaveAttribute('aria-disabled', 'true');
+  // Readiness has an 8 s network deadline, plus initial hydration on the software
+  // CI GPU. This is setup for graphics fault tests, not a 5 s startup SLA.
+  await expect(phone(page)).not.toHaveAttribute('aria-disabled', 'true', { timeout: 12_000 });
 }
 async function hangup(page: Page) {
   await page.getByRole('button', { name: '挂断', exact: true }).click();
