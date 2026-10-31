@@ -82,11 +82,15 @@ test('a tap connects to the actual local welcome audio without a synthesis round
   writeFileSync('output/playwright/living-greeting-browser.json', JSON.stringify({ ...timing, ...stats, conditions: 'Chromium, silent virtual microphone, real local MiniMax recording, mocked capability availability. Not physical-device or cloud-response latency.' }, null, 2));
 });
 
-test('hangup during dialling releases the device and rejects a late welcome', async ({ page }) => {
+test('hangup during dialling releases late microphone permission without playing the opening', async ({ page }) => {
   await page.addInitScript(() => {
     const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     const gate = new Promise<void>(resolve => { (window as any).__allowOpeningMic = resolve; });
-    navigator.mediaDevices.getUserMedia = async constraints => { await gate; return original(constraints); };
+    navigator.mediaDevices.getUserMedia = async constraints => {
+      await gate; const stream = await original(constraints);
+      (window as any).__openingMicResolved = true;
+      return stream;
+    };
   });
   const stats = await setup(page);
   await page.getByRole('button', { name: /给面包打(?:个)?电话/ }).click();
@@ -100,6 +104,8 @@ test('hangup during dialling releases the device and rejects a late welcome', as
   await page.getByRole('button', { name: '挂断', exact: true }).click();
   await page.evaluate(() => (window as any).__allowOpeningMic());
   await expect(page.locator('.callroom')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => !!(window as any).__openingMicResolved)).toBe(true);
+  await expect.poll(() => page.evaluate(() => (window as any).__openingTracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
   await expect.poll(() => page.evaluate(() => (window as any).__openingContexts.every((c: AudioContext) => c.state === 'closed'))).toBe(true);
   expect(await page.evaluate(() => (window as any).__openingStarts.length)).toBe(0);
   expect(stats).toEqual({ syntheses: 0, transcripts: 0 });
