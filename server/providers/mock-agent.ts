@@ -6,6 +6,11 @@ import type { AgentProvider } from './agent';
 export function mockCandidate(input: TurnRequest): TurnCandidate {
   const base: TurnCandidate = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, assistantText: '', findings: [], warnings: ['当前为规则演示，开放话题理解有限。'], serviceMode: 'mock' };
   if (needsImmediateSupport(input.userMessage)) return { ...base, assistantText: SUPPORT_TEXT, supportGuidance: true };
+  if (input.mode === 'practice' && !input.context.selectedQuestion) {
+    const material = input.context.sources.filter(s => s.confirmed && s.label !== '本次请求').map(s => s.text).join('\n');
+    const question = /benchmark|评测|Agent/i.test(material) ? '讲讲你怎样判断这个 Agent 的效果。你做了什么验证，还有哪些地方不确定？' : '选一个你确实参与过的项目，说说你负责什么，以及怎样判断做得好不好。';
+    return { ...base, assistantText: `就从这一题开始：${question} 按你平常说话的方式回答就好，也可以让我换一道。`, practiceSetup: { question, criteria: ['说清自己做了什么', '用真实例子说明判断依据'] } };
+  }
   if (input.mode === 'listen') {
     const text = /准备了三天/.test(input.userMessage) ? '准备了三天，最后却只得到很简短的回复。你现在最想说的是这个结果，还是面试里某个一直放不下的片段？'
       : /不想.*(复盘|分析)/.test(input.userMessage) ? '好，今晚不做分析。可以继续说，也可以停在这里。'
@@ -15,7 +20,7 @@ export function mockCandidate(input: TurnRequest): TurnCandidate {
     return { ...base, assistantText: text };
   }
   const eligible = input.context.sources.filter(s => s.confirmed && s.text.trim().length > 5 && s.label !== '本次请求');
-  if (!eligible.length) return { ...base, assistantText: input.mode === 'organize' ? '可以先写下一件你最在意的事，再留个记号。' : '先提供岗位类别和一小段当时的回答吧。材料可以省去公司名称；添加后请核对并确认表述。我们暂时不知道拒绝原因。' };
+  if (!eligible.length) return { ...base, assistantText: input.mode === 'organize' ? '可以先写下一件你最在意的事，再留个记号。' : '我们先看一个片段就好。面试里哪道题让你一直挂心？可以直接写下当时怎么问、你怎么答，不用整理完整。' };
   const source = [...eligible].reverse().find(s => s.label !== '本次请求') ?? eligible[eligible.length - 1];
   const prefix = input.runId;
   const fact: Finding = { id: `${prefix}_fact`, kind: 'reported_fact', text: `你提供的${source.origin === 'user_recollection' ? '回忆' : '材料'}：${source.text.slice(0, 150)}`, evidenceRefs: [firstReference(source)], validity: 'draft' };
@@ -30,7 +35,7 @@ export function mockCandidate(input: TurnRequest): TurnCandidate {
     findings.push(f); sections.push({ key: input.mode === 'practice' ? '这次练习' : '可选的一个练习', text: f.text, findingIds: [f.id] });
   } else sections.push({ key: '以后想看的问题', text: '', findingIds: [] }, { key: '我选择的下一步', text: '', findingIds: [] });
   const card: Card = { id: `${prefix}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, type: input.mode === 'organize' ? 'note' : 'review', title: input.mode === 'organize' ? '今晚，先留一个记号' : input.mode === 'practice' ? '这一题，慢慢来' : '从一段真实回答开始', sections, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'mock' };
-  return { ...base, assistantText: input.mode === 'organize' ? '把你提供的原话留成了一个草稿。可以改字、删去不想留的内容，再决定是否确认和保存。' : '我把材料和未知分开放好了。右侧是待核对的草稿；通用练习建议不代表招聘方的判断。', findings, cardDraft: card };
+  return { ...base, assistantText: input.mode === 'organize' ? '把你提供的原话留成了一个草稿。可以改字、删去不想留的内容，再决定是否确认和保存。' : '这段回答里有值得留下的部分。先只看一个可以说得更清楚的地方，卡片放在下面，你可以改，也可以先不留。', findings, cardDraft: card };
 }
 export class MockProvider implements AgentProvider {
   constructor(private delay = 400) {}

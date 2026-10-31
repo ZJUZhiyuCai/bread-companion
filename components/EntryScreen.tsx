@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, type FormEvent, type KeyboardEvent } from 'react';
-import { Archive, ArrowRight, Headphones, Info, MessageCircle, NotebookPen } from 'lucide-react';
+import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { ArrowRight, Archive, Headphones, MessageCircle, ScanText } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
-import { NightWindow } from './NightWindow';
-import { ServiceChips } from './ServiceStatus';
+import { LampScene } from './NightWindow';
+import { AiStamp } from './ServiceStatus';
+import { useAutoGrow } from './hooks';
 
 interface EntryScreenProps {
   caps: Capabilities | null;
@@ -13,11 +14,13 @@ interface EntryScreenProps {
   onWelcome: () => void;
   onReview: () => void;
   onOpenArchive: () => void;
-  onOpenStatus: () => void;
+  onOpenAbout: () => void;
 }
 
-export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onOpenArchive, onOpenStatus }: EntryScreenProps) {
+export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onOpenArchive, onOpenAbout }: EntryScreenProps) {
   const [text, setText] = useState('');
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useAutoGrow(ref, text, 200);
   const maxInput = caps?.limits.maxInputChars ?? null;
   const over = maxInput !== null && text.length > maxInput;
 
@@ -29,7 +32,7 @@ export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onO
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Desktop-ish behavior; on touch keyboards Enter stays a newline (checked via pointer media at event time).
+    // Touch keyboards keep Enter as a newline; checked at event time so server and client render the same.
     if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
     if (window.matchMedia('(pointer: coarse)').matches) return;
     e.preventDefault();
@@ -37,109 +40,103 @@ export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onO
   };
 
   const welcomeSub = !caps
-    ? '一段二三十秒的欢迎词，先显示文字'
+    ? '一段二三十秒的话，文字先到'
     : caps.tts.available
-      ? '一段二三十秒的欢迎词。文字先到，要听再点播放'
-      : '一段二三十秒的欢迎词。现在没有语音播报，会以文字呈现';
+      ? '一段二三十秒的话。文字先到，想听再点'
+      : '一段二三十秒的话，现在以文字呈现';
 
   return (
     <main id="main" className="entry">
-      <div className="entry__scene">
-        <NightWindow lit />
+      <div className="entry__top">
+        <p className="wordmark">
+          面包<span className="wordmark__sub">收到拒信的那个晚上</span>
+        </p>
+        <AiStamp caps={caps} onClick={onOpenAbout} />
       </div>
 
-      <div className="entry__content">
-        <p className="entry__brand">
-          <span className="entry__brand-name">面包</span>
-          <span className="entry__brand-sub">收到拒信的那个晚上</span>
-        </p>
-        <h1 className="entry__title">今晚，先说说。</h1>
-        <p className="entry__lede">可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。</p>
+      <div className="entry__stage">
+        <div className="entry__scene">
+          <LampScene lit idPrefix="entry-lamp" />
+        </div>
 
-        <ul className="choices" aria-label="怎么开始">
-          <li>
-            <button type="button" className="choice choice--talk" onClick={() => onTalk()}>
-              <span className="choice__icon" aria-hidden="true">
-                <MessageCircle />
-              </span>
-              <span className="choice__text">
-                <span className="choice__title">我想说几句</span>
-                <span className="choice__sub">用文字，或者自己点开录音。说多少都行</span>
-              </span>
-              <ArrowRight aria-hidden="true" className="choice__go" />
-            </button>
-          </li>
-          <li>
-            <button type="button" className="choice choice--listen" onClick={onWelcome}>
-              <span className="choice__icon" aria-hidden="true">
-                <Headphones />
-              </span>
-              <span className="choice__text">
-                <span className="choice__title">现在不想说，先听一小段</span>
-                <span className="choice__sub">{welcomeSub}，不会打开麦克风</span>
-              </span>
-              <ArrowRight aria-hidden="true" className="choice__go" />
-            </button>
-          </li>
-          <li>
-            <button type="button" className="choice choice--review" onClick={onReview}>
-              <span className="choice__icon" aria-hidden="true">
-                <NotebookPen />
-              </span>
-              <span className="choice__text">
-                <span className="choice__title">我想直接复盘</span>
-                <span className="choice__sub">放一段你愿意讨论的材料，看事实、推断和未知</span>
-              </span>
-              <ArrowRight aria-hidden="true" className="choice__go" />
-            </button>
-          </li>
-        </ul>
+        <div className="entry__content">
+          <h1 className="entry__title">今晚，先说说。</h1>
+          <p className="entry__lede">可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。</p>
 
-        <form className="entry__write" onSubmit={submit}>
-          <label htmlFor="entry-first" className="entry__write-label">
-            或者，直接写下第一句
-          </label>
-          <div className="entry__write-box">
+          <form className="first-note" onSubmit={submit}>
+            <label htmlFor="entry-first" className="first-note__label">
+              写下第一句，不用整理好
+            </label>
             <textarea
               id="entry-first"
-              className="entry__write-input"
+              ref={ref}
+              className="first-note__input"
               rows={2}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={onKey}
-              placeholder="比如：刚收到拒信。我准备了三天，最后只收到一句不合适。"
+              placeholder="比如：刚收到拒信。我准备了三天，最后只收到一句“不合适”。"
               aria-describedby="entry-first-help"
               aria-invalid={over || undefined}
             />
-            <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
-              说给面包
-            </button>
-          </div>
-          <p id="entry-first-help" className={`small ${over ? 'warn-text' : 'muted'}`}>
-            {over
-              ? `超过 ${maxInput} 字了，可以先发一部分`
-              : '不需要填公司、简历，也不用给心情打分。要放材料的话，只粘贴你愿意讨论的片段。'}
-          </p>
-        </form>
+            <div className="first-note__row">
+              <p id="entry-first-help" className={`small ${over ? 'warn-text' : 'muted'}`}>
+                {over ? `超过 ${maxInput} 字了，可以先说一部分` : '不用填公司，不用传简历，也不用给心情打分。'}
+              </p>
+              <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
+                说给面包 <ArrowRight aria-hidden="true" />
+              </button>
+            </div>
+          </form>
 
-        <footer className="entry__foot">
-          <ServiceChips caps={caps} />
-          <div className="entry__links">
-            <button type="button" className="link-btn" onClick={onOpenStatus}>
-              <Info aria-hidden="true" /> 服务状态与数据处理
-            </button>
-            <button type="button" className="archive-link" onClick={onOpenArchive}>
+          <div className="ways">
+            <p className="ways__title" id="ways-title">
+              或者，换一种开始
+            </p>
+            <ul className="ways__list" aria-labelledby="ways-title">
+              <li>
+                <button type="button" className="way" onClick={() => onTalk()}>
+                  <MessageCircle aria-hidden="true" className="way__icon" />
+                  <span className="way__text">
+                    <span className="way__title">我想说几句</span>
+                    <span className="way__sub">打字，或者自己点开录音</span>
+                  </span>
+                </button>
+              </li>
+              <li>
+                <button type="button" className="way" onClick={onWelcome}>
+                  <Headphones aria-hidden="true" className="way__icon" />
+                  <span className="way__text">
+                    <span className="way__title">现在不想说，先听一小段</span>
+                    <span className="way__sub">{welcomeSub}，不会打开麦克风</span>
+                  </span>
+                </button>
+              </li>
+              <li>
+                <button type="button" className="way" onClick={onReview}>
+                  <ScanText aria-hidden="true" className="way__icon" />
+                  <span className="way__text">
+                    <span className="way__title">我想直接复盘</span>
+                    <span className="way__sub">不用填表，面包先问你一个问题</span>
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <footer className="entry__foot">
+            <button type="button" className="drawer-link" onClick={onOpenArchive} aria-haspopup="dialog">
               <Archive aria-hidden="true" />
               <span>
-                本设备档案{savedCount > 0 ? `（${savedCount}）` : ''}
-                <small>以前主动保存的卡片，和今晚的对话分开</small>
+                以前留下的{savedCount > 0 ? `（${savedCount}）` : ''}
+                <small>只在这台设备的这个浏览器里</small>
               </span>
             </button>
-          </div>
-          <p className="entry__fine small muted">
-            默认是临时会话，结束或刷新后对话就没有了。面包提供一般性的陪伴和整理，不是心理诊断或治疗，也不知道招聘方没有公开的决定原因。
-          </p>
-        </footer>
+            <p className="entry__fine small muted">
+              这次对话默认不保存，结束或刷新就没有了。面包是 AI，提供一般性的陪伴和整理，不是心理诊断或治疗。
+            </p>
+          </footer>
+        </div>
       </div>
     </main>
   );

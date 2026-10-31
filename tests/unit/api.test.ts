@@ -59,6 +59,13 @@ describe('real provider candidates', () => {
     setup(); const fetcher=vi.fn(async()=>upstream(modelOutput())); const c=await new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal);
     expect(c.serviceMode).toBe('real'); expect(c.runId).toBe('run_test'); expect(c.findings.every(f=>f.validity==='draft')).toBe(true); expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('lets the agent prepare a question without inventing an answer or changing other modes', async () => {
+    setup(); const payload={assistantText:'就练这一点：你怎么判断画对了？',findings:[],practiceSetup:{question:'你怎么判断画对了？',criteria:['判断标准是否明确']}};
+    const fetcher=vi.fn(async()=>upstream(payload));
+    const c=await new RealProvider(fetcher).generate(requestFixture({mode:'practice'}),new AbortController().signal);
+    expect(c.practiceSetup?.question).toBe(payload.practiceSetup.question);expect(c.cardDraft).toBeUndefined();
+    await expect(new RealProvider(fetcher).generate(requestFixture({mode:'listen'}),new AbortController().signal)).rejects.toMatchObject({code:'INVALID_MODEL_OUTPUT'});
+  });
   it('repairs structure at most once and never publishes fabricated evidence', async () => {
     setup(); const bad=modelOutput();bad.findings[0].evidenceRefs[0].quote='从未提供的项目成果';
     const fetcher=vi.fn(async()=>upstream(bad)); await expect(new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal)).rejects.toMatchObject({code:'EVIDENCE_MISMATCH'});expect(fetcher).toHaveBeenCalledTimes(2);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useState, type RefObject } from 'react';
 
 /**
  * Reads the real value on first client render. Only use in views that are never server-rendered
@@ -31,4 +31,15 @@ export function useDomId(prefix: string): string {
 
 export function anyDialogOpen(): boolean {
   return typeof document !== 'undefined' && !!document.querySelector('dialog[open]');
+}
+
+/** Textarea grows with its content up to `maxPx`, then scrolls. */
+export function useAutoGrow(ref: RefObject<HTMLTextAreaElement | null>, value: string, maxPx = 220) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, maxPx)}px`;
+    el.style.overflowY = el.scrollHeight > maxPx ? 'auto' : 'hidden';
+  }, [ref, value, maxPx]);
 }

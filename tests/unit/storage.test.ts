@@ -31,6 +31,16 @@ describe('confirmed local archives', () => {
   });
   it('rechecks validity immediately before write', async () => { await expect(saveArchive(archive(), () => false)).rejects.toThrow(); expect(await listSaved()).toEqual([]); });
   it('marks prior saved judgments stale after source correction', async () => { const a = archive(); await saveArchive(a); await invalidateSaved(a.caseId, sampleSource.id); expect((await listSaved())[0].cards[0].validity).toBe('stale'); });
+  it('a delayed correction invalidates old evidence without invalidating a newly rebuilt card', async () => {
+    const a=archive(); await saveArchive(a);
+    const source={...sampleSource,revision:2,text:'我实际上做了十个测试案例。'};
+    let state: SessionState={...initialState('session_test','case_test'),sources:[source],activeRunId:'run_new'};
+    state=reducer(state,{type:'CANDIDATE',candidate:mockCandidate(requestFixture({runId:'run_new',context:{summary:'',recentMessages:[],sources:[source]}}))});
+    state=reducer(state,{type:'CONFIRM_CARD'});const next=fromSnapshot(makeEndSnapshot(state)!);
+    next.cards[0].revision=2;next.cards[0].parentRevision=1;await saveArchive(next);
+    await invalidateSaved(a.caseId,sampleSource.id,undefined,1);
+    const [saved]=await listSaved();expect(saved.cards.find(c=>c.revision===1)?.validity).toBe('stale');expect(saved.cards.find(c=>c.revision===2)?.validity).toBe('confirmed');
+  });
   it('rejects corrupt, oversized, orphaned and authority-bearing imports', () => {
     expect(() => parseImport('{')).toThrow(); expect(() => parseImport(' '.repeat(1024 * 1024 + 1))).toThrow();
     const a = archive(); a.cards[0].sections[0].findingIds = ['ghost']; expect(() => parseImport(JSON.stringify(a))).toThrow();

@@ -31,6 +31,10 @@ export function evidenceSnapshots(card: Card, findings: Finding[], sources: Sour
 export function validateCandidate(candidate: TurnCandidate, input: TurnRequest): string[] {
   const errors: string[] = [];
   for (const key of ['requestId', 'sessionId', 'runId', 'epoch', 'contextRevision'] as const) if (candidate[key] !== input[key]) errors.push('STALE_RESULT');
+  const preparingPractice = input.mode === 'practice' && !input.context.selectedQuestion;
+  if (candidate.practiceSetup && (!preparingPractice || candidate.supportGuidance)) errors.push('PRACTICE_SETUP_NOT_REQUESTED');
+  if (preparingPractice && !candidate.supportGuidance && !candidate.practiceSetup) errors.push('PRACTICE_SETUP_REQUIRED');
+  if (preparingPractice && (candidate.findings.length || candidate.cardDraft)) errors.push('PRACTICE_ANSWER_REQUIRED');
   if (input.mode === 'listen' && (candidate.findings.length || candidate.cardDraft)) errors.push('MODE_VIOLATION');
   if (input.mode === 'listen' && candidate.assistantText.length > 240) errors.push('REPLY_TOO_LONG');
   if (input.mode === 'organize' && candidate.findings.some(f => f.kind === 'inference' || f.kind === 'practice_suggestion')) errors.push('MODE_VIOLATION');

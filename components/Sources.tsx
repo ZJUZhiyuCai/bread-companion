@@ -1,101 +1,87 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ChevronDown, CircleCheck, Pencil, Plus, TriangleAlert } from 'lucide-react';
-import type { Origin, Source } from '@/domain/types';
-import { useDomId } from './hooks';
-import { ORIGIN_META, ORIGIN_ORDER } from './labels';
+import { ChevronDown, CircleCheck, Paperclip, Pencil, Plus, TriangleAlert } from 'lucide-react';
+import type { Source } from '@/domain/types';
+import { Dialog } from './Dialog';
+import { useAutoGrow, useDomId } from './hooks';
+import { ORIGIN_META } from './labels';
 
-interface AddSourceFormProps {
+interface MaterialDialogProps {
+  open: boolean;
+  onClose: () => void;
+  prefill: string;
+  error?: string;
   maxChars: number | null;
-  count: number;
-  onAdd: (text: string, origin: Origin, label: string) => void;
-  onCancel: () => void;
-  autoFocus?: boolean;
+  canAct: boolean;
+  onAdd: (text: string) => void;
 }
 
-export function AddSourceForm({ maxChars, count, onAdd, onCancel, autoFocus }: AddSourceFormProps) {
-  const [origin, setOrigin] = useState<Origin>('user_recollection');
-  const [label, setLabel] = useState('');
+/** One box. No categories, no names, no extra confirmation: what you paste is what you gave. */
+export function MaterialDialog({ open, onClose, prefill, maxChars, canAct, onAdd, error }: MaterialDialogProps) {
   const [text, setText] = useState('');
-  const textRef = useRef<HTMLTextAreaElement>(null);
-  const id = useDomId('src');
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const id = useDomId('mat');
   const over = maxChars !== null && text.length > maxChars;
 
   useEffect(() => {
-    if (autoFocus) textRef.current?.focus({ preventScroll: false });
-  }, [autoFocus]);
+    if (!open) return;
+    setText(prefill);
+    const t = window.setTimeout(() => ref.current?.focus(), 30);
+    return () => window.clearTimeout(t);
+  }, [open, prefill]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const body = text.trim();
-    if (!body || over) return;
-    onAdd(body, origin, label.trim() || `${ORIGIN_META[origin].label} ${count + 1}`);
-    setText('');
-    setLabel('');
+    if (!body || over || !canAct) return;
+    onAdd(body);
   };
 
   return (
-    <form className="source-form" onSubmit={submit} aria-labelledby={`${id}-title`}>
-      <h4 id={`${id}-title`} className="source-form__title">
-        放一段材料
-      </h4>
-      <p className="muted small">只粘贴你愿意讨论的片段就好，公司名和个人信息可以先删掉。</p>
-
-      <fieldset className="origin-pick">
-        <legend>这段是什么</legend>
-        {ORIGIN_ORDER.map((o) => (
-          <label key={o} className={`origin-pick__item ${origin === o ? 'is-on' : ''}`}>
-            <input type="radio" name={`${id}-origin`} value={o} checked={origin === o} onChange={() => setOrigin(o)} />
-            <span className="origin-pick__label">{ORIGIN_META[o].label}</span>
-            <span className="origin-pick__desc">{ORIGIN_META[o].desc}</span>
-          </label>
-        ))}
-      </fieldset>
-
-      <div className="field">
-        <label htmlFor={`${id}-label`}>给它起个名字（可选）</label>
-        <input
-          id={`${id}-label`}
-          className="input"
-          value={label}
-          maxLength={40}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder={ORIGIN_META[origin].example}
-        />
-      </div>
-
-      <div className="field">
-        <label htmlFor={`${id}-text`}>内容</label>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="放一段材料"
+      subtitle="拒信原文、你记得的回答、岗位描述……粘贴就好，只放你愿意聊的那部分。"
+      size="md"
+      className="material"
+    >
+      <form onSubmit={submit} className="material__form">
+        <label htmlFor={`${id}-t`} className="sr-only">
+          材料内容
+        </label>
         <textarea
-          id={`${id}-text`}
-          ref={textRef}
-          className="input textarea"
-          rows={6}
+          id={`${id}-t`}
+          ref={ref}
+          className="material__input"
+          rows={8}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          aria-describedby={`${id}-count`}
+          aria-describedby={`${id}-n`}
           aria-invalid={over || undefined}
+          placeholder="比如：感谢你参加我们的面试。经过慎重考虑，我们认为你与该岗位暂不匹配……"
         />
-        <p id={`${id}-count`} className={`counter ${over ? 'is-over' : ''}`}>
-          {maxChars !== null ? `${text.length} / ${maxChars} 字` : `${text.length} 字`}
-          {over && '，超出上限了。可以截取最相关的一段，不会被自动截断。'}
+        <p id={`${id}-n`} className={`small ${over ? 'warn-text' : 'muted'}`}>
+          {over
+            ? `${text.length} / ${maxChars} 字，超出上限了。截取最相关的一段就好，面包不会替你截断。`
+            : '它会被记为“你放进来的材料”：确实是你提交的文字，但不代表里面说的都已核实。公司名、个人信息可以先删掉。'}
         </p>
-      </div>
-
-      <div className="row gap-s">
-        <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
-          <Plus aria-hidden="true" /> 放进材料
-        </button>
-        <button type="button" className="btn btn--ghost" onClick={onCancel}>
-          取消
-        </button>
-      </div>
-    </form>
+        {error && <p className="warn-text" role="alert">{error}</p>}
+        <div className="material__actions">
+          <button type="button" className="btn btn--ghost" onClick={onClose}>
+            先不放
+          </button>
+          <button type="submit" className="btn btn--primary" disabled={!text.trim() || over || !canAct}>
+            <Paperclip aria-hidden="true" /> 放进来
+          </button>
+        </div>
+      </form>
+    </Dialog>
   );
 }
 
-interface SourceItemProps {
+interface SourceSlipProps {
   source: Source;
   canAct: boolean;
   highlighted: boolean;
@@ -104,15 +90,16 @@ interface SourceItemProps {
   onConfirm: (id: string) => void;
 }
 
-function SourceItem({ source, canAct, highlighted, maxChars, onCorrect, onConfirm }: SourceItemProps) {
+function SourceSlip({ source, canAct, highlighted, maxChars, onCorrect, onConfirm }: SourceSlipProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(source.text);
   const [expanded, setExpanded] = useState(false);
   const ref = useRef<HTMLLIElement>(null);
   const editRef = useRef<HTMLTextAreaElement>(null);
   const id = useDomId('srcitem');
-  const long = source.text.length > 160;
+  const long = source.text.length > 180;
   const over = maxChars !== null && draft.length > maxChars;
+  useAutoGrow(editRef, editing ? draft : '', 320);
 
   useEffect(() => {
     if (!highlighted) return;
@@ -141,51 +128,51 @@ function SourceItem({ source, canAct, highlighted, maxChars, onCorrect, onConfir
       ref={ref}
       id={`source-${source.id}`}
       tabIndex={-1}
-      className={`source source--${source.origin} ${highlighted ? 'is-highlighted' : ''}`}
+      className={`slip slip--${source.origin} ${highlighted ? 'is-highlighted' : ''}`}
+      aria-labelledby={`${id}-h`}
     >
-      <div className="source__head">
-        <span className="source__origin">{ORIGIN_META[source.origin].label}</span>
-        <h4 className="source__label">{source.label}</h4>
-        <span className="source__rev">第 {source.revision} 版</span>
+      <div className="slip__head">
+        <h4 id={`${id}-h`} className="slip__label">
+          {source.label || ORIGIN_META[source.origin].label}
+        </h4>
+        <span className="slip__meta">
+          {ORIGIN_META[source.origin].label}
+          {source.revision > 1 && ` · 改过 ${source.revision - 1} 次`}
+        </span>
       </div>
 
       {editing ? (
-        <form onSubmit={save} className="source__edit">
+        <form onSubmit={save} className="slip__edit">
           <label htmlFor={`${id}-edit`} className="small">
-            修正这段内容
+            改成你记得的样子
           </label>
           <textarea
             id={`${id}-edit`}
             ref={editRef}
-            className="input textarea"
-            rows={6}
+            className="field-input"
+            rows={4}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             aria-describedby={`${id}-warn`}
           />
           <p id={`${id}-warn`} className="small warn-text">
-            <TriangleAlert aria-hidden="true" /> 修正后会变成第 {source.revision + 1} 版，用到这段的分析和卡片会标为过期，需要重新确认。
-            {over && ` 已超过 ${maxChars} 字上限。`}
+            <TriangleAlert aria-hidden="true" /> 改了之后，用到这段的卡片和看法会标成“需要重新整理”，旧的不会再当作有效。
+            {over && ` 已超过 ${maxChars} 字。`}
           </p>
           <div className="row gap-s">
             <button type="submit" className="btn btn--primary btn--sm" disabled={!draft.trim() || over}>
-              保存修正
+              就这样改
             </button>
             <button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing(false)}>
-              取消
+              不改了
             </button>
           </div>
         </form>
       ) : (
         <>
-          <p className={`source__text prewrap ${long && !expanded ? 'is-clamped' : ''}`}>{source.text}</p>
+          <p className={`slip__text prewrap ${long && !expanded ? 'is-clamped' : ''}`}>{source.text}</p>
           {long && (
-            <button
-              type="button"
-              className="link-btn small"
-              aria-expanded={expanded}
-              onClick={() => setExpanded((v) => !v)}
-            >
+            <button type="button" className="text-btn" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
               <ChevronDown aria-hidden="true" className={expanded ? 'rot-180' : ''} />
               {expanded ? '收起' : '展开全文'}
             </button>
@@ -194,25 +181,21 @@ function SourceItem({ source, canAct, highlighted, maxChars, onCorrect, onConfir
       )}
 
       {!editing && (
-        <div className="source__foot">
-          {source.confirmed ? (
-            <span className="source__status is-ok">
-              <CircleCheck aria-hidden="true" /> 已确认归属
-            </span>
-          ) : (
-            <span className="source__status is-pending">
-              <TriangleAlert aria-hidden="true" /> 待你确认：内容和“{ORIGIN_META[source.origin].label}”这个归属对吗？
-            </span>
+        <div className="slip__foot">
+          {!source.confirmed && (
+            <p className="slip__pending">
+              <TriangleAlert aria-hidden="true" /> 这段还没经你确认，内容还对吗？
+            </p>
           )}
           {canAct && (
-            <div className="row gap-s">
+            <div className="row gap-s wrap">
               {!source.confirmed && (
-                <button type="button" className="btn btn--quiet btn--sm" onClick={() => onConfirm(source.id)}>
-                  <CircleCheck aria-hidden="true" /> 确认归属
+                <button type="button" className="pill pill--warm" onClick={() => onConfirm(source.id)}>
+                  <CircleCheck aria-hidden="true" /> 对，是这样
                 </button>
               )}
-              <button type="button" className="btn btn--ghost btn--sm" onClick={() => setEditing(true)}>
-                <Pencil aria-hidden="true" /> 修正
+              <button type="button" className="pill" onClick={() => setEditing(true)}>
+                <Pencil aria-hidden="true" /> 改一改
               </button>
             </div>
           )}
@@ -226,67 +209,39 @@ interface SourcesSectionProps {
   sources: Source[];
   canAct: boolean;
   maxChars: number | null;
-  formOpen: boolean;
-  setFormOpen: (v: boolean) => void;
   highlightId: string | null;
-  onAdd: (text: string, origin: Origin, label: string) => void;
+  onAdd: () => void;
   onCorrect: (id: string, text: string) => void;
   onConfirm: (id: string) => void;
 }
 
-export function SourcesSection(props: SourcesSectionProps) {
-  const { sources, canAct, maxChars, formOpen, setFormOpen, highlightId, onAdd, onCorrect, onConfirm } = props;
-  const pending = sources.filter((s) => !s.confirmed).length;
-
+export function SourcesSection({ sources, canAct, maxChars, highlightId, onAdd, onCorrect, onConfirm }: SourcesSectionProps) {
   return (
     <div className="sources">
       {sources.length > 0 ? (
-        <>
-          {pending > 0 && (
-            <p className="callout callout--pending">
-              <TriangleAlert aria-hidden="true" /> 有 {pending} 段材料还没确认归属。确认的是“这段话属于哪类、内容对不对”，不是确认拒绝原因。
-            </p>
-          )}
-          <ul className="sources__list">
-            {sources.map((s) => (
-              <SourceItem
-                key={s.id}
-                source={s}
-                canAct={canAct}
-                highlighted={highlightId === s.id}
-                maxChars={maxChars}
-                onCorrect={onCorrect}
-                onConfirm={onConfirm}
-              />
-            ))}
-          </ul>
-        </>
+        <ul className="sources__list">
+          {sources.map((s) => (
+            <SourceSlip
+              key={s.id}
+              source={s}
+              canAct={canAct}
+              highlighted={highlightId === s.id}
+              maxChars={maxChars}
+              onCorrect={onCorrect}
+              onConfirm={onConfirm}
+            />
+          ))}
+        </ul>
       ) : (
-        !formOpen && (
-          <div className="empty-note">
-            <p>还没有材料。</p>
-            <p className="muted small">可以是你记得的回答、拒信原文或岗位描述片段。没有也完全可以，只是复盘时依据会更少。</p>
-          </div>
-        )
+        <p className="tray-empty">
+          还没有材料。没有也完全可以；放进来的话，面包引用时会照原文，不改一个字。
+        </p>
       )}
-
-      {canAct &&
-        (formOpen ? (
-          <AddSourceForm
-            maxChars={maxChars}
-            count={sources.length}
-            autoFocus
-            onAdd={(t, o, l) => {
-              onAdd(t, o, l);
-              setFormOpen(false);
-            }}
-            onCancel={() => setFormOpen(false)}
-          />
-        ) : (
-          <button type="button" className="btn btn--quiet btn--block" onClick={() => setFormOpen(true)}>
-            <Plus aria-hidden="true" /> 放一段材料
-          </button>
-        ))}
+      {canAct && (
+        <button type="button" className="btn btn--quiet btn--block" onClick={onAdd}>
+          <Plus aria-hidden="true" /> 放一段材料
+        </button>
+      )}
     </div>
   );
 }

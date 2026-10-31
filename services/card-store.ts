@@ -86,14 +86,15 @@ export async function deleteSavedCase(caseId: string): Promise<void> {
     tx.oncomplete = () => resolve(); tx.onabort = tx.onerror = () => reject(new Error('删除未完成，请重试'));
   }); } finally { db.close(); }
 }
-export async function invalidateSaved(caseId: string, sourceId?: string, findingId?: string): Promise<void> {
+export async function invalidateSaved(caseId: string, sourceId?: string, findingId?: string, throughSourceRevision = Infinity): Promise<void> {
   const db = await openDb();
   try { await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite'); const store = tx.objectStore(STORE); const req = store.get(caseId);
     req.onsuccess = () => {
       if (!req.result) return;
       const data = validateArchive(req.result);
-      const bad = new Set(data.findings.filter(f => f.id === findingId || f.evidenceRefs.some(r => r.sourceId === sourceId)).map(f => f.id));
+      // A delayed correction must not invalidate cards already rebuilt from the newer wording.
+      const bad = new Set(data.findings.filter(f => f.id === findingId || f.evidenceRefs.some(r => r.sourceId === sourceId && r.sourceRevision <= throughSourceRevision)).map(f => f.id));
       data.findings = data.findings.map(f => bad.has(f.id) ? { ...f, validity: findingId ? 'disputed' : 'stale' } : f);
       data.cards = data.cards.map(c => c.sections.some(s => s.findingIds.some(id => bad.has(id))) ? { ...c, validity: findingId ? 'disputed' : 'stale' } : c);
       store.put(data);

@@ -12,6 +12,8 @@ export interface BreadViewModel {
   busy: boolean;
   start: (mode?: Mode, welcome?: boolean) => void;
   send: (text: string) => Promise<void>;
+  assist: (mode: Exclude<Mode, 'listen'>) => Promise<void>;
+  addMaterial: (text: string) => boolean;
   setMode: (mode: Mode) => void;
   stop: () => void;
   end: () => void;

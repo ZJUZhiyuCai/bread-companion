@@ -15,9 +15,9 @@ function invalidate(state: SessionState, sourceId: string): SessionState {
   const cards = state.cards.map(c => c.sections.some(s => s.findingIds.some(id => invalid.has(id))) ? { ...c, validity: 'stale' as const } : c);
   return { ...state, findings, cards, epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
 }
-export function makeEndSnapshot(state: SessionState): EndSnapshot | null {
+export function makeEndSnapshot(state: SessionState, includeDraft = false): EndSnapshot | null {
   const card = currentCard(state);
-  if (!card || card.validity !== 'confirmed' || !cardCanConfirm(card, state.findings, state.sources)) return null;
+  if (!card || (!includeDraft && card.validity !== 'confirmed') || !cardCanConfirm(card, state.findings, state.sources)) return null;
   return structuredClone({ id: uid('snapshot'), sessionId: state.sessionId, card, findings: linkedFindings(card, state.findings), evidence: evidenceSnapshots(card, state.findings, state.sources), confirmedPractice: [], createdAt: new Date().toISOString() });
 }
 export type Event =
@@ -35,6 +35,8 @@ export type Event =
   | { type: 'REJECT'; id: string }
   | { type: 'EDIT_CARD'; title: string; sections: Card['sections'] }
   | { type: 'CONFIRM_CARD' }
+  | { type: 'CONFIRM_END_CARD' }
+  | { type: 'PREPARE_PRACTICE' }
   | { type: 'PRACTICE'; question: string; criteria: string[] }
   | { type: 'DELETE_CASE'; caseId: string }
   | { type: 'REPLACE'; state: SessionState };
@@ -43,6 +45,11 @@ export function reducer(state: SessionState, event: Event): SessionState {
   if (event.type === 'DELETE_CASE') {
     if (state.caseId !== event.caseId) return state;
     return { ...initialState(), lifecycle: state.lifecycle, started: state.started, epoch: state.epoch + 1 };
+  }
+  if (event.type === 'CONFIRM_END_CARD' && state.lifecycle === 'ended' && state.endSnapshot?.card.validity === 'draft') {
+    // The snapshot was validated before raw sources were cleared. Only an explicit
+    // save action can accept this read-only draft; no Agent run can reach this event.
+    return { ...state, endSnapshot: { ...state.endSnapshot, card: { ...state.endSnapshot.card, validity: 'confirmed' }, findings: state.endSnapshot.findings.map(f => ({ ...f, validity: 'confirmed' })) } };
   }
   if (state.lifecycle === 'ended') return state;
   switch (event.type) {
@@ -57,15 +64,15 @@ export function reducer(state: SessionState, event: Event): SessionState {
       const c = event.candidate;
       const nextRevision = Math.max(0, ...state.cards.map(v => v.revision)) + 1;
       const card = c.cardDraft ? { ...c.cardDraft, caseId: state.caseId, revision: nextRevision, parentRevision: currentCard(state)?.revision ?? null } : undefined;
-      return { ...state, mode: c.supportGuidance ? 'listen' : state.mode, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
+      return { ...state, ...(c.practiceSetup ? { selectedQuestion: c.practiceSetup.question, practiceCriteria: c.practiceSetup.criteria, contextRevision: state.contextRevision + 1 } : {}), mode: c.supportGuidance ? 'listen' : state.mode, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
     }
     case 'STOP': return { ...state, epoch: state.epoch + 1, activeRunId: null, activity: 'paused' };
-    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state), messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [] };
+    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state, true), messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [] };
     case 'ADD_SOURCE': return { ...state, sources: [...state.sources, event.source], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     case 'CORRECT_SOURCE': {
       if (!state.sources.some(s => s.id === event.id)) return state;
       const s = invalidate(state, event.id);
-      return { ...s, sources: s.sources.map(v => v.id === event.id ? { ...v, text: event.text, revision: v.revision + 1, confirmed: false } : v), messages: s.messages.map(m => m.sourceId === event.id ? { ...m, text: event.text } : m) };
+      return { ...s, sources: s.sources.map(v => v.id === event.id ? { ...v, text: event.text, revision: v.revision + 1, confirmed: true } : v), messages: s.messages.map(m => m.sourceId === event.id ? { ...m, text: event.text } : m) };
     }
     case 'CONFIRM_SOURCE': return { ...state, sources: state.sources.map(s => s.id === event.id ? { ...s, confirmed: true } : s), epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
     case 'REJECT': {
@@ -89,6 +96,7 @@ export function reducer(state: SessionState, event: Event): SessionState {
       const ids = new Set(card.sections.flatMap(s => s.findingIds));
       return { ...state, cards: state.cards.map(c => c.id === card.id ? { ...c, validity: 'confirmed' } : c), findings: state.findings.map(f => ids.has(f.id) ? { ...f, validity: 'confirmed' } : f) };
     }
+    case 'PREPARE_PRACTICE': return { ...state, mode: 'practice', selectedQuestion: '', practiceCriteria: [], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     case 'PRACTICE': return { ...state, mode: 'practice', selectedQuestion: event.question, practiceCriteria: event.criteria.slice(0, 2), epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     default: return state;
   }

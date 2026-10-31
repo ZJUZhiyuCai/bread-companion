@@ -1,122 +1,134 @@
 import { ACTIVITY_META, type AvatarState } from './labels';
 
-type Face = 'resting' | 'open' | 'focus' | 'worried';
+type Face = 'content' | 'open' | 'thinking' | 'worried' | 'asleep';
 
 const FACE_BY_STATE: Record<AvatarState, Face> = {
-  idle: 'resting',
-  paused: 'resting',
-  ended: 'resting',
+  idle: 'content',
+  paused: 'content',
+  ended: 'asleep',
   requesting_mic: 'open',
   recording: 'open',
   recorded: 'open',
   speaking: 'open',
-  transcribing: 'focus',
-  generating: 'focus',
-  validating: 'focus',
+  transcribing: 'thinking',
+  generating: 'thinking',
+  validating: 'thinking',
   error: 'worried',
 };
 
 /**
- * The loaf itself, drawn in a 120×100 box. Shared by the status avatar and the window scenes,
- * so the bread on the windowsill is the same character that talks to you.
+ * The loaf, drawn in a 120×100 box. Shared by the presence on the composer and the lamp scenes,
+ * so the bread under the lamp is the same character that talks to you.
  */
 export function LoafFigure({ state }: { state: AvatarState }) {
   const face = FACE_BY_STATE[state];
   const speaking = state === 'speaking';
   return (
     <g className="loaf" data-state={state}>
-      <ellipse className="loaf__plate" cx="60" cy="88" rx="44" ry="5" />
+      <ellipse className="loaf__shadow" cx="60" cy="90" rx="42" ry="4.5" />
       <g className="loaf__body">
         <path
           className="loaf__crust"
-          d="M14 70 C14 43 35 25 60 25 C85 25 106 43 106 70 C106 80 98 84 88 84 L32 84 C22 84 14 80 14 70 Z"
+          d="M12 72 C12 44 33 24 60 24 C87 24 108 44 108 72 C108 83 100 87 89 87 L31 87 C20 87 12 83 12 72 Z"
         />
-        <path className="loaf__sheen" d="M27 54 C33 39 46 32 60 32 C75 32 87 39 93 52" />
+        <path className="loaf__crumb" d="M22 74 C22 52 39 36 60 36 C81 36 98 52 98 74 C98 80 93 82 86 82 L34 82 C27 82 22 80 22 74 Z" />
         <g className="loaf__scores">
-          <path d="M37 42 q7 -8 16 -8" />
-          <path d="M54 36 q7 -6 16 -5" />
-          <path d="M71 40 q6 -4 13 -1" />
+          <path d="M36 33 q8 -7 17 -6" />
+          <path d="M55 28 q8 -4 16 -2" />
+          <path d="M73 31 q7 -1 12 3" />
         </g>
         <g className="loaf__face">
-          {face === 'resting' && (
+          {face === 'content' && (
             <>
-              <path d="M43 61 q5 5 10 0" />
-              <path d="M67 61 q5 5 10 0" />
+              <path d="M42 60 q5 -5 10 0" />
+              <path d="M68 60 q5 -5 10 0" />
             </>
           )}
           {face === 'open' && (
-            <>
-              <circle cx="48" cy="60" r="3" className="loaf__eye" />
-              <circle cx="72" cy="60" r="3" className="loaf__eye" />
-            </>
+            <g className="loaf__eyes">
+              <ellipse cx="47" cy="59" rx="3.2" ry="3.6" className="loaf__eye" />
+              <ellipse cx="73" cy="59" rx="3.2" ry="3.6" className="loaf__eye" />
+              <circle cx="48.2" cy="57.6" r="1" className="loaf__glint" />
+              <circle cx="74.2" cy="57.6" r="1" className="loaf__glint" />
+            </g>
           )}
-          {face === 'focus' && (
+          {face === 'thinking' && (
             <>
-              <path d="M43 62 h10" />
-              <path d="M67 62 h10" />
+              <circle cx="49" cy="56" r="2.8" className="loaf__eye" />
+              <circle cx="75" cy="56" r="2.8" className="loaf__eye" />
             </>
           )}
           {face === 'worried' && (
             <>
-              <path d="M43 56 l9 2" />
-              <path d="M77 56 l-9 2" />
-              <circle cx="48" cy="62" r="2.4" className="loaf__eye" />
-              <circle cx="72" cy="62" r="2.4" className="loaf__eye" />
+              <path d="M41 52 l9 2.5" />
+              <path d="M79 52 l-9 2.5" />
+              <circle cx="47" cy="60" r="2.6" className="loaf__eye" />
+              <circle cx="73" cy="60" r="2.6" className="loaf__eye" />
+            </>
+          )}
+          {face === 'asleep' && (
+            <>
+              <path d="M42 60 q5 4 10 0" />
+              <path d="M68 60 q5 4 10 0" />
             </>
           )}
           {speaking ? (
-            <ellipse className="loaf__mouth" cx="60" cy="70" rx="3.6" ry="2.6" />
+            <ellipse className="loaf__mouth" cx="60" cy="69" rx="4" ry="3" />
+          ) : face === 'worried' ? (
+            <path d="M55 71 q5 -3 10 0" />
+          ) : face === 'thinking' ? (
+            <path d="M57 69 h6" />
           ) : (
-            <path d={face === 'worried' ? 'M55 72 q5 -3 10 0' : 'M55 69 q5 4 10 0'} />
+            <path d="M55 67 q5 4.5 10 0" />
           )}
         </g>
-        <circle className="loaf__cheek" cx="38" cy="68" r="4" />
-        <circle className="loaf__cheek" cx="82" cy="68" r="4" />
+        <ellipse className="loaf__cheek" cx="36" cy="67" rx="5" ry="3.4" />
+        <ellipse className="loaf__cheek" cx="84" cy="67" rx="5" ry="3.4" />
       </g>
 
       {speaking && (
         <g className="loaf__steam">
-          <path d="M48 20 c-5 -5 5 -9 0 -15" />
-          <path d="M60 18 c-5 -5 5 -9 0 -15" />
-          <path d="M72 20 c-5 -5 5 -9 0 -15" />
+          <path d="M46 18 c-5 -5 5 -9 0 -15" />
+          <path d="M60 15 c-5 -5 5 -9 0 -15" />
+          <path d="M74 18 c-5 -5 5 -9 0 -15" />
         </g>
       )}
       {(state === 'generating' || state === 'validating' || state === 'transcribing') && (
         <g className="loaf__flour">
-          <circle cx="46" cy="14" r="2.6" />
-          <circle cx="60" cy="9" r="2.6" />
-          <circle cx="74" cy="14" r="2.6" />
+          <circle cx="44" cy="14" r="2.4" />
+          <circle cx="60" cy="9" r="2.4" />
+          <circle cx="76" cy="14" r="2.4" />
         </g>
       )}
       {state === 'recording' && (
         <g className="loaf__rec">
-          <circle className="loaf__rec-ring" cx="102" cy="26" r="9" />
-          <circle className="loaf__rec-dot" cx="102" cy="26" r="6" />
+          <circle className="loaf__rec-ring" cx="104" cy="26" r="10" />
+          <circle className="loaf__rec-dot" cx="104" cy="26" r="6" />
         </g>
       )}
-      {state === 'recorded' && <rect className="loaf__rec-dot" x="96" y="20" width="12" height="12" rx="2" />}
+      {state === 'recorded' && <rect className="loaf__rec-dot" x="98" y="20" width="12" height="12" rx="2.5" />}
       {state === 'requesting_mic' && (
         <g className="loaf__badge">
-          <circle cx="102" cy="26" r="9" />
-          <text x="102" y="30.5" textAnchor="middle">?</text>
+          <circle cx="104" cy="26" r="9.5" />
+          <text x="104" y="30.5" textAnchor="middle">?</text>
         </g>
       )}
       {state === 'paused' && (
         <g className="loaf__pause">
-          <rect x="96" y="18" width="4" height="14" rx="1.5" />
-          <rect x="104" y="18" width="4" height="14" rx="1.5" />
+          <rect x="97" y="18" width="4.5" height="15" rx="1.6" />
+          <rect x="106" y="18" width="4.5" height="15" rx="1.6" />
         </g>
       )}
       {state === 'error' && (
         <g className="loaf__badge loaf__badge--warn">
-          <circle cx="102" cy="26" r="9" />
-          <text x="102" y="30.5" textAnchor="middle">!</text>
+          <circle cx="104" cy="26" r="9.5" />
+          <text x="104" y="30.5" textAnchor="middle">!</text>
         </g>
       )}
       {state === 'ended' && (
         <g className="loaf__zz">
           <text x="94" y="30">z</text>
-          <text x="103" y="20">z</text>
+          <text x="104" y="19">z</text>
         </g>
       )}
     </g>
@@ -125,24 +137,24 @@ export function LoafFigure({ state }: { state: AvatarState }) {
 
 interface StateAvatarProps {
   state: AvatarState;
-  size?: 'sm' | 'md' | 'lg';
-  /** Show the plain-text status next to the figure. */
-  showLabel?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  /** Decorative copies (e.g. next to every message) stay out of the accessibility tree. */
+  decorative?: boolean;
   className?: string;
 }
 
-export function StateAvatar({ state, size = 'md', showLabel = false, className = '' }: StateAvatarProps) {
-  const meta = ACTIVITY_META[state];
+export function StateAvatar({ state, size = 'md', decorative = false, className = '' }: StateAvatarProps) {
   return (
     <span className={`avatar avatar--${size} ${className}`} data-state={state}>
-      <svg viewBox="0 0 120 100" className="avatar__svg" role="img" aria-label={`面包：${meta.label}`}>
+      <svg
+        viewBox="0 0 120 100"
+        className="avatar__svg"
+        {...(decorative
+          ? { 'aria-hidden': true, focusable: false }
+          : { role: 'img', 'aria-label': `面包：${ACTIVITY_META[state].label}` })}
+      >
         <LoafFigure state={state} />
       </svg>
-      {showLabel && (
-        <span className="avatar__label" aria-hidden="true">
-          {meta.label}
-        </span>
-      )}
     </span>
   );
 }

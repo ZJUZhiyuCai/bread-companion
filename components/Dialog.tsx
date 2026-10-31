@@ -10,13 +10,18 @@ interface DialogProps {
   title: ReactNode;
   subtitle?: ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  /** 'sheet' always slides up from the bottom (mobile tray); 'center' becomes a sheet only on small screens. */
+  variant?: 'center' | 'sheet';
   className?: string;
   children: ReactNode;
   footer?: ReactNode;
+  closeLabel?: string;
 }
 
 /** Native <dialog>: focus containment, Esc to close and inert background come for free. */
-export function Dialog({ open, onClose, title, subtitle, size = 'md', className = '', children, footer }: DialogProps) {
+export function Dialog(props: DialogProps) {
+  const { open, onClose, title, subtitle, size = 'md', variant = 'center', className = '', children, footer, closeLabel = '关闭' } =
+    props;
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useDomId('dlg-title');
   const descId = useDomId('dlg-desc');
@@ -31,7 +36,7 @@ export function Dialog({ open, onClose, title, subtitle, size = 'md', className 
   return (
     <dialog
       ref={ref}
-      className={`dialog dialog--${size} ${className}`}
+      className={`dialog dialog--${size} dialog--${variant} ${className}`}
       aria-labelledby={titleId}
       aria-describedby={subtitle ? descId : undefined}
       onClose={onClose}
@@ -41,6 +46,7 @@ export function Dialog({ open, onClose, title, subtitle, size = 'md', className 
     >
       {open && (
         <div className="dialog__inner">
+          <span className="dialog__grip" aria-hidden="true" />
           <header className="dialog__head">
             <div>
               <h2 id={titleId} className="dialog__title">
@@ -52,11 +58,14 @@ export function Dialog({ open, onClose, title, subtitle, size = 'md', className 
                 </p>
               )}
             </div>
-            <button type="button" className="icon-btn" onClick={onClose} aria-label="关闭">
+            <button type="button" className="icon-btn" onClick={onClose} aria-label={closeLabel}>
               <X aria-hidden="true" />
             </button>
           </header>
-        <div className="dialog__body" tabIndex={0}>{children}</div>
+          {/* focusable so keyboard users can scroll long content */}
+          <div className="dialog__body" tabIndex={0}>
+            {children}
+          </div>
           {footer && <footer className="dialog__foot">{footer}</footer>}
         </div>
       )}

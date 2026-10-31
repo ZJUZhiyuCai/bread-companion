@@ -1,101 +1,85 @@
 'use client';
 
-import { Archive, Moon, NotebookPen, Square } from 'lucide-react';
-import type { Capabilities, Mode } from '@/domain/types';
-import { StateAvatar } from './StateAvatar';
-import { agentSummary } from './ServiceStatus';
-import { ACTIVITY_META, MODE_META, type AvatarState } from './labels';
+import { Archive, Moon, PanelRight, Square } from 'lucide-react';
+import type { Capabilities } from '@/domain/types';
+import { AiStamp } from './ServiceStatus';
+import { ACTIVITY_META, type AvatarState } from './labels';
 
 interface TopBarProps {
-  avatarState: AvatarState;
-  mode: Mode;
   caps: Capabilities | null;
+  activity: AvatarState;
   active: boolean;
-  panelOpen: boolean;
-  cardFlag: boolean;
-  onTogglePanel: () => void;
+  working: boolean;
+  trayOpen: boolean;
+  trayCount: number;
+  /** A card is on the table that hasn't been kept yet — a hint, never a blocker. */
+  cardWaiting: boolean;
+  onToggleTray: () => void;
   onOpenArchive: () => void;
-  onOpenStatus: () => void;
+  onOpenAbout: () => void;
   onStop: () => void;
   onEnd: () => void;
 }
 
-const QUIET_STATES: AvatarState[] = ['idle', 'paused', 'error', 'ended'];
-
 export function TopBar(props: TopBarProps) {
-  const { avatarState, mode, caps, active, panelOpen, cardFlag, onTogglePanel, onOpenArchive, onOpenStatus, onStop, onEnd } =
+  const { caps, activity, active, working, trayOpen, trayCount, cardWaiting, onToggleTray, onOpenArchive, onOpenAbout, onStop, onEnd } =
     props;
-  const agent = agentSummary(caps);
-  const working = !QUIET_STATES.includes(avatarState);
 
   return (
     <header className="topbar">
       <div className="topbar__id">
-        <StateAvatar state={avatarState} size="sm" />
-        <div className="topbar__who">
-          <p className="topbar__name">
-            面包<span className="topbar__role">面试后交流与整理助手</span>
-            <button
-              type="button"
-              className={`svc-pill svc-pill--${agent.tone}`}
-              onClick={onOpenStatus}
-              aria-haspopup="dialog"
-              title="服务与数据"
-            >
-              <span className="svc-pill__dot" aria-hidden="true" />
-              {agent.short}
-              <span className="svc-pill__more">· 服务与数据</span>
-            </button>
-          </p>
-          <p className="topbar__state">
-            <span className={`state-dot ${working ? 'is-working' : ''}`} aria-hidden="true" />
-            {ACTIVITY_META[avatarState].label}
-            <span aria-hidden="true"> · </span>
-            <span className="sr-only">当前模式：</span>
-            {MODE_META[mode].label}
-          </p>
-        </div>
+        <p className="wordmark wordmark--sm">面包</p>
+        <AiStamp caps={caps} onClick={onOpenAbout} />
       </div>
 
-      <div className="topbar__tools">
+      <nav className="topbar__tools" aria-label="桌上和抽屉">
         <button
           type="button"
-          className={`tool-btn ${panelOpen ? 'is-on' : ''}`}
-          onClick={onTogglePanel}
-          aria-expanded={panelOpen}
-          aria-label={`今晚的材料${cardFlag ? '（有新卡片）' : ''}`}
+          className={`tool-btn ${trayOpen ? 'is-on' : ''}`}
+          onClick={onToggleTray}
+          aria-expanded={trayOpen}
+          aria-label={`今晚的卡片与材料${trayCount > 0 ? `，${trayCount} 样` : ''}`}
         >
-          <NotebookPen aria-hidden="true" />
-          <span className="tool-btn__label">今晚的材料</span>
-          {cardFlag && <span className="badge-dot" aria-hidden="true" />}
+          <PanelRight aria-hidden="true" />
+          <span className="tool-btn__label">卡片与材料</span>
+          {trayCount > 0 && (
+            <span className="tool-btn__count" aria-hidden="true">
+              {trayCount}
+            </span>
+          )}
         </button>
-        <button type="button" className="tool-btn" onClick={onOpenArchive} aria-haspopup="dialog" aria-label="本设备档案">
+        <button type="button" className="tool-btn" onClick={onOpenArchive} aria-haspopup="dialog" aria-label="以前留下的">
           <Archive aria-hidden="true" />
-          <span className="tool-btn__label">本设备档案</span>
+          <span className="tool-btn__label">以前留下的</span>
         </button>
-      </div>
+      </nav>
 
       <div className="topbar__controls" role="group" aria-label="会话控制">
         <button
           type="button"
-          className={`btn btn--stop ${working ? 'is-hot' : ''}`}
+          className={`ctl ctl--stop ${working ? 'is-hot' : ''}`}
           onClick={onStop}
           disabled={!active}
           aria-keyshortcuts="Escape"
-          title="停止当前的回应、播放、录音或转写（Esc）"
+          aria-describedby="stop-desc"
+          title="停下正在进行的回应、播放、录音或转写（Esc）"
         >
           <Square aria-hidden="true" />
           停止
         </button>
+        <span id="stop-desc" className="sr-only">
+          {working ? `现在面包${ACTIVITY_META[activity].label}` : '现在没有正在进行的事'}
+        </span>
         <button
           type="button"
-          className="btn btn--end"
+          className="ctl ctl--end"
           onClick={onEnd}
           disabled={!active}
-          title="结束今晚：停止一切，进入结束页"
+          title={cardWaiting ? '结束今晚。结束后仍可决定要不要留下这张卡片' : '结束今晚：停下一切'}
         >
           <Moon aria-hidden="true" />
           结束
+          {cardWaiting && <span className="ctl__dot" aria-hidden="true" />}
         </button>
       </div>
     </header>

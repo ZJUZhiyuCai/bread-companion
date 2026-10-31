@@ -1,3 +1,5 @@
+> 历史交接：这是第一轮给 Claude 的任务说明，不是当前验收规则。第二轮已按用户新要求取消模式、材料分类和练习维度的必填配置；当前行为以 `design.md`、`acceptance.md` 和 `domain/view-model.ts` 为准。
+
 # Frontend assignment for Claude
 
 用户明确指定由 Claude 做前端设计，Codex 负责后端和业务控制。请在当前项目实际实现精致的中文应用，直接写文件，不停在建议。

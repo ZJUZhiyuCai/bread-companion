@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronRight, LoaderCircle, MessageCircle, RotateCcw, Trash2, Upload } from 'lucide-react';
-import type { Card, SavedCase } from '@/domain/types';
+import { ArrowLeft, Braces, ChevronRight, FileDown, LoaderCircle, MessageCircle, RotateCcw, Trash2, Upload } from 'lucide-react';
+import type { SavedCase } from '@/domain/types';
 import { Dialog } from './Dialog';
 import { EvidenceQuote } from './Evidence';
+import { downloadSavedCase } from './exporters';
 import { useDomId } from './hooks';
-import { CARD_TYPE_LABEL, VALIDITY_META, formatDateTime, sectionLabel, viewEvidence } from './labels';
+import { CARD_TYPE_LABEL, VALIDITY_META, formatDateTime, latestCard, sectionLabel, viewEvidence } from './labels';
 
 interface SavedArchiveProps {
   open: boolean;
@@ -23,14 +24,8 @@ interface SavedArchiveProps {
   error: string;
 }
 
-function latestCard(c: SavedCase): Card | null {
-  if (c.cards.length === 0) return null;
-  return [...c.cards].sort((a, b) => b.revision - a.revision)[0];
-}
-
 export function SavedArchive(props: SavedArchiveProps) {
-  const { open, onClose, savedCases, sessionLive, refreshSaved, deleteSaved, importSaved, onResume, onTalkElse, notice, error } =
-    props;
+  const { open, onClose, savedCases, sessionLive, refreshSaved, deleteSaved, importSaved, onResume, onTalkElse, notice, error } = props;
   const id = useDomId('archive');
   const [selected, setSelected] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -81,8 +76,8 @@ export function SavedArchive(props: SavedArchiveProps) {
       onClose={onClose}
       size="lg"
       className="archive"
-      title={current ? '本设备档案 · 一张卡片' : '本设备档案'}
-      subtitle="存在这台设备的当前浏览器里，和今晚的临时对话分开。不是云备份，不能跨设备。"
+      title={current ? '以前留下的 · 一张' : '以前留下的'}
+      subtitle="只在这台设备的这个浏览器里，和今晚的对话分开。不是云备份，不能跨设备。"
     >
       <div className="archive__msgs">
         <p role="status" className="archive__msg">
@@ -92,6 +87,7 @@ export function SavedArchive(props: SavedArchiveProps) {
           {error}
         </p>
       </div>
+
       {current ? (
         <ArchiveDetail
           saved={current}
@@ -119,28 +115,31 @@ export function SavedArchive(props: SavedArchiveProps) {
         <>
           {working === 'loading' && sorted.length === 0 ? (
             <p className="muted">
-              <LoaderCircle aria-hidden="true" className="spin" /> 正在读取…
+              <LoaderCircle aria-hidden="true" className="spin" /> 正在打开抽屉…
             </p>
           ) : sorted.length === 0 ? (
             <div className="drawer-empty">
-              <div className="drawer-empty__art" aria-hidden="true" />
+              <span className="drawer-empty__art" aria-hidden="true" />
               <p>抽屉是空的。</p>
-              <p className="muted small">只有你确认、并在保存预览里点了“保存”的卡片才会放进来。不保存也完全没关系。</p>
+              <p className="muted small">只有你点过“就留下这些”的卡片才会放进来。什么都不留，也完全没关系。</p>
             </div>
           ) : (
-            <ul className="archive__list" aria-label="已保存的卡片">
+            <ul className="archive__list" aria-label="留下的卡片">
               {sorted.map((c) => {
                 const card = latestCard(c);
                 return (
                   <li key={c.caseId}>
-                    <button type="button" className="archive__item" onClick={() => setSelected(c.caseId)}>
-                      <span className={`archive__type archive__type--${card?.type ?? 'note'}`}>
-                        {card ? CARD_TYPE_LABEL[card.type] : '档案'}
-                      </span>
+                    <button type="button" className={`archive__item archive__item--${card?.type ?? 'note'}`} onClick={() => setSelected(c.caseId)}>
+                      <span className="archive__tag" aria-hidden="true" />
                       <span className="archive__main">
-                        <span className="archive__title">{card?.title ?? '（没有卡片）'}{card && card.validity !== 'confirmed' ? ` · ${VALIDITY_META[card.validity].label}` : ''}</span>
+                        <span className="archive__type">{card ? CARD_TYPE_LABEL[card.type] : '档案'}</span>
+                        <span className="archive__title">
+                          {card?.title ?? '（没有卡片）'}
+                          {card && card.validity !== 'confirmed' ? ` · ${VALIDITY_META[card.validity].label}` : ''}
+                        </span>
                         <span className="archive__meta">
-                          {formatDateTime(c.savedAt)} 保存 · {c.cards.length} 个版本 · {c.selectedEvidence.length} 段摘录
+                          {formatDateTime(c.savedAt)} 留下
+                          {c.selectedEvidence.length > 0 && ` · ${c.selectedEvidence.length} 段原话`}
                           {c.confirmedPractice.length > 0 && ` · ${c.confirmedPractice.length} 道练习`}
                         </span>
                       </span>
@@ -153,11 +152,13 @@ export function SavedArchive(props: SavedArchiveProps) {
           )}
 
           <section className="archive__import" aria-labelledby={`${id}-imp`}>
-            <h3 id={`${id}-imp`}>从 JSON 备份导入</h3>
-            <p className="small muted">只接受面包导出的 JSON 备份。文件会先被校验，不会执行其中任何内容。</p>
+            <h3 id={`${id}-imp`} className="archive__h">
+              从备份文件放回来
+            </h3>
+            <p className="small muted">只接受面包导出的 JSON 备份。文件会先被检查，里面的任何内容都不会被执行。</p>
             <label className="btn btn--ghost file-btn">
               {working === 'importing' ? <LoaderCircle aria-hidden="true" className="spin" /> : <Upload aria-hidden="true" />}
-              {working === 'importing' ? '正在导入…' : '选择 JSON 文件'}
+              {working === 'importing' ? '正在放回…' : '选择 JSON 文件'}
               <input
                 ref={fileRef}
                 type="file"
@@ -189,8 +190,7 @@ interface ArchiveDetailProps {
 }
 
 function ArchiveDetail(props: ArchiveDetailProps) {
-  const { saved, sessionLive, confirmDelete, deleting, onBack, onResume, onTalkElse, onLater, onAskDelete, onCancelDelete, onDelete } =
-    props;
+  const { saved, sessionLive, confirmDelete, deleting, onBack, onResume, onTalkElse, onLater, onAskDelete, onCancelDelete, onDelete } = props;
   const card = latestCard(saved);
   const older = [...saved.cards].sort((a, b) => b.revision - a.revision).slice(1);
   const ctx = { sources: null, snapshot: saved.selectedEvidence };
@@ -198,40 +198,48 @@ function ArchiveDetail(props: ArchiveDetailProps) {
 
   return (
     <div className="archive-detail">
-      <button type="button" className="link-btn" onClick={onBack}>
-        <ArrowLeft aria-hidden="true" /> 返回列表
+      <button type="button" className="text-btn" onClick={onBack}>
+        <ArrowLeft aria-hidden="true" /> 回到抽屉
       </button>
 
       {card ? (
-        <article className={`paper-card paper-card--${card.type} is-${card.validity} is-readonly`}>
-          <span className="paper-card__hole" aria-hidden="true" />
-          <header className="paper-card__head">
-            <p className="paper-card__kicker">
-              {CARD_TYPE_LABEL[card.type]} · 第 {card.revision} 版 · {formatDateTime(saved.savedAt)} 保存
+        <article className={`paper paper--${card.type} is-${card.validity} is-readonly`} aria-labelledby="arch-title">
+          {card.type === 'note' ? <span className="paper__hole" aria-hidden="true" /> : <span className="paper__perf" aria-hidden="true" />}
+          <header className="paper__head">
+            <p className="paper__kicker">
+              {CARD_TYPE_LABEL[card.type]} · {formatDateTime(saved.savedAt)} 留下
+              {card.serviceMode === 'mock' && ' · 演示生成'}
             </p>
-            <h3 className="paper-card__title">{card.title}</h3>
-            {card.validity !== 'confirmed' && <p className="callout callout--locked">{VALIDITY_META[card.validity].desc}。这里只保留历史记录，不能当作当前已确认结论。</p>}
+            <h3 id="arch-title" className="paper__title">
+              {card.title}
+            </h3>
+            {card.validity !== 'confirmed' && (
+              <p className="callout callout--faded">{VALIDITY_META[card.validity].desc}。这里只是历史记录，不当作现在有效的结论。</p>
+            )}
           </header>
-          <dl className="paper-card__sections">
-            {card.sections.map((s, i) => (
-              <div className="section" key={`${s.key}-${i}`}>
-                <dt className="section__label">{sectionLabel(s.key)}</dt>
-                <dd className="section__text">
-                  {s.text ? <span className="prewrap">{s.text}</span> : <span className="muted">（留空）</span>}
-                  {s.findingIds.length > 0 && (
-                    <div className="section__quotes">
-                      {s.findingIds
-                        .map((fid) => byId.get(fid))
-                        .flatMap((f) => f?.evidenceRefs ?? [])
-                        .map((r) => {
-                          const ev = viewEvidence(r, ctx);
-                          return <EvidenceQuote key={ev.key} ev={ev} />;
-                        })}
-                    </div>
-                  )}
-                </dd>
-              </div>
-            ))}
+          <dl className="paper__sections">
+            {card.sections.map((s, i) => {
+              const refs = s.findingIds.map((fid) => byId.get(fid)).flatMap((f) => f?.evidenceRefs ?? []);
+              return (
+                <div className="paper__section" key={`${s.key}-${i}`}>
+                  <dt className="paper__label">{sectionLabel(s.key)}</dt>
+                  <dd className="paper__text">
+                    {s.text ? <span className="prewrap">{s.text}</span> : <span className="muted">（留空）</span>}
+                    {refs.length > 0 && (
+                      <details className="basis">
+                        <summary>原话 {refs.length} 处</summary>
+                        <div className="basis__body">
+                          {refs.map((r) => {
+                            const ev = viewEvidence(r, ctx);
+                            return <EvidenceQuote key={ev.key} ev={ev} />;
+                          })}
+                        </div>
+                      </details>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
           </dl>
         </article>
       ) : (
@@ -240,7 +248,7 @@ function ArchiveDetail(props: ArchiveDetailProps) {
 
       {saved.confirmedPractice.length > 0 && (
         <section>
-          <h3 className="pane-section__title">练习提纲</h3>
+          <h3 className="archive__h">练过的题</h3>
           <ul className="practice-list">
             {saved.confirmedPractice.map((p) => (
               <li key={p.id}>
@@ -252,12 +260,12 @@ function ArchiveDetail(props: ArchiveDetailProps) {
         </section>
       )}
 
-      {older.length > 0 && (
-        <p className="small muted">还保存了更早的 {older.length} 个版本：{older.map((c) => `第 ${c.revision} 版`).join('、')}。</p>
-      )}
+      {older.length > 0 && <p className="small muted">还留着更早的 {older.length} 个版本：{older.map((c) => `第 ${c.revision} 版`).join('、')}。</p>}
 
-      <section className="next-choice" aria-label="接下来">
-        <h3 className="pane-section__title">今天想怎么用它？</h3>
+      <section className="next-choice" aria-labelledby="arch-next">
+        <h3 id="arch-next" className="archive__h">
+          今天想怎么用它？
+        </h3>
         <div className="next-choice__row">
           <button type="button" className="btn btn--primary" onClick={onResume}>
             <RotateCcw aria-hidden="true" /> 继续看这道题
@@ -270,15 +278,24 @@ function ArchiveDetail(props: ArchiveDetailProps) {
           </button>
         </div>
         <p className="small muted">
-          “继续看这道题”会开始一个新的对话，只带入这张卡片仍有效的来源摘录，先作为待核对材料
-          {sessionLive ? '；现在这次对话里没保存的内容不会带过去，会被清掉' : ''}。
+          “继续看这道题”会开始一次新的对话，只带入此前保存的有效原话摘录；旧卡片仍留在抽屉里
+          {sessionLive ? '；现在这次对话里没留下的内容不会带过去，会被清掉' : ''}。
         </p>
       </section>
 
-      <section className="danger-zone" aria-label="删除">
+      <section className="archive__tools" aria-label="导出与删除">
+        <div className="row gap-s wrap">
+          <span className="small muted">导出这一份：</span>
+          <button type="button" className="text-btn" onClick={() => downloadSavedCase(saved, 'md')}>
+            <FileDown aria-hidden="true" /> Markdown
+          </button>
+          <button type="button" className="text-btn" onClick={() => downloadSavedCase(saved, 'json')}>
+            <Braces aria-hidden="true" /> JSON 备份
+          </button>
+        </div>
         {confirmDelete ? (
-          <div className="inline-confirm" role="group" aria-label="确认删除">
-            <p>删除后，这份档案的所有版本、摘录和练习都会从本设备移除，不能撤销。已经导出的文件不受影响。</p>
+          <div className="inline-confirm inline-confirm--danger" role="group" aria-label="确认删除">
+            <p>删掉后，这一份的所有版本、原话和练习都会从这台设备上移除，不能撤销。已经导出的文件不受影响。</p>
             <div className="row gap-s">
               <button type="button" className="btn btn--danger" onClick={onDelete} disabled={deleting}>
                 {deleting ? <LoaderCircle aria-hidden="true" className="spin" /> : <Trash2 aria-hidden="true" />}
@@ -290,8 +307,8 @@ function ArchiveDetail(props: ArchiveDetailProps) {
             </div>
           </div>
         ) : (
-          <button type="button" className="btn btn--ghost btn--sm danger-text" onClick={onAskDelete}>
-            <Trash2 aria-hidden="true" /> 从本设备删除这份档案
+          <button type="button" className="text-btn text-btn--danger" onClick={onAskDelete}>
+            <Trash2 aria-hidden="true" /> 从这台设备删除这一份
           </button>
         )}
       </section>

@@ -30,7 +30,7 @@ export class RealProvider implements AgentProvider {
     let repair = '';
     for (let attempt = 0; attempt < 2; attempt++) {
       signal.throwIfAborted();
-      const system = systemPrompt(input.mode) + repair;
+      const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion) + repair;
       const anthropic = cfg.agentProtocol === 'anthropic';
       const body = anthropic ? { model: cfg.agentModel, max_tokens: 4096, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
         : { model: cfg.agentModel, max_tokens: 4096, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
@@ -53,7 +53,7 @@ export class RealProvider implements AgentProvider {
       const p = parsed.data;
       // Namespace all model ids to the current run, preventing collisions with earlier findings.
       const ids = new Map(p.findings.map(f => [f.id, `${input.runId}_${f.id}`]));
-      const candidate = candidateSchema.parse({ ...meta, assistantText: p.assistantText, findings: p.findings.map(f => ({ ...f, id: ids.get(f.id), validity: 'draft' })), warnings: p.warnings, supportGuidance: p.supportGuidance,
+      const candidate = candidateSchema.parse({ ...meta, assistantText: p.assistantText, findings: p.findings.map(f => ({ ...f, id: ids.get(f.id), validity: 'draft' })), warnings: p.warnings, supportGuidance: p.supportGuidance, ...(p.practiceSetup ? { practiceSetup: p.practiceSetup } : {}),
         ...(p.card ? { cardDraft: { ...p.card, sections: p.card.sections.map(s => ({ ...s, findingIds: s.findingIds.map(id => ids.get(id) ?? id) })), id: `${input.runId}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'real' } } : {}) });
       const errors = validateCandidate(candidate, input);
       if (!errors.length) return candidate;

@@ -41,12 +41,7 @@ export function Notices({ notice, error, clearNotice }: NoticesProps) {
           <div className="toast toast--error">
             <TriangleAlert aria-hidden="true" className="toast__icon" />
             <p className="toast__text">{error}</p>
-            <button
-              type="button"
-              className="icon-btn icon-btn--sm"
-              onClick={() => setHiddenError(error)}
-              aria-label="关闭错误提示"
-            >
+            <button type="button" className="icon-btn icon-btn--sm" onClick={() => setHiddenError(error)} aria-label="关闭错误提示">
               <X aria-hidden="true" />
             </button>
           </div>

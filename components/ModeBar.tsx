@@ -1,70 +1,109 @@
 'use client';
 
-import { BookOpenCheck, Paperclip, Target } from 'lucide-react';
+import { BookmarkPlus, MessageCircle, ScanText, Shuffle, SlidersHorizontal, Target } from 'lucide-react';
 import type { Mode } from '@/domain/types';
-import { MODE_META, MODE_ORDER } from './labels';
+import { DOING_META } from './labels';
+import type { AssistMode } from './vm';
 
 interface ModeBarProps {
   mode: Mode;
+  selectedQuestion: string;
+  practiceCriteria: string[];
   canAct: boolean;
   busy: boolean;
-  sourceCount: number;
-  pendingSources: number;
-  selectedQuestion: string;
-  onMode: (m: Mode) => void;
-  onStartReview: () => void;
-  onAddSource: () => void;
-  onOpenPractice: () => void;
+  /** Offers appear only after the user has said something — never on a first, plain vent. */
+  show: boolean;
+  hasCard: boolean;
+  onAssist: (mode: AssistMode) => void;
+  onBackToTalk: () => void;
+  onAdjustPractice: () => void;
 }
 
+const OFFERS: { mode: AssistMode; label: string; icon: typeof BookmarkPlus; hint: string }[] = [
+  { mode: 'organize', label: '留个记号', icon: BookmarkPlus, hint: '用你说过的话起一张小签，你来改' },
+  { mode: 'review', label: '看看那段回答', icon: ScanText, hint: '分开说清：你说过的、可能的解释、还不知道的' },
+  { mode: 'practice', label: '练一题', icon: Target, hint: '面包挑一道题直接问你，答完给有出处的反馈' },
+];
+
+/**
+ * Modes are internal. What surfaces is one line about what's happening now (with a way back),
+ * a ticket when practicing, and three small invitations.
+ */
 export function ModeBar(props: ModeBarProps) {
-  const { mode, canAct, busy, sourceCount, pendingSources, selectedQuestion, onMode, onStartReview, onAddSource, onOpenPractice } =
-    props;
+  const { mode, selectedQuestion, practiceCriteria, canAct, busy, show, hasCard, onAssist, onBackToTalk, onAdjustPractice } = props;
+  const practicing = mode === 'practice' && !!selectedQuestion;
+  const doing = DOING_META[mode];
 
   return (
     <div className="modebar">
-      <div className="modebar__chips" role="group" aria-label="今晚想做什么">
-        {MODE_ORDER.map((m) => (
-          <button
-            key={m}
-            type="button"
-            className={`mode-chip mode-chip--${m} ${mode === m ? 'is-on' : ''}`}
-            aria-pressed={mode === m}
-            onClick={() => onMode(m)}
-            disabled={!canAct}
-          >
-            <span className="mode-chip__notch" aria-hidden="true" />
-            {MODE_META[m].label}
-          </button>
-        ))}
-      </div>
-
-      <div className="modebar__line">
-        <p className="modebar__hint">{MODE_META[mode].hint}</p>
-
-        {mode === 'review' && canAct && (
-          <div className="modebar__actions">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onAddSource}>
-              <Paperclip aria-hidden="true" /> 放材料{sourceCount > 0 ? `（${sourceCount}）` : ''}
-            </button>
-            <button type="button" className="btn btn--quiet btn--sm" onClick={onStartReview} disabled={busy}>
-              <BookOpenCheck aria-hidden="true" /> 开始复盘
-            </button>
+      {practicing ? (
+        <section className="ticket" aria-labelledby="ticket-k">
+          <div className="ticket__main">
+            <p id="ticket-k" className="ticket__kicker">
+              <Target aria-hidden="true" /> 在练这一题
+            </p>
+            <p className="ticket__q">{selectedQuestion}</p>
+            {practiceCriteria.length > 0 && <p className="ticket__crit">这次留意：{practiceCriteria.join('、')}</p>}
           </div>
-        )}
-        {mode === 'practice' && canAct && (
-          <div className="modebar__actions">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onOpenPractice}>
-              <Target aria-hidden="true" /> {selectedQuestion ? '题目与维度' : '选一道题'}
-            </button>
-          </div>
-        )}
-      </div>
-      {mode === 'review' && pendingSources > 0 && (
-        <p className="modebar__note small">有 {pendingSources} 段材料还没确认归属，可以在“材料与依据”里确认。</p>
+          {canAct && (
+            <div className="ticket__actions">
+              <button type="button" className="pill" onClick={() => onAssist('practice')} disabled={busy}>
+                <Shuffle aria-hidden="true" /> 换一题
+              </button>
+              <button type="button" className="pill" onClick={onAdjustPractice} disabled={busy}>
+                <SlidersHorizontal aria-hidden="true" /> 调一调
+              </button>
+              <button type="button" className="pill" onClick={onBackToTalk} disabled={busy}>
+                <MessageCircle aria-hidden="true" /> 不练了
+              </button>
+            </div>
+          )}
+        </section>
+      ) : (
+        doing && (
+          <p className="doing">
+            <span className="doing__dot" aria-hidden="true" />
+            <span>{doing}</span>
+            {canAct && (
+              <button type="button" className="doing__back" onClick={onBackToTalk} disabled={busy}>
+                回到只是聊聊
+              </button>
+            )}
+          </p>
+        )
       )}
-      {mode === 'review' && sourceCount === 0 && (
-        <p className="modebar__note small">还没有材料也能开始，只是依据会很有限，结论里会标明。</p>
+
+      {show && canAct && !practicing && (
+        <div className="offers" role="group" aria-labelledby="offers-lead">
+          <span id="offers-lead" className="offers__lead">
+            想的话，也可以
+          </span>
+          {OFFERS.filter((o) => o.mode !== mode || (o.mode === 'organize' && hasCard)).map((o) => {
+            const Icon = o.icon;
+            const label = o.mode === 'organize' && hasCard ? '再整理一次记号' : o.label;
+            return (
+              <button
+                key={o.mode}
+                type="button"
+                className="offer"
+                onClick={() => onAssist(o.mode)}
+                disabled={busy}
+                title={o.hint}
+                aria-describedby={`offer-${o.mode}`}
+              >
+                <Icon aria-hidden="true" />
+                {label}
+              </button>
+            );
+          })}
+          <span className="sr-only">
+            {OFFERS.map((o) => (
+              <span key={o.mode} id={`offer-${o.mode}`}>
+                {o.hint}
+              </span>
+            ))}
+          </span>
+        </div>
       )}
     </div>
   );

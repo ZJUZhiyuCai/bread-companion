@@ -1,252 +1,173 @@
 'use client';
 
-import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
-import { BookmarkPlus, X } from 'lucide-react';
-import type { BreadViewModel } from '@/domain/view-model';
+import { useEffect, useRef } from 'react';
+import { BookmarkPlus, ScanText, X } from 'lucide-react';
+import type { Card } from '@/domain/types';
 import { CardView } from './CardView';
 import { FindingsSection } from './Findings';
-import { PracticeSetup } from './PracticeSetup';
 import { SourcesSection } from './Sources';
 import { useDomId } from './hooks';
 import type { EvidenceContext } from './labels';
+import type { AssistMode, BreadVM } from './vm';
 
-export type PanelTab = 'card' | 'material' | 'practice';
-
-const TABS: { key: PanelTab; label: string }[] = [
-  { key: 'card', label: '记号' },
-  { key: 'material', label: '材料与依据' },
-  { key: 'practice', label: '练一题' },
-];
+export type TraySection = 'card' | 'findings' | 'sources';
 
 interface WorkPanelProps {
-  vm: BreadViewModel;
+  vm: BreadVM;
+  /** 'aside' sits beside the conversation on wide screens; 'sheet' is rendered inside a bottom-sheet dialog. */
   variant: 'aside' | 'sheet';
-  tab: PanelTab;
-  setTab: (t: PanelTab) => void;
-  onClose: () => void;
-  /** Increment to move focus to the panel heading. */
-  focusToken: number;
-  sourceFormOpen: boolean;
-  setSourceFormOpen: (v: boolean) => void;
+  /** Bump `n` to scroll to and focus a section. */
+  target: { section: TraySection; n: number };
+  cardSaved: boolean;
+  /** Non-zero asks the card to open its editor; reset through onEditConsumed. */
+  editToken: number;
+  onEditConsumed: () => void;
   highlightSource: string | null;
+  onClose: () => void;
   onOpenSource: (id: string) => void;
-  practicePrefill: string | null;
-  onPracticeFromFinding: (q: string) => void;
   onRequestSave: () => void;
-  onRedo: () => void;
-  onAnswer: () => void;
-  onOrganize: () => void;
+  onRedo: (card: Card) => void;
+  onPractice: (question: string) => void;
+  onAssist: (mode: AssistMode) => void;
+  onAddMaterial: () => void;
 }
 
+/** The table: what's been put down tonight. One calm scroll instead of tabs. */
 export function WorkPanel(props: WorkPanelProps) {
-  const {
-    vm,
-    variant,
-    tab,
-    setTab,
-    onClose,
-    focusToken,
-    sourceFormOpen,
-    setSourceFormOpen,
-    highlightSource,
-    onOpenSource,
-    practicePrefill,
-    onPracticeFromFinding,
-    onRequestSave,
-    onRedo,
-    onAnswer,
-    onOrganize,
-  } = props;
+  const { vm, variant, target, cardSaved, editToken, onEditConsumed, highlightSource, onClose, onOpenSource, onRequestSave, onRedo, onPractice, onAssist, onAddMaterial } =
+    props;
   const { state, currentCard, capabilities, busy } = vm;
-  const id = useDomId('panel');
-  const headRef = useRef<HTMLHeadingElement>(null);
-  const tabRefs = useRef<Record<PanelTab, HTMLButtonElement | null>>({ card: null, material: null, practice: null });
+  const id = useDomId('tray');
   const canAct = state.lifecycle === 'active';
   const ctx: EvidenceContext = { sources: state.sources, snapshot: null };
-  const maxSource = capabilities?.limits.maxSourceChars ?? null;
+  const refs = useRef<Record<TraySection, HTMLHeadingElement | null>>({ card: null, findings: null, sources: null });
 
   useEffect(() => {
-    if (focusToken > 0) headRef.current?.focus();
-  }, [focusToken]);
+    if (target.n === 0) return;
+    // A highlighted source takes focus itself.
+    if (target.section === 'sources' && highlightSource) return;
+    const el = refs.current[target.section];
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    el.focus({ preventScroll: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target.n]);
 
-  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
-    let next = -1;
-    if (e.key === 'ArrowRight') next = (i + 1) % TABS.length;
-    if (e.key === 'ArrowLeft') next = (i - 1 + TABS.length) % TABS.length;
-    if (e.key === 'Home') next = 0;
-    if (e.key === 'End') next = TABS.length - 1;
-    if (next < 0) return;
-    e.preventDefault();
-    const t = TABS[next].key;
-    setTab(t);
-    tabRefs.current[t]?.focus();
-  };
+  const showFindings = state.findings.length > 0;
 
-  const pendingSources = state.sources.filter((s) => !s.confirmed).length;
-  const counts: Record<PanelTab, ReactNode> = {
-    card: currentCard ? (
-      <>
-        <span className={`tab-dot tab-dot--${currentCard.validity}`} aria-hidden="true" />
-        <span className="sr-only">（有卡片）</span>
-      </>
-    ) : null,
-    material:
-      state.sources.length + state.findings.length > 0 ? (
-        <span className="tab-count">
-          {state.sources.length + state.findings.length}
-          {pendingSources > 0 && <span className="sr-only">，{pendingSources} 段待确认</span>}
-        </span>
-      ) : null,
-    practice:
-      state.mode === 'practice' && state.selectedQuestion ? (
-        <>
-          <span className="tab-dot tab-dot--draft" aria-hidden="true" />
-          <span className="sr-only">（练习中）</span>
-        </>
-      ) : null,
-  };
+  const body = (
+    <>
+      <section className="tray__section" aria-labelledby={`${id}-card`}>
+        <h3
+          id={`${id}-card`}
+          className="tray__h"
+          tabIndex={-1}
+          ref={(el) => {
+            refs.current.card = el;
+          }}
+        >
+          卡片
+        </h3>
+        {currentCard ? (
+          <CardView
+            card={currentCard}
+            findings={state.findings}
+            ctx={ctx}
+            busy={busy}
+            saved={cardSaved}
+            editToken={editToken}
+            onEditConsumed={onEditConsumed}
+            onEdit={vm.editCard}
+            onRequestSave={onRequestSave}
+            onExport={vm.exportCard}
+            onRedo={() => onRedo(currentCard)}
+            onOpenSource={onOpenSource}
+          />
+        ) : (
+          <div className="tray-empty tray-empty--card">
+            <span className="tray-empty__tag" aria-hidden="true" />
+            <p>还没有卡片。想留的时候，面包会用你说过的话起个草稿，你来改。可以只有一行，也可以什么都不留。</p>
+            {canAct && (
+              <div className="row gap-s wrap">
+                <button type="button" className="btn btn--quiet btn--sm" onClick={() => onAssist('organize')} disabled={busy}>
+                  <BookmarkPlus aria-hidden="true" /> 留个记号
+                </button>
+                <button type="button" className="btn btn--ghost btn--sm" onClick={() => onAssist('review')} disabled={busy}>
+                  <ScanText aria-hidden="true" /> 看看那段回答
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
-  const suggestions = state.findings
-    .filter((f) => f.kind === 'practice_suggestion' && f.validity !== 'stale' && f.validity !== 'disputed')
-    .map((f) => f.text);
+      {showFindings && (
+        <section className="tray__section" aria-labelledby={`${id}-fd`}>
+          <h3
+            id={`${id}-fd`}
+            className="tray__h"
+            tabIndex={-1}
+            ref={(el) => {
+              refs.current.findings = el;
+            }}
+          >
+            面包看到的
+            <span className="tray__hint">分开放：你说过的、可能的解释、还不知道的</span>
+          </h3>
+          <FindingsSection
+            findings={state.findings}
+            ctx={ctx}
+            canAct={canAct}
+            onReject={vm.rejectFinding}
+            onPractice={onPractice}
+            onOpenSource={onOpenSource}
+          />
+        </section>
+      )}
 
-  const Wrapper = variant === 'sheet' ? 'section' : 'aside';
+      <section className="tray__section" aria-labelledby={`${id}-src`}>
+        <h3
+          id={`${id}-src`}
+          className="tray__h"
+          tabIndex={-1}
+          ref={(el) => {
+            refs.current.sources = el;
+          }}
+        >
+          你放进来的材料
+        </h3>
+        <SourcesSection
+          sources={state.sources}
+          canAct={canAct}
+          maxChars={capabilities?.limits.maxSourceChars ?? null}
+          highlightId={highlightSource}
+          onAdd={onAddMaterial}
+          onCorrect={vm.correctSource}
+          onConfirm={vm.confirmSource}
+        />
+      </section>
+    </>
+  );
+
+  if (variant === 'sheet') return <div className="tray tray--sheet">{body}</div>;
 
   return (
-    <Wrapper
-      className={`panel panel--${variant}`}
-      aria-labelledby={`${id}-h`}
-      {...(variant === 'sheet' ? { role: 'dialog', 'aria-modal': false } : {})}
-      onKeyDown={(e) => {
-        if (variant === 'sheet' && e.key === 'Escape' && !e.nativeEvent.isComposing) {
-          e.preventDefault();
-          e.stopPropagation();
-          onClose();
-        }
-      }}
-    >
-      <header className="panel__head">
-        <h2 id={`${id}-h`} ref={headRef} tabIndex={-1} className="panel__title">
-          今晚的材料
-          <span className="panel__sub">只在这次会话里，结束后不会自动保留</span>
-        </h2>
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="收起今晚的材料">
+    <aside className="tray tray--aside" aria-labelledby={`${id}-title`}>
+      <header className="tray__head">
+        <div>
+          <h2 id={`${id}-title`} className="tray__title">
+            今晚的卡片与材料
+          </h2>
+          <p className="tray__sub">只在这次对话里。你选“留下”的，才会存到这台设备。</p>
+        </div>
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="收起卡片与材料">
           <X aria-hidden="true" />
         </button>
       </header>
-
-      <div role="tablist" aria-label="今晚的材料" className="tabs">
-        {TABS.map((t, i) => (
-          <button
-            key={t.key}
-            ref={(el) => {
-              tabRefs.current[t.key] = el;
-            }}
-            role="tab"
-            type="button"
-            id={`${id}-tab-${t.key}`}
-            aria-selected={tab === t.key}
-            aria-controls={`${id}-pane-${t.key}`}
-            tabIndex={tab === t.key ? 0 : -1}
-            className={`tab ${tab === t.key ? 'is-on' : ''}`}
-            onClick={() => setTab(t.key)}
-            onKeyDown={(e) => onTabKey(e, i)}
-          >
-            {t.label}
-            {counts[t.key]}
-          </button>
-        ))}
+      {/* focusable so keyboard users can scroll it */}
+      <div className="tray__body" tabIndex={0}>
+        {body}
       </div>
-
-      <div
-        role="tabpanel"
-        id={`${id}-pane-${tab}`}
-        aria-labelledby={`${id}-tab-${tab}`}
-        className="panel__body"
-        tabIndex={0}
-      >
-        {tab === 'card' &&
-          (currentCard ? (
-            <CardView
-              card={currentCard}
-              findings={state.findings}
-              ctx={ctx}
-              busy={busy}
-              onEdit={vm.editCard}
-              onConfirm={vm.confirmCard}
-              onRequestSave={onRequestSave}
-              onExport={vm.exportCard}
-              onRedo={onRedo}
-              onOpenSource={onOpenSource}
-            />
-          ) : (
-            <div className="empty-card">
-              <div className="empty-card__tag" aria-hidden="true">
-                <span />
-              </div>
-              <p>还没有卡片。</p>
-              <p className="muted small">
-                “留个记号”会把你在意的一件事、以后想再看的问题、目前不知道的事整理成一张小卡片。可以只有一条，也可以什么都不留。
-              </p>
-              {canAct && state.mode !== 'organize' && (
-                <button type="button" className="btn btn--quiet" onClick={onOrganize} disabled={busy}>
-                  <BookmarkPlus aria-hidden="true" /> 留个记号
-                </button>
-              )}
-              {state.mode === 'organize' && (
-                <p className="small">已在“留个记号”模式。先说几句或放一段材料，面包会整理出候选。</p>
-              )}
-            </div>
-          ))}
-
-        {tab === 'material' && (
-          <>
-            <section className="pane-section" aria-labelledby={`${id}-src`}>
-              <h3 id={`${id}-src`} className="pane-section__title">
-                材料
-              </h3>
-              <SourcesSection
-                sources={state.sources}
-                canAct={canAct}
-                maxChars={maxSource}
-                formOpen={sourceFormOpen}
-                setFormOpen={setSourceFormOpen}
-                highlightId={highlightSource}
-                onAdd={vm.addSource}
-                onCorrect={vm.correctSource}
-                onConfirm={vm.confirmSource}
-              />
-            </section>
-            <section className="pane-section" aria-labelledby={`${id}-fd`}>
-              <h3 id={`${id}-fd`} className="pane-section__title">
-                分析：事实、推断、未知
-              </h3>
-              <FindingsSection
-                findings={state.findings}
-                ctx={ctx}
-                canAct={canAct}
-                onReject={vm.rejectFinding}
-                onPractice={onPracticeFromFinding}
-                onOpenSource={onOpenSource}
-              />
-            </section>
-          </>
-        )}
-
-        {tab === 'practice' && (
-          <PracticeSetup
-            active={state.mode === 'practice'}
-            selectedQuestion={state.selectedQuestion}
-            practiceCriteria={state.practiceCriteria}
-            suggestions={suggestions}
-            prefill={practicePrefill}
-            canAct={canAct}
-            busy={busy}
-            onStart={vm.setPractice}
-            onAnswer={onAnswer}
-          />
-        )}
-      </div>
-    </Wrapper>
+    </aside>
   );
 }

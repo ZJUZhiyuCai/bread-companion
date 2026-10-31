@@ -3,7 +3,7 @@ import type { Activity, Card, EndSnapshot, Mode, Origin, RunToken, SavedCase, So
 import { candidateSchema, sourceSchema, turnRequestSchema } from '@/domain/schemas';
 import { buildTurn } from '@/domain/context-builder';
 import { cardCanConfirm, refKey, validateCandidate } from '@/domain/evidence';
-import { explicitIntent } from '@/domain/policy';
+import { explicitIntent, isActionOnly } from '@/domain/policy';
 import { currentCard, initialState, isCurrent, makeEndSnapshot, reducer, uid, type Event } from '@/domain/reducer';
 import { deleteSavedCase, fromSnapshot, invalidateSaved, listSaved, MAX_IMPORT_BYTES, parseImport, saveArchive, validateArchive } from './card-store';
 import { downloadArchive } from './export';
@@ -28,7 +28,7 @@ export class BreadController {
   private dispatch(event: Event) { this.state = reducer(this.state, event); this.publish(); }
   private buildView(): BreadViewModel {
     return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds,
-      busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice };
+      busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice };
   }
   async initialize() {
     this.disposed = false;
@@ -42,7 +42,7 @@ export class BreadController {
   clearNotice = () => { this.notice = ''; this.error = ''; this.publish(); };
   start = (mode: Mode = 'listen', welcome = false) => {
     if (this.state.lifecycle !== 'active') return;
-    this.dispatch({ type: 'START', mode, welcome: welcome ? WELCOME : mode === 'listen' ? '想从哪里说起都可以。' : '我们就从一段真实回答开始。可以先添加岗位类别和当时的原话，核对后再复盘。' });
+    this.dispatch({ type: 'START', mode, welcome: welcome ? WELCOME : mode === 'listen' ? '想从哪里说起都可以。' : '可以直接说说面试里让你挂心的片段，或贴一段当时的回答。我来帮你理一理。' });
   };
   stop = () => { this.dispatch({ type: 'STOP' }); this.cancelResources(); this.publish(); };
   end = () => { this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
@@ -58,14 +58,17 @@ export class BreadController {
     const intent = explicitIntent(text);
     if (intent === 'stop') { this.stop(); return; } if (intent === 'end') { this.end(); return; }
     if (text.length > 4000) { this.fail(new Error('每次最多发送 4,000 个字符，可以分几段说。')); return; }
-    if (intent) { this.dispatch({ type: 'MODE', mode: intent }); this.cancelResources(); }
+    if (!this.state.started) this.start(intent || this.state.mode);
+    if (intent) { this.dispatch(intent === 'practice' ? { type: 'PREPARE_PRACTICE' } : { type: 'MODE', mode: intent }); this.cancelResources(); }
     else if (this.view.busy || this.state.activity === 'recorded') { this.fail(new Error('请先停止当前操作，或处理已录好的片段。')); return; }
-    if (this.state.mode === 'practice' && (!this.state.selectedQuestion || !this.state.practiceCriteria.length)) { this.fail(new Error('先选择一道题和一到两个练习维度，再发送回答。')); return; }
-    if (!this.state.started) this.start();
     this.error = '';
-    const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: intent ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
+    const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
     this.dispatch({ type: 'USER', text, source });
     await this.requestTurn(text);
+  };
+  assist = async (mode: Exclude<Mode, 'listen'>) => {
+    const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。' };
+    await this.send(requests[mode]);
   };
   private async requestTurn(text: string) {
     if (this.state.lifecycle !== 'active') return;
@@ -73,7 +76,7 @@ export class BreadController {
     this.dispatch({ type: 'RUN', runId: token.runId, activity: 'generating' });
     const request = buildTurn(this.state, text, token.runId, uid('request'));
     try {
-      const validated = turnRequestSchema.safeParse(request); if (!validated.success) throw new Error('请检查材料长度，并为练习选择问题和维度。');
+      const validated = turnRequestSchema.safeParse(request); if (!validated.success) throw new Error('这段内容有点长，可以分几段发送。');
       const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
       const json = await res.json(); if (!isCurrent(this.state, token) || signal.aborted) return;
       if (!res.ok) throw new Error(json.error?.userMessage || '回复没有完成，可以稍后重试。');
@@ -84,6 +87,14 @@ export class BreadController {
       this.dispatch({ type: 'CANDIDATE', candidate });
     } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) { this.dispatch({ type: 'FINISH', token, activity: 'error' }); this.fail(e); } }
   }
+  addMaterial = (text: string) => {
+    if (this.state.lifecycle !== 'active') return false;
+    const source = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin: 'user_recollection', label: `粘贴的材料 ${this.state.sources.filter(s => s.label.startsWith('粘贴的材料')).length + 1}`, text: text.trim(), confirmed: true });
+    if (!source.success) { this.fail(new Error('可以粘贴 1—20,000 字符的片段。')); return false; }
+    if (this.state.sources.length >= 24) { this.fail(new Error('这次已有不少材料了，可以先留下卡片，再开始新的会话。')); return false; }
+    this.dispatch({ type: 'ADD_SOURCE', source: source.data }); this.cancelResources();
+    this.notice = '材料收到了。你可以直接说想一起看看什么。'; this.error = ''; this.publish(); return true;
+  };
   addSource = (text: string, origin: Origin, label: string) => {
     if (this.state.lifecycle !== 'active') return;
     const s = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin, label: label.trim() || '补充材料', text: text.trim(), confirmed: false });
@@ -93,12 +104,14 @@ export class BreadController {
   };
   correctSource = (id: string, text: string) => {
     if (this.state.lifecycle !== 'active' || !text.trim() || text.length > 20000) return;
+    const previousRevision = this.state.sources.find(s => s.id === id)?.revision;
+    if (previousRevision === undefined) return;
     if (this.state.messages.some(m => m.sourceId === id) && text.length > 4000) { this.fail(new Error('聊天原话最多 4,000 字符，较长材料可另行添加。')); return; }
     this.artifactVersion++;
     const caseId = this.state.caseId;
     this.dispatch({ type: 'CORRECT_SOURCE', id, text: text.trim() }); this.cancelResources();
-    this.notice = '来源已更新，相关旧分析已失效。核对并确认来源后，可以重新整理。'; this.publish();
-    void invalidateSaved(caseId, id).then(this.refreshSaved).catch(e => this.fail(e));
+    this.notice = '原话改好了，旧的整理也已作废。需要时我可以根据新内容重新整理。'; this.publish();
+    void invalidateSaved(caseId, id, undefined, previousRevision).then(this.refreshSaved).catch(e => this.fail(e));
   };
   confirmSource = (id: string) => { this.dispatch({ type: 'CONFIRM_SOURCE', id }); this.cancelResources(); this.publish(); };
   rejectFinding = (id: string) => {
@@ -120,9 +133,19 @@ export class BreadController {
     if (!snapshot) throw new Error('请先确认当前有效的卡片，再保存或导出。');
     return structuredClone(snapshot);
   }
+  private acceptDisplayedCard() {
+    const card = currentCard(this.state);
+    // Saving or exporting the displayed version accepts its wording, not its external truth.
+    if (this.state.lifecycle === 'active' && card?.validity === 'draft') {
+      if (!cardCanConfirm(card, this.state.findings, this.state.sources)) throw new Error('这张卡片的来源已变化，请重新整理后再留下。');
+      this.dispatch({ type: 'CONFIRM_CARD' });
+    }
+    if (this.state.lifecycle === 'ended' && card?.validity === 'draft') this.dispatch({ type: 'CONFIRM_END_CARD' });
+  }
   saveCard = async () => {
     this.error = ''; this.notice = ''; this.publish();
     try {
+      this.acceptDisplayedCard();
       const snapshot = this.selectedSnapshot(); const selected = fromSnapshot(snapshot);
       const artifactVersion = this.artifactVersion;
       const sourceVersions = snapshot.evidence.map(e => [e.sourceId, e.sourceRevision] as const);
@@ -136,7 +159,7 @@ export class BreadController {
       this.notice = `已保存版本 ${snapshot.card.revision} 到本设备的当前浏览器。`; this.error = ''; await this.refreshSaved(); this.publish();
     } catch (e) { this.fail(e, '保存未完成。卡片仍在，可以重试或导出。'); }
   };
-  exportCard = (format: 'md' | 'json') => { try { downloadArchive(fromSnapshot(this.selectedSnapshot()), format); this.notice = '已生成下载文件，请在浏览器下载列表查看。'; this.publish(); } catch (e) { this.fail(e); } };
+  exportCard = (format: 'md' | 'json') => { try { this.acceptDisplayedCard(); downloadArchive(fromSnapshot(this.selectedSnapshot()), format); this.notice = '已生成下载文件，请在浏览器下载列表查看。'; this.publish(); } catch (e) { this.fail(e); } };
   refreshSaved = async () => { try { const cases = await listSaved(); if (!this.disposed) { this.savedCases = cases; this.publish(); } } catch (e) { if (!this.disposed) this.fail(e); } };
   deleteSaved = async (caseId: string) => {
     // Invalidate in-memory snapshots synchronously so pending export/save cannot resurrect a deleted case.
@@ -152,14 +175,14 @@ export class BreadController {
       this.artifactVersion++;
       this.stop(); const state = initialState(); state.started = true; state.mode = 'listen';
       const evidence = saved.selectedEvidence.filter(e => saved.findings.some(f => f.validity === 'confirmed' && f.evidenceRefs.some(r => refKey(r) === refKey(e))));
-      state.sources = evidence.map(e => ({ id: uid('source'), revision: 1, origin: e.origin, label: '从已保存卡片带入的摘录', text: e.quote, confirmed: false }));
-      state.messages = [{ id: uid('message'), role: 'assistant', text: '这是一次新的临时会话，只带入你保存的来源摘录，先作为待核对材料。可以继续看一道题，也可以聊别的，或暂时不看。' }];
+      state.sources = evidence.map(e => ({ id: uid('source'), revision: 1, origin: e.origin, label: '从已保存卡片带入的摘录', text: e.quote, confirmed: true }));
+      state.messages = [{ id: uid('message'), role: 'assistant', text: '之前留下的那几句原话，已经带过来了。想接着聊、练一道题，或者说点新的，都可以。' }];
       this.notice = '已打开新的临时会话；旧存档仍保留。'; this.error = ''; this.transcriptDraft = ''; this.dispatch({ type: 'REPLACE', state });
     } catch (e) { this.fail(e); }
   };
   setPractice = (question: string, criteria: string[]) => {
-    if (!question.trim() || question.length > 1000 || !criteria.length || criteria.length > 2 || criteria.some(c => !c.trim() || c.length > 100)) { this.fail(new Error('请选定一道题和一到两个练习维度。')); return; }
-    this.dispatch({ type: 'PRACTICE', question: question.trim(), criteria }); this.cancelResources(); this.publish();
+    if (!question.trim() || question.length > 1000 || criteria.length > 2 || criteria.some(c => !c.trim() || c.length > 100)) { this.fail(new Error('请选定一道题和一到两个练习维度。')); return; }
+    this.dispatch({ type: 'PRACTICE', question: question.trim(), criteria: criteria.length ? criteria : ['把自己的思路说具体'] }); this.cancelResources(); this.publish();
   };
   startRecording = async () => {
     if (this.state.lifecycle !== 'active') return;

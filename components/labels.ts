@@ -6,90 +6,77 @@ import type {
   Finding,
   Mode,
   Origin,
+  SavedCase,
   Source,
   Validity,
 } from '@/domain/types';
 
 export type AvatarState = Activity | 'ended';
 
-export const MODE_ORDER: Mode[] = ['listen', 'organize', 'review', 'practice'];
-
-export const MODE_META: Record<Mode, { label: string; hint: string; placeholder: string }> = {
-  listen: {
-    label: '倾听',
-    hint: '只回应你说出来的内容，不做评价。想停随时停。',
-    placeholder: '想说什么都可以。比如：“刚收到拒信……”',
-  },
-  organize: {
-    label: '留个记号',
-    hint: '把你在意的事整理成一张记号卡。确认的是你的表述，不是拒绝原因。',
-    placeholder: '还有想放进记号里的吗？',
-  },
-  review: {
-    label: '复盘',
-    hint: '材料原文、你的回忆、推断和未知会分开列出。点“开始复盘”才会分析。',
-    placeholder: '可以补充当时的情况，或者直接点“开始复盘”',
-  },
-  practice: {
-    label: '练一题',
-    hint: '围绕一道题练一次，只用你真实提供的经历，缺的部分会留空。',
-    placeholder: '写下你这一次的回答，发送后得到反馈',
-  },
-};
-
+/** What the loaf says it is doing. Plain text, so state never depends on color or animation alone. */
 export const ACTIVITY_META: Record<AvatarState, { label: string; detail: string }> = {
-  idle: { label: '等待中', detail: '没有在录音，也没有在生成' },
-  requesting_mic: { label: '等待麦克风授权', detail: '请在浏览器弹窗里选择是否允许' },
-  recording: { label: '正在录音', detail: '只录你点击之后的这一段' },
-  recorded: { label: '录音已到上限', detail: '已经停止录音，等你决定转写还是放弃' },
-  transcribing: { label: '正在转写', detail: '转写结果会先给你修改' },
-  generating: { label: '正在整理', detail: '结果核对后才会显示' },
-  validating: { label: '正在核对', detail: '检查引用和格式' },
-  speaking: { label: '正在说', detail: '点停止可以随时打断' },
-  paused: { label: '已暂停', detail: '可以继续说，或者结束' },
-  error: { label: '出了点问题', detail: '文字输入仍然可用' },
+  idle: { label: '在这儿', detail: '没有在录音，也没有在生成' },
+  requesting_mic: { label: '等你允许麦克风', detail: '在浏览器弹窗里选择；不允许就不会录' },
+  recording: { label: '在录这一段', detail: '只录你点击之后的这一段' },
+  recorded: { label: '录满了，先停下了', detail: '已录的部分还在，等你决定' },
+  transcribing: { label: '在把录音转成字', detail: '转好先给你改，不会自动发出' },
+  generating: { label: '在想', detail: '想好、核对过才会一起给你' },
+  validating: { label: '在核对', detail: '检查引用和格式' },
+  speaking: { label: '在念给你听', detail: '点“停止”随时打断' },
+  paused: { label: '停下了', detail: '想继续就接着说' },
+  error: { label: '出了点小问题', detail: '文字还可以照常用' },
   ended: { label: '已结束', detail: '不再录音、生成或播放' },
 };
 
-export const ORIGIN_ORDER: Origin[] = ['source_quote', 'user_recollection', 'explicit_feedback'];
+export const WORKING_STATES: AvatarState[] = [
+  'requesting_mic',
+  'recording',
+  'recorded',
+  'transcribing',
+  'generating',
+  'validating',
+  'speaking',
+];
 
-export const ORIGIN_META: Record<Origin, { label: string; desc: string; example: string }> = {
-  source_quote: {
-    label: '材料原文',
-    desc: '粘贴的材料里确实有的原话，比如岗位描述、笔记',
-    example: '比如：岗位描述里的要求',
-  },
-  user_recollection: {
-    label: '我的回忆',
-    desc: '你记得的当时情况，不等于完整记录',
-    example: '比如：我对 benchmark 那道题的回答',
-  },
-  explicit_feedback: {
-    label: '明确反馈',
-    desc: '拒信或面试官明确说过的话，不一定是全部原因',
-    example: '比如：拒信原文',
-  },
+/**
+ * A modal makes the page behind it inert, including 停止. Things that shouldn't keep going out of reach
+ * (microphone, transcription, generation or audio) are stopped first.
+ */
+export const STOP_BEFORE_MODAL: AvatarState[] = [...WORKING_STATES];
+
+/** The single line shown when the agent is doing something other than just talking. */
+export const DOING_META: Record<Mode, string | null> = {
+  listen: null,
+  organize: '在把你说过的话留成一张记号',
+  review: '在一起看那段回答',
+  practice: '在练一题',
+};
+
+export const ORIGIN_META: Record<Origin, { label: string; desc: string }> = {
+  source_quote: { label: '你放进来的材料', desc: '你粘贴的原文。确实是你提交的文字，不代表外部事实已核实' },
+  user_recollection: { label: '你的回忆', desc: '你记得的当时情况，不等于完整记录' },
+  explicit_feedback: { label: '明确反馈', desc: '拒信或面试官明确说过的话，不一定是全部原因' },
 };
 
 export const VALIDITY_META: Record<Validity, { label: string; desc: string }> = {
-  draft: { label: '草稿', desc: '还没确认，可以改字或删掉条目' },
-  confirmed: { label: '已确认', desc: '你认可了这一版的表述' },
-  stale: { label: '已过期', desc: '它依赖的材料被修正过，需要重新整理' },
-  disputed: { label: '有异议', desc: '你不认同其中的推断，需要重新整理' },
+  draft: { label: '草稿 · 可以改', desc: '还没留下，可以改字或删掉一栏' },
+  confirmed: { label: '已确认', desc: '你认可了这一版的写法' },
+  stale: { label: '需要重新整理', desc: '它用到的材料被你改过了' },
+  disputed: { label: '需要重新整理', desc: '你不认同其中一条' },
 };
 
 export const KIND_ORDER: Finding['kind'][] = ['reported_fact', 'inference', 'unknown', 'practice_suggestion'];
 
 export const KIND_META: Record<Finding['kind'], { label: string; desc: string }> = {
-  reported_fact: { label: '你提供的事实', desc: '来自你的材料或回忆' },
-  inference: { label: '推断', desc: '可能的解释，不是定论' },
-  unknown: { label: '未知', desc: '现有信息回答不了，不替招聘方下结论' },
-  practice_suggestion: { label: '练习建议', desc: '可以练的方向，依据见下方摘录' },
+  reported_fact: { label: '你说过的 / 材料里有的', desc: '来自你的话或你放进来的材料' },
+  inference: { label: '可能的解释', desc: '只是一种看法，不是定论' },
+  unknown: { label: '还不知道的', desc: '现有信息回答不了，不替招聘方下结论' },
+  practice_suggestion: { label: '可以练的', desc: '一个能练的小地方' },
 };
 
 export const CARD_TYPE_LABEL: Record<Card['type'], string> = {
-  note: '记号卡',
-  review: '复盘卡',
+  note: '记号',
+  review: '复盘小票',
 };
 
 const SECTION_ALIASES: [string[], string][] = [
@@ -132,6 +119,21 @@ export function formatBytes(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${bytes} B`;
+}
+
+export function isLocked(v: Validity): boolean {
+  return v === 'stale' || v === 'disputed';
+}
+
+/** Has this exact card version reached the local archive? Only a real saved record counts. */
+export function isCardSaved(card: Card | null, saved: SavedCase[]): boolean {
+  if (!card || isLocked(card.validity)) return false;
+  return saved.some((c) => c.caseId === card.caseId && c.cards.some((k) => k.id === card.id && k.revision === card.revision && k.validity === 'confirmed' && k.title === card.title && JSON.stringify(k.sections) === JSON.stringify(card.sections)));
+}
+
+export function latestCard(c: SavedCase): Card | null {
+  if (c.cards.length === 0) return null;
+  return [...c.cards].sort((a, b) => b.revision - a.revision)[0];
 }
 
 /** Findings referenced by the card's sections, in section order, without duplicates. */
@@ -202,7 +204,7 @@ export function viewEvidence(ref: EvidenceRef, ctx: EvidenceContext): EvidenceVi
     ...base,
     origin: src?.origin ?? null,
     confirmed: src?.confirmed ?? null,
-    label: src?.label || (src ? ORIGIN_META[src.origin].label : '已不在本次会话的材料'),
+    label: src?.label || (src ? ORIGIN_META[src.origin].label : '已不在这次对话里的材料'),
     outdated: !!src && src.revision !== ref.sourceRevision,
     missing: !src,
   };

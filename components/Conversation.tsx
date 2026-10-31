@@ -1,37 +1,18 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ArrowRight, LoaderCircle, Paperclip, Square, Volume2 } from 'lucide-react';
-import type { Card, Message, Mode } from '@/domain/types';
+import { HeartHandshake, LoaderCircle, Paperclip, Square, Volume2 } from 'lucide-react';
+import type { Card, Message } from '@/domain/types';
+import { CardSlip } from './CardView';
 import { StateAvatar } from './StateAvatar';
 import { useReducedMotion } from './hooks';
-import { CARD_TYPE_LABEL, VALIDITY_META, type AvatarState } from './labels';
-
-const EMPTY_PROMPT: Record<Mode, { title: string; body: string }> = {
-  listen: {
-    title: '想从哪里说起都可以。',
-    body: '可以是这次面试，也可以只是现在的感受。不需要公司名，也不用先整理好。',
-  },
-  organize: {
-    title: '想留一个以后再看的记号。',
-    body: '先说说你最在意的那件事。面包会整理成一张小卡片，由你来改字和确认。',
-  },
-  review: {
-    title: '来看一道题。',
-    body: '先放一段你愿意讨论的材料：你记得的回答、拒信原文或岗位描述片段。准备好了点“开始复盘”。',
-  },
-  practice: {
-    title: '练一题。',
-    body: '在“练一题”里选好题目和一到两个关注点，然后在这里回答。',
-  },
-};
 
 interface ConversationProps {
   messages: Message[];
-  mode: Mode;
-  avatarState: AvatarState;
-  thinking: boolean;
   welcomeIntent: boolean;
+  reviewIntent: boolean;
+  supportGuidance: boolean;
+  thinking: boolean;
   ttsAvailable: boolean | null;
   ttsReason?: string;
   canPlay: boolean;
@@ -42,17 +23,21 @@ interface ConversationProps {
   onStop: () => void;
   onOpenSource: (id: string) => void;
   card: Card | null;
-  showCardSlip: boolean;
+  cardSaved: boolean;
   onOpenCard: () => void;
+  onSaveCard: () => void;
+  onRedoCard: (card: Card) => void;
+  busy: boolean;
+  canAct: boolean;
 }
 
 export function Conversation(props: ConversationProps) {
   const {
     messages,
-    mode,
-    avatarState,
-    thinking,
     welcomeIntent,
+    reviewIntent,
+    supportGuidance,
+    thinking,
     ttsAvailable,
     ttsReason,
     canPlay,
@@ -63,8 +48,12 @@ export function Conversation(props: ConversationProps) {
     onStop,
     onOpenSource,
     card,
-    showCardSlip,
+    cardSaved,
     onOpenCard,
+    onSaveCard,
+    onRedoCard,
+    busy,
+    canAct,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -75,128 +64,155 @@ export function Conversation(props: ConversationProps) {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+      stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 140;
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
+  const cardKey = card ? `${card.id}:${card.revision}:${card.validity}` : '';
   useEffect(() => {
     if (stickToBottom.current) endRef.current?.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' });
-  }, [messages.length, thinking, showCardSlip, reduced]);
+  }, [messages.length, thinking, cardKey, reduced]);
 
   const firstAssistantId = messages.find((m) => m.role === 'assistant')?.id;
-  const empty = EMPTY_PROMPT[mode];
 
   return (
     <div className="conversation" ref={scrollRef}>
       <div className="conversation__inner">
+        <p className="conv-opening">
+          <span className="conv-opening__line" aria-hidden="true" />
+          <span>
+            今晚的对话从这里开始。面包是 AI，不是真人，也没有人在后台看着；这些话默认不会保存。
+          </span>
+          <span className="conv-opening__line" aria-hidden="true" />
+        </p>
+
+        {supportGuidance && (
+          <section className="support" aria-labelledby="support-h">
+            <HeartHandshake aria-hidden="true" className="support__icon" />
+            <div>
+              <h2 id="support-h" className="support__title">
+                先把面试放一放。
+              </h2>
+              <p>如果你现在可能伤害自己，请先联系一位你信任的人陪着你；如果危险就在眼前，请联系当地的急救或紧急服务。</p>
+              <p className="small muted">面包是一个程序，不能代替真人或专业帮助，也不会替你联系任何人。停止、结束随时都可以用。</p>
+            </div>
+          </section>
+        )}
+
         {messages.length === 0 && !thinking && (
           <div className="conv-empty">
-            <StateAvatar state={avatarState} size="lg" />
-            <p className="conv-empty__title">{empty.title}</p>
-            <p className="conv-empty__body">{empty.body}</p>
+            <StateAvatar state="idle" size="lg" decorative />
+            <p className="conv-empty__title">{reviewIntent ? '我们一起看看那一段。' : '想从哪里说起都可以。'}</p>
+            <p className="conv-empty__body">
+              {reviewIntent
+                ? '你记得的回答、拒信原文、岗位描述都可以，直接说或者粘贴进来。'
+                : '可以是这次面试，也可以只是现在的感受。不用说公司名，也不用先想清楚。'}
+            </p>
           </div>
         )}
 
         <div role="log" aria-label="对话" aria-live="polite" aria-relevant="additions">
-        <ol className="messages">
-          {messages.map((m) => {
-            if (m.role === 'user') {
+          <ol className="messages">
+            {messages.map((m) => {
+              if (m.role === 'user') {
+                return (
+                  <li key={m.id} className="msg msg--user">
+                    <div className="msg__note">
+                      <span className="sr-only">你说：</span>
+                      <p className="msg__text">{m.text}</p>
+                      {m.sourceId && (
+                        <button type="button" className="msg__source" onClick={() => onOpenSource(m.sourceId!)}>
+                          <Paperclip aria-hidden="true" /> 已放进材料 · 看看
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              }
+              const isWelcome = welcomeIntent && m.id === firstAssistantId;
+              const speakingThis = isSpeaking && speakingId === m.id;
+              const pendingThis = speakPendingId === m.id && !speakingThis;
               return (
-                <li key={m.id} className="msg msg--user">
+                <li key={m.id} className={`msg msg--bread ${isWelcome ? 'msg--welcome' : ''} ${speakingThis ? 'is-speaking' : ''}`}>
+                  <span className="msg__mark" aria-hidden="true">
+                    <StateAvatar state={speakingThis ? 'speaking' : 'idle'} size="xs" decorative />
+                  </span>
                   <div className="msg__body">
-                    <span className="sr-only">你说：</span>
+                    <span className="sr-only">面包说：</span>
+                    {isWelcome && <p className="msg__kicker">给你的一小段话</p>}
                     <p className="msg__text">{m.text}</p>
-                    {m.sourceId && (
-                      <button type="button" className="msg__source link-btn" onClick={() => onOpenSource(m.sourceId!)}>
-                        <Paperclip aria-hidden="true" /> 已放进材料，查看
-                      </button>
+                    <div className="msg__meta">
+                      {m.serviceMode === 'mock' && <span className="tag tag--mock">演示回复</span>}
+                      {canPlay &&
+                        (speakingThis ? (
+                          <button type="button" className="pill pill--stop" onClick={onStop} aria-label="停止播放">
+                            <Square aria-hidden="true" /> 停
+                            <span className="sr-only">止播放</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={`pill ${isWelcome ? 'pill--warm' : ''}`}
+                            onClick={() => onSpeak(m.id, m.text)}
+                            disabled={!!speakPendingId || isSpeaking}
+                            aria-label={isWelcome ? '播放这段话' : '念给我听'}
+                          >
+                            {pendingThis ? (
+                              <>
+                                <LoaderCircle aria-hidden="true" className="spin" /> 准备声音…
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 aria-hidden="true" /> 听
+                              </>
+                            )}
+                          </button>
+                        ))}
+                      {speakingThis && <span className="msg__caption">正在念，上面的文字就是字幕</span>}
+                    </div>
+                    {isWelcome && (
+                      <p className="msg__after">
+                        {ttsAvailable === false && `现在没有语音播报${ttsReason ? `（${ttsReason}）` : ''}，读文字就好。`}
+                        听完想说就说，不想说，点右上角“结束”也完全可以。
+                      </p>
                     )}
                   </div>
                 </li>
               );
-            }
-            const isWelcome = welcomeIntent && m.id === firstAssistantId;
-            const speakingThis = isSpeaking && speakingId === m.id;
-            const pendingThis = speakPendingId === m.id && !speakingThis;
-            return (
-              <li
-                key={m.id}
-                className={`msg msg--assistant ${isWelcome ? 'msg--welcome' : ''} ${speakingThis ? 'is-speaking' : ''}`}
-              >
+            })}
+            {thinking && (
+              <li className="msg msg--bread msg--thinking">
                 <span className="msg__mark" aria-hidden="true">
-                  <StateAvatar state={speakingThis ? 'speaking' : 'idle'} size="sm" />
+                  <StateAvatar state="generating" size="xs" decorative />
                 </span>
                 <div className="msg__body">
-                  <span className="sr-only">面包说：</span>
-                  {isWelcome && <p className="msg__kicker">一小段欢迎词 · 文字先到，要听再点播放</p>}
-                  <p className="msg__text">{m.text}</p>
-                  <div className="msg__meta">
-                    {m.serviceMode === 'mock' && <span className="svc-tag svc-tag--mock">规则演示</span>}
-                    {m.serviceMode === 'real' && <span className="svc-tag svc-tag--real">AI 生成</span>}
-                    {canPlay &&
-                      (speakingThis ? (
-                        <button type="button" className="btn btn--sm btn--stop-soft" onClick={onStop}>
-                          <Square aria-hidden="true" /> 停止播放
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className={`btn btn--sm ${isWelcome ? 'btn--quiet' : 'btn--ghost'}`}
-                          onClick={() => onSpeak(m.id, m.text)}
-                          disabled={!!speakPendingId || isSpeaking}
-                        >
-                          {pendingThis ? (
-                            <>
-                              <LoaderCircle aria-hidden="true" className="spin" /> 准备声音…
-                            </>
-                          ) : (
-                            <>
-                              <Volume2 aria-hidden="true" /> {isWelcome ? '播放欢迎词' : '播放'}
-                            </>
-                          )}
-                        </button>
-                      ))}
-                    {speakingThis && <span className="msg__caption small">正在播放，这段文字就是字幕</span>}
-                  </div>
-                  {isWelcome && ttsAvailable === false && (
-                    <p className="small muted">现在没有可用的语音播报{ttsReason ? `（${ttsReason}）` : ''}，读文字就好。</p>
-                  )}
-                  {isWelcome && (
-                    <p className="small muted">听完想说就说，不想说也可以直接结束。</p>
-                  )}
+                  <p className="msg__text msg__text--quiet">
+                    在想
+                    <span className="dots" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </p>
+                  <p className="msg__after">想好、核对过才会一起给你。不想等就点“停止”。</p>
                 </div>
               </li>
-            );
-          })}
-          {thinking && (
-            <li className="msg msg--assistant msg--thinking">
-              <span className="msg__mark" aria-hidden="true">
-                <StateAvatar state="generating" size="sm" />
-              </span>
-              <div className="msg__body">
-                <p className="msg__text">正在整理回应…</p>
-                <p className="small muted">核对完一次显示，可以随时点“停止”。</p>
-              </div>
-            </li>
-          )}
-        </ol>
+            )}
+          </ol>
         </div>
 
-        {showCardSlip && card && (
-          <button type="button" className={`card-slip is-${card.validity}`} onClick={onOpenCard}>
-            <span className="card-slip__scores" aria-hidden="true" />
-            <span className="card-slip__text">
-              <strong>{CARD_TYPE_LABEL[card.type]}</strong>
-              <span>
-                {card.title} · 第 {card.revision} 版 · {VALIDITY_META[card.validity].label}
-              </span>
-            </span>
-            <span className="card-slip__go">
-              打开看看 <ArrowRight aria-hidden="true" />
-            </span>
-          </button>
+        {card && (
+          <CardSlip
+            card={card}
+            saved={cardSaved}
+            busy={busy}
+            canAct={canAct}
+            onOpen={onOpenCard}
+            onSave={onSaveCard}
+            onRedo={() => onRedoCard(card)}
+          />
         )}
         <div ref={endRef} className="conversation__end" />
       </div>

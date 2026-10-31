@@ -1,29 +1,39 @@
 'use client';
 
-import { useEffect, useState, type KeyboardEvent, type RefObject } from 'react';
-import { LoaderCircle, Mic, Paperclip, SendHorizontal, Square, Trash2, X } from 'lucide-react';
-import type { BreadViewModel } from '@/domain/view-model';
-import { useDomId, useMediaQuery } from './hooks';
-import { formatClock } from './labels';
+import { useEffect, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react';
+import { ArrowUp, Check, LoaderCircle, Mic, Paperclip, Trash2, X } from 'lucide-react';
+import { StateAvatar } from './StateAvatar';
+import { useAutoGrow, useDomId, useMediaQuery } from './hooks';
+import { ACTIVITY_META, formatClock } from './labels';
+import type { BreadVM } from './vm';
 
 interface ComposerProps {
-  vm: BreadViewModel;
+  vm: BreadVM;
   draft: string;
   setDraft: (v: string) => void;
   onSend: () => void;
-  placeholder: string;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
-  onAddSource: () => void;
+  /** Opens the one-box material dialog; `fromDraft` means a long paste is being moved over. */
+  onAddMaterial: (prefill?: string, fromDraft?: boolean) => void;
+  sourceCount: number;
+  onOpenSources: () => void;
 }
 
-export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef, onAddSource }: ComposerProps) {
+const LONG_PASTE = 240;
+
+export function Composer(props: ComposerProps) {
+  const { vm, draft, setDraft, onSend, textareaRef, onAddMaterial, sourceCount, onOpenSources } = props;
   const { state, capabilities: caps, transcriptDraft, recordedSeconds, busy } = vm;
   const id = useDomId('composer');
   const coarse = useMediaQuery('(pointer: coarse)');
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [micHint, setMicHint] = useState('');
+  const [pasteHint, setPasteHint] = useState(false);
   const a = state.activity;
+  const canAct = state.lifecycle === 'active';
   const voicePhase = a === 'requesting_mic' || a === 'recording' || a === 'recorded' || a === 'transcribing' ? a : null;
+
+  useAutoGrow(textareaRef, draft, coarse ? 160 : 240);
 
   const maxInput = caps?.limits.maxInputChars ?? null;
   const maxSec = caps?.limits.maxRecordingSeconds ?? 60;
@@ -41,12 +51,16 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
     return () => window.clearTimeout(t);
   }, [micHint]);
 
+  useEffect(() => {
+    if (!draft) setPasteHint(false);
+  }, [draft]);
+
   const micBlock = !caps
-    ? '正在检查语音能力'
+    ? '还在检查语音能力'
     : !caps.asr.available
-      ? `语音识别不可用${caps.asr.reason ? `：${caps.asr.reason}` : ''}，可以继续用文字`
+      ? `现在不能用语音${caps.asr.reason ? `（${caps.asr.reason}）` : ''}，打字照样可以`
       : busy && a !== 'speaking' // during playback the hook stops audio before recording
-        ? '等这次回应结束，或先点“停止”'
+        ? '等面包这次说完，或先点“停止”'
         : transcriptOpen
           ? '先处理上一段转写'
           : '';
@@ -57,6 +71,10 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
     onSend();
   };
 
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    if (e.clipboardData.getData('text').length >= LONG_PASTE) setPasteHint(true);
+  };
+
   const startMic = () => {
     if (micBlock) {
       setMicHint(micBlock);
@@ -65,25 +83,39 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
     void vm.startRecording();
   };
 
+  const presence = (
+    <div className="presence" data-state={a}>
+      <StateAvatar state={a} size="sm" />
+      {a !== 'idle' && (
+        <p className="presence__text">
+          <span className="presence__name">面包</span>
+          {ACTIVITY_META[a].label}
+          <span className="presence__detail"> · {ACTIVITY_META[a].detail}</span>
+        </p>
+      )}
+    </div>
+  );
+
   if (voicePhase) {
     const pct = Math.min(100, (recordedSeconds / maxSec) * 100);
     return (
-      <div className={`composer composer--rec is-${voicePhase}`} role="group" aria-labelledby={`${id}-rec`}>
-        <div className="rec">
-          <div className="rec__status">
+      <div className="composer-wrap">
+        {presence}
+        <div className={`composer composer--rec is-${voicePhase}`} role="group" aria-labelledby={`${id}-rec`}>
+          <div className="rec__head">
             {voicePhase === 'recording' && <span className="rec__dot" aria-hidden="true" />}
             {(voicePhase === 'requesting_mic' || voicePhase === 'transcribing') && (
-              <LoaderCircle aria-hidden="true" className="spin" />
+              <LoaderCircle aria-hidden="true" className="spin rec__spin" />
             )}
             {voicePhase === 'recorded' && <span className="rec__dot rec__dot--still" aria-hidden="true" />}
             <p id={`${id}-rec`} className="rec__label">
-              {voicePhase === 'requesting_mic' && '正在请求麦克风权限，请在浏览器弹窗里选择'}
-              {voicePhase === 'recording' && '录音中'}
-              {voicePhase === 'recorded' && `已到 ${maxSec} 秒上限，录音已经停了`}
-              {voicePhase === 'transcribing' && '正在转写…'}
+              {voicePhase === 'requesting_mic' && '在等你允许麦克风'}
+              {voicePhase === 'recording' && '在录这一段'}
+              {voicePhase === 'recorded' && `到 ${maxSec} 秒了，录音已经停下`}
+              {voicePhase === 'transcribing' && '在把录音转成字…'}
             </p>
             {(voicePhase === 'recording' || voicePhase === 'recorded') && (
-              <span className="rec__time" aria-live="off">
+              <span className="rec__time">
                 <time>{formatClock(recordedSeconds)}</time>
                 <span className="muted"> / {formatClock(maxSec)}</span>
               </span>
@@ -98,48 +130,48 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
               aria-valuemin={0}
               aria-valuemax={maxSec}
               aria-valuenow={Math.floor(recordedSeconds)}
-              aria-valuetext={`${Math.floor(recordedSeconds)} 秒，上限 ${maxSec} 秒`}
+              aria-valuetext={`${Math.floor(recordedSeconds)} 秒，最长 ${maxSec} 秒`}
             >
               <span style={{ width: `${pct}%` }} />
             </div>
           )}
 
-          <p className="rec__note small">
-            {voicePhase === 'recording' && '只录你点击之后的这一段。点“结束并转写”就停，转写后可以先改再发。'}
-            {voicePhase === 'recorded' && '已录的部分还在。要转写，还是放弃？'}
-            {voicePhase === 'requesting_mic' && '没有授权就不会录音。可以随时取消。'}
-            {voicePhase === 'transcribing' && '转写结果会先给你看，不会自动发送。'}
+          <p className="rec__note">
+            {voicePhase === 'recording' && '只录你点击之后的这一段。说完点“说完了”，转成字后可以先改再发。'}
+            {voicePhase === 'recorded' && '录到的部分还在。要转成字，还是不要了？'}
+            {voicePhase === 'requesting_mic' && '在浏览器弹窗里选择。不允许，就不会录。'}
+            {voicePhase === 'transcribing' && '转好的文字会先给你看，不会自动发出。'}
           </p>
 
           <div className="rec__actions">
             {voicePhase === 'recording' && (
               <>
                 <button type="button" className="btn btn--primary" onClick={() => void vm.finishRecording()}>
-                  <Square aria-hidden="true" /> 结束并转写
+                  <Check aria-hidden="true" /> 说完了
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={vm.cancelRecording}>
-                  <Trash2 aria-hidden="true" /> 放弃这段
+                  <Trash2 aria-hidden="true" /> 不要这段
                 </button>
               </>
             )}
             {voicePhase === 'recorded' && (
               <>
                 <button type="button" className="btn btn--primary" onClick={() => void vm.transcribeRecorded()}>
-                  转写已录的部分
+                  <Check aria-hidden="true" /> 转成字
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={vm.cancelRecording}>
-                  <Trash2 aria-hidden="true" /> 放弃
+                  <Trash2 aria-hidden="true" /> 不要了
                 </button>
               </>
             )}
             {voicePhase === 'requesting_mic' && (
               <button type="button" className="btn btn--ghost" onClick={vm.cancelRecording}>
-                <X aria-hidden="true" /> 取消
+                <X aria-hidden="true" /> 算了
               </button>
             )}
             {voicePhase === 'transcribing' && (
               <button type="button" className="btn btn--ghost" onClick={vm.stop}>
-                <Square aria-hidden="true" /> 停止转写
+                <X aria-hidden="true" /> 停止转写
               </button>
             )}
           </div>
@@ -150,44 +182,48 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
 
   if (transcriptOpen) {
     return (
-      <div className="composer composer--transcript">
-        <label htmlFor={`${id}-tr`} className="composer__label">
-          转写草稿 <span className="muted small">可能有错字，发送前改一改</span>
-        </label>
-        <textarea
-          id={`${id}-tr`}
-          className="input textarea composer__input"
-          rows={3}
-          value={transcriptDraft}
-          onChange={(e) => vm.setTranscriptDraft(e.target.value)}
-          aria-describedby={`${id}-trc`}
-        />
-        <div className="composer__row">
-          <p id={`${id}-trc`} className={`counter ${transcriptOver ? 'is-over' : ''}`}>
-            {transcriptOver ? `超过 ${maxInput} 字了，可以删掉一部分再发` : '这段文字确认后才会发送'}
-          </p>
-          <div className="row gap-s">
-            <button
-              type="button"
-              className="btn btn--ghost"
-              onClick={() => {
-                vm.setTranscriptDraft('');
-                setTranscriptOpen(false);
-              }}
-            >
-              <Trash2 aria-hidden="true" /> 丢弃
-            </button>
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={!transcriptDraft.trim() || transcriptOver || busy}
-              onClick={async () => {
-                await vm.sendTranscript();
-                setTranscriptOpen(false);
-              }}
-            >
-              <SendHorizontal aria-hidden="true" /> 发送这段
-            </button>
+      <div className="composer-wrap">
+        {presence}
+        <div className="composer composer--transcript">
+          <label htmlFor={`${id}-tr`} className="composer__label">
+            转好的文字 <span className="muted">可能有错字，改好再发</span>
+          </label>
+          <textarea
+            id={`${id}-tr`}
+            className="composer__input composer__input--boxed"
+            rows={3}
+            value={transcriptDraft}
+            onChange={(e) => vm.setTranscriptDraft(e.target.value)}
+            aria-describedby={`${id}-trc`}
+            aria-invalid={transcriptOver || undefined}
+          />
+          <div className="composer__row">
+            <p id={`${id}-trc`} className={`composer__help ${transcriptOver ? 'is-over' : ''}`}>
+              {transcriptOver ? `超过 ${maxInput} 字了，删掉一些再发` : '你点“发出去”之前，这段不会发送。'}
+            </p>
+            <div className="row gap-s">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  vm.setTranscriptDraft('');
+                  setTranscriptOpen(false);
+                }}
+              >
+                <Trash2 aria-hidden="true" /> 不要了
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={!transcriptDraft.trim() || transcriptOver || busy || !canAct}
+                onClick={async () => {
+                  setTranscriptOpen(false);
+                  await vm.sendTranscript();
+                }}
+              >
+                <ArrowUp aria-hidden="true" /> 发出去
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -195,75 +231,104 @@ export function Composer({ vm, draft, setDraft, onSend, placeholder, textareaRef
   }
 
   return (
-    <form
-      className="composer"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSend();
-      }}
-    >
-      <label htmlFor={`${id}-in`} className="sr-only">
-        写给面包
-      </label>
-      <div className="composer__box">
+    <div className="composer-wrap">
+      {presence}
+      {pasteHint && draft.length >= LONG_PASTE && (
+        <div className="paste-hint" role="group" aria-label="长段落">
+          <p>这段比较长，像是材料。放进材料里，面包引用时会照原文，不改一个字。</p>
+          <div className="row gap-s">
+            <button
+              type="button"
+              className="pill pill--warm"
+              onClick={() => {
+                setPasteHint(false);
+                onAddMaterial(draft, true);
+              }}
+            >
+              <Paperclip aria-hidden="true" /> 放进材料
+            </button>
+            <button type="button" className="pill" onClick={() => setPasteHint(false)}>
+              就当一句话
+            </button>
+          </div>
+        </div>
+      )}
+      <form
+        className="composer"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSend();
+        }}
+      >
+        <label htmlFor={`${id}-in`} className="sr-only">
+          写给面包
+        </label>
         <textarea
           id={`${id}-in`}
           ref={textareaRef}
           className="composer__input"
-          rows={2}
+          rows={1}
           value={draft}
-          placeholder={placeholder}
+          placeholder={state.mode === 'practice' && state.selectedQuestion ? '写下你这一次的回答，想到哪写到哪' : '想说什么都可以'}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKey}
+          onPaste={onPaste}
           aria-describedby={`${id}-help`}
           aria-invalid={over || undefined}
+          disabled={!canAct}
         />
         <div className="composer__tools">
-          <button type="button" className="icon-btn" onClick={onAddSource} aria-label="放一段材料" title="放一段材料">
-            <Paperclip aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className={`icon-btn icon-btn--mic ${micBlock ? 'is-blocked' : ''}`}
-            onClick={startMic}
-            aria-disabled={!!micBlock || undefined}
-            aria-label={micBlock ? `录音（${micBlock}）` : '开始录音'}
-            title={micBlock || '开始录音'}
-          >
-            <Mic aria-hidden="true" />
-          </button>
-          <button
-            type="submit"
-            className="btn btn--primary btn--send"
-            disabled={!draft.trim() || over || busy}
-            aria-label="发送"
-          >
-            <SendHorizontal aria-hidden="true" />
-            <span className="btn--send__label">发送</span>
-          </button>
+          <div className="composer__left">
+            <button type="button" className="icon-btn" onClick={() => onAddMaterial()} aria-label="放一段材料" title="放一段材料">
+              <Paperclip aria-hidden="true" />
+            </button>
+            {sourceCount > 0 && (
+              <button type="button" className="mat-chip" onClick={onOpenSources}>
+                材料 {sourceCount} 段<span className="sr-only">，打开看看</span>
+              </button>
+            )}
+          </div>
+          <div className="composer__right">
+            <button
+              type="button"
+              className={`icon-btn icon-btn--mic ${micBlock ? 'is-blocked' : ''}`}
+              onClick={startMic}
+              aria-disabled={!!micBlock || undefined}
+              aria-label={micBlock ? `说给面包听（${micBlock}）` : '说给面包听：点一下开始录音'}
+              title={micBlock || '点一下开始录这一段'}
+            >
+              <Mic aria-hidden="true" />
+            </button>
+            <button type="submit" className="send-btn" disabled={!draft.trim() || over || busy || !canAct} aria-label="发出">
+              <ArrowUp aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="composer__row">
-        <p id={`${id}-help`} className="composer__help small" aria-live="polite">
+      </form>
+      <div className="composer__row composer__row--below">
+        <span className="sr-only" aria-live="polite">
+          {micHint}
+        </span>
+        <p id={`${id}-help`} className="composer__help">
           {micHint ? (
             <span className="warn-text">{micHint}</span>
           ) : busy ? (
-            '正在整理回应，可以点“停止”打断'
+            '面包在忙，想打断就点“停止”或按 Esc'
           ) : coarse ? (
-            '换行用回车，点“发送”发出'
+            '回车换行，点箭头发出'
           ) : (
             <>
-              <kbd>Enter</kbd> 发送 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行 · <kbd>Esc</kbd> 停止
+              <kbd>Enter</kbd> 发出 · <kbd>Shift</kbd>+<kbd>Enter</kbd> 换行 · <kbd>Esc</kbd> 停止
             </>
           )}
         </p>
         {(nearLimit || over) && (
-          <p className={`counter ${over ? 'is-over' : ''}`}>
+          <p className={`composer__count ${over ? 'is-over' : ''}`}>
             {draft.length} / {maxInput}
-            {over && ' 字，分几次发或截取一段'}
+            {over && ' 字，分几次说，或者放进材料'}
           </p>
         )}
       </div>
-    </form>
+    </div>
   );
 }

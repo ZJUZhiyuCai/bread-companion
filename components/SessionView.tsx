@@ -1,40 +1,52 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { HeartHandshake, Target } from 'lucide-react';
-import type { Card, Mode } from '@/domain/types';
-import type { BreadViewModel } from '@/domain/view-model';
+import type { Card } from '@/domain/types';
 import { Composer } from './Composer';
 import { Conversation } from './Conversation';
+import { Dialog } from './Dialog';
 import { ModeBar } from './ModeBar';
+import { PracticeAdjust } from './PracticeSetup';
 import { SavePreview } from './SavePreview';
+import { MaterialDialog } from './Sources';
 import { TopBar } from './TopBar';
-import { WorkPanel, type PanelTab } from './WorkPanel';
+import { WorkPanel, type TraySection } from './WorkPanel';
 import { anyDialogOpen, useMediaQuery } from './hooks';
-import { ACTIVITY_META, CARD_TYPE_LABEL, MODE_META, cardEvidence, type EvidenceView } from './labels';
+import {
+  ACTIVITY_META,
+  CARD_TYPE_LABEL,
+  STOP_BEFORE_MODAL,
+  WORKING_STATES,
+  cardEvidence,
+  isCardSaved,
+  isLocked,
+  type EvidenceView,
+} from './labels';
+import type { AssistMode, BreadVM } from './vm';
 
 export type EntryIntent = 'talk' | 'welcome' | 'review' | 'resume' | null;
 
 interface SessionViewProps {
-  vm: BreadViewModel;
+  vm: BreadVM;
   intent: EntryIntent;
   onOpenArchive: () => void;
-  onOpenStatus: () => void;
+  onOpenAbout: () => void;
 }
 
-const REVIEW_PROMPT = '请根据我提供的材料做一次复盘。';
-
-export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: SessionViewProps) {
+export function SessionView({ vm, intent, onOpenArchive, onOpenAbout }: SessionViewProps) {
   const { state, currentCard, capabilities: caps, busy } = vm;
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery('(min-width: 1080px)');
   const canAct = state.lifecycle === 'active';
+  const activity = state.activity;
+  const working = WORKING_STATES.includes(activity);
+  const thinking = activity === 'generating' || activity === 'validating';
 
-  const [panelOpen, setPanelOpen] = useState(intent === 'review');
-  const [panelTab, setPanelTab] = useState<PanelTab>(intent === 'review' ? 'material' : 'card');
-  const [panelFocus, setPanelFocus] = useState(0);
-  const [sourceFormOpen, setSourceFormOpen] = useState(intent === 'review');
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [trayTarget, setTrayTarget] = useState<{ section: TraySection; n: number }>({ section: 'card', n: 0 });
   const [highlightSource, setHighlightSource] = useState<string | null>(null);
-  const [practicePrefill, setPracticePrefill] = useState<string | null>(null);
+  const [materialOpen, setMaterialOpen] = useState(false);
+  const [materialPrefill, setMaterialPrefill] = useState('');
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [saveOpen, setSaveOpen] = useState(false);
   // The exact version the user is looking at in the save preview.
@@ -45,23 +57,20 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const pendingAfterMode = useRef<{ mode: Mode; text: string } | null>(null);
   const vmRef = useRef(vm);
   vmRef.current = vm;
 
-  const activity = state.activity;
-  const thinking = activity === 'generating' || activity === 'validating';
-  const ttsAvailable = caps ? caps.tts.available : null;
-  const maxInput = caps?.limits.maxInputChars ?? null;
+  const cardSaved = isCardSaved(currentCard, vm.savedCases);
+  const hasTalked = state.messages.some((m) => m.role === 'user') || state.sources.length > 0 || state.mode !== 'listen';
 
-  // Initial focus according to how the user came in. Typing intent gets the keyboard; listening intent does not.
+  // Typing intent gets the keyboard; the listen-first intent does not (no surprise keyboard on phones).
   useEffect(() => {
-    if (intent === 'talk' || intent === 'resume') textareaRef.current?.focus();
-    else if (intent !== 'review') headingRef.current?.focus();
+    if (intent === 'welcome') headingRef.current?.focus();
+    else textareaRef.current?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Esc = stop, unless a dialog or the mobile sheet handled it first.
+  // Esc = stop, unless a dialog handled it first.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented || anyDialogOpen()) return;
@@ -72,33 +81,33 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // A pending send waits until the requested mode is actually set.
+  // Quiet announcements: what the loaf is doing, a new card, a new piece of material.
   useEffect(() => {
-    const p = pendingAfterMode.current;
-    if (p && state.mode === p.mode && state.lifecycle === 'active') {
-      pendingAfterMode.current = null;
-      void vmRef.current.send(p.text);
-    }
-  }, [state.mode, state.lifecycle]);
+    if (activity !== 'idle') setLive(`面包${ACTIVITY_META[activity].label}`);
+  }, [activity]);
 
-  // New card or new revision: open the panel on desktop (without stealing focus), announce everywhere.
   const cardKey = currentCard ? `${currentCard.id}:${currentCard.revision}:${currentCard.validity}` : null;
-  const lastCardId = useRef<string | null>(null);
   useEffect(() => {
     if (!currentCard) return;
-    const isNew = lastCardId.current !== currentCard.id;
-    lastCardId.current = currentCard.id;
-    setLive(`${CARD_TYPE_LABEL[currentCard.type]}第 ${currentCard.revision} 版，${currentCard.validity === 'confirmed' ? '已确认' : currentCard.validity === 'draft' ? '草稿' : '需要重新确认'}`);
-    if (isNew && isDesktop && !panelOpen) {
-      setPanelTab('card');
-      setPanelOpen(true);
-    }
+    setLive(
+      isLocked(currentCard.validity)
+        ? `这张${CARD_TYPE_LABEL[currentCard.type]}需要重新整理`
+        : `桌上有一张${CARD_TYPE_LABEL[currentCard.type]}：${currentCard.title}`,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardKey]);
 
+  // Announce a pasted material only once it actually appears in state, and only for the user's own paste.
+  const sourceCount = state.sources.length;
+  const lastSourceCount = useRef(sourceCount);
+  const awaitingMaterial = useRef(false);
   useEffect(() => {
-    setLive(ACTIVITY_META[activity].label);
-  }, [activity]);
+    if (awaitingMaterial.current && sourceCount > lastSourceCount.current) {
+      awaitingMaterial.current = false;
+      setLive('材料放进来了，在“卡片与材料”里能看到');
+    }
+    lastSourceCount.current = sourceCount;
+  }, [sourceCount]);
 
   useEffect(() => {
     if (activity !== 'speaking' && !speakPendingId) setSpeakingId(null);
@@ -110,55 +119,35 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
     return () => window.clearTimeout(t);
   }, [highlightSource]);
 
-  /** focus=false when something inside the panel takes focus itself (source form, highlighted source). */
-  const openPanel = (tab: PanelTab, focus = true) => {
-    setPanelTab(tab);
-    setPanelOpen(true);
-    if (focus) setPanelFocus((n) => n + 1);
+  // Modal surfaces make 停止 unreachable; don't leave a mic or audio running behind them.
+  const settle = () => {
+    if (STOP_BEFORE_MODAL.includes(activity)) vm.stop();
   };
 
-  const closePanel = () => {
-    setPanelOpen(false);
-    setSourceFormOpen(false);
-    if (!isDesktop) textareaRef.current?.focus({ preventScroll: true });
+  const openTray = (section: TraySection) => {
+    if (!isDesktop) settle();
+    setTrayTarget((t) => ({ section, n: t.n + 1 }));
+    setTrayOpen(true);
   };
+
+  const closeTray = () => {
+    setTrayOpen(false);
+    if (!isDesktop) window.setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 0);
+  };
+
+  const focusComposer = () => window.setTimeout(() => textareaRef.current?.focus(), 0);
 
   const send = () => {
     const t = draft.trim();
-    if (!t || busy || (maxInput !== null && t.length > maxInput)) return;
+    const max = caps?.limits.maxInputChars ?? null;
+    if (!t || busy || !canAct || (max !== null && t.length > max)) return;
     setDraft('');
     void vm.send(t);
   };
 
-  const startReview = () => {
-    const t = draft.trim();
-    if (maxInput !== null && t.length > maxInput) return;
-    setDraft('');
-    void vm.send(t || REVIEW_PROMPT);
-  };
-
-  const onMode = (m: Mode) => {
-    if (m === 'practice') {
-      openPanel('practice');
-      return;
-    }
-    vm.setMode(m);
-    if (m === 'organize' && isDesktop) openPanel('card', false);
-    if (m === 'review' && isDesktop) openPanel('material', false);
-  };
-
-  const redo = () => {
-    if (!currentCard) return;
-    if (currentCard.type === 'note') {
-      if (state.mode !== 'organize') vm.setMode('organize');
-      else void vm.send('请按修正后的内容重新整理记号。');
-    } else {
-      const text = '请按修正后的材料重新复盘。';
-      if (state.mode !== 'review') {
-        pendingAfterMode.current = { mode: 'review', text };
-        vm.setMode('review');
-      } else void vm.send(text);
-    }
+  const assist = (mode: AssistMode) => {
+    if (!canAct || busy) return;
+    void vm.assist(mode);
   };
 
   const onSpeak = async (id: string, text: string) => {
@@ -171,84 +160,108 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
     }
   };
 
-  const addSource = () => {
-    setSourceFormOpen(true);
-    openPanel('material', false);
+  const materialFromDraft = useRef(false);
+  const openMaterial = (prefill = '', fromDraft = false) => {
+    settle();
+    materialFromDraft.current = fromDraft;
+    setMaterialPrefill(prefill);
+    setMaterialOpen(true);
   };
 
   const openSource = (id: string) => {
-    openPanel('material', false);
+    openTray('sources');
     setHighlightSource(id);
   };
 
-  const answer = () => {
-    if (!isDesktop) setPanelOpen(false);
-    window.setTimeout(() => textareaRef.current?.focus(), 0);
+  const freeze = (card: Card) => ({
+    card,
+    evidence: cardEvidence(card, state.findings, { sources: state.sources, snapshot: null }),
+  });
+
+  const requestSave = () => {
+    if (!currentCard || isLocked(currentCard.validity)) return;
+    settle();
+    setSaveSnap(freeze(currentCard));
+    setSaveOpen(true);
   };
 
-  const pendingSources = state.sources.filter((s) => !s.confirmed).length;
-  const cardVisibleInPanel = panelOpen && panelTab === 'card';
-  const placeholder = MODE_META[state.mode].placeholder;
+  const redo = (card: Card) => {
+    if (!isDesktop) setTrayOpen(false);
+    assist(card.type === 'note' ? 'organize' : 'review');
+  };
+
+  const practiceThis = (question: string) => {
+    if (!canAct) return;
+    vm.setPractice(question, []);
+    if (!isDesktop) setTrayOpen(false);
+    focusComposer();
+  };
+
+  const [editToken, setEditToken] = useState(0);
+  const editFromPreview = () => {
+    setSaveOpen(false);
+    openTray('card');
+    setEditToken((n) => n + 1);
+  };
+
+  const tray = (
+    <WorkPanel
+      vm={vm}
+      variant={isDesktop ? 'aside' : 'sheet'}
+      target={trayTarget}
+      cardSaved={cardSaved}
+      editToken={editToken}
+      onEditConsumed={() => setEditToken(0)}
+      highlightSource={highlightSource}
+      onClose={closeTray}
+      onOpenSource={openSource}
+      onRequestSave={requestSave}
+      onRedo={redo}
+      onPractice={practiceThis}
+      onAssist={(m) => {
+        if (!isDesktop) setTrayOpen(false);
+        assist(m);
+      }}
+      onAddMaterial={() => openMaterial()}
+    />
+  );
 
   return (
-    <div className={`session ${panelOpen ? 'has-panel' : ''}`} data-activity={activity} data-mode={state.mode}>
+    <div
+      className={`session ${trayOpen && isDesktop ? 'has-tray' : ''}`}
+      data-activity={activity}
+      data-mode={state.mode}
+    >
       <TopBar
-        avatarState={activity}
-        mode={state.mode}
         caps={caps}
+        activity={activity}
         active={canAct}
-        panelOpen={panelOpen}
-        cardFlag={!!currentCard && !cardVisibleInPanel}
-        onTogglePanel={() => (panelOpen ? closePanel() : openPanel(currentCard ? 'card' : panelTab))}
+        working={working}
+        trayOpen={trayOpen}
+        trayCount={sourceCount + (currentCard ? 1 : 0)}
+        cardWaiting={!!currentCard && !cardSaved && !isLocked(currentCard.validity)}
+        onToggleTray={() => (trayOpen ? closeTray() : openTray(currentCard ? 'card' : sourceCount ? 'sources' : 'card'))}
         onOpenArchive={onOpenArchive}
-        onOpenStatus={onOpenStatus}
+        onOpenAbout={onOpenAbout}
         onStop={vm.stop}
         onEnd={vm.end}
       />
 
       <div className="session__body">
-        <main id="main" className="session__main" aria-labelledby="conv-heading">
+        <main id="main" className="stage" aria-labelledby="conv-heading">
           <h1 id="conv-heading" ref={headingRef} tabIndex={-1} className="sr-only">
-            和面包的对话
+            和面包说说话
           </h1>
-
-          <ModeBar
-            mode={state.mode}
-            canAct={canAct}
-            busy={busy}
-            sourceCount={state.sources.length}
-            pendingSources={pendingSources}
-            selectedQuestion={state.selectedQuestion}
-            onMode={onMode}
-            onStartReview={startReview}
-            onAddSource={addSource}
-            onOpenPractice={() => openPanel('practice')}
-          />
-
-          {state.supportState === 'support_guidance' && (
-            <section className="support" aria-labelledby="support-h">
-              <HeartHandshake aria-hidden="true" className="support__icon" />
-              <div>
-                <h2 id="support-h" className="support__title">先把面试放一放。</h2>
-                <p>
-                  如果你现在可能伤害自己，请先联系一位你信任的人陪着你。若危险迫在眼前，请联系当地急救或紧急服务。
-                </p>
-                <p className="small muted">
-                  面包是一个程序，不能代替真人或专业帮助，也不会替你联系任何人。停止、结束随时可用。
-                </p>
-              </div>
-            </section>
-          )}
 
           <Conversation
             messages={state.messages}
-            mode={state.mode}
-            avatarState={activity}
-            thinking={thinking}
             welcomeIntent={intent === 'welcome'}
-            ttsAvailable={ttsAvailable}
+            reviewIntent={intent === 'review'}
+            supportGuidance={state.supportState === 'support_guidance'}
+            thinking={thinking}
+            ttsAvailable={caps ? caps.tts.available : null}
             ttsReason={caps?.tts.reason}
-            canPlay={!!ttsAvailable && canAct}
+            canPlay={!!caps?.tts.available && canAct}
             speakingId={speakingId}
             speakPendingId={speakPendingId}
             isSpeaking={activity === 'speaking'}
@@ -256,67 +269,101 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
             onStop={vm.stop}
             onOpenSource={openSource}
             card={currentCard}
-            showCardSlip={!!currentCard && !cardVisibleInPanel}
-            onOpenCard={() => openPanel('card')}
+            cardSaved={cardSaved}
+            onOpenCard={() => openTray('card')}
+            onSaveCard={requestSave}
+            onRedoCard={redo}
+            busy={busy}
+            canAct={canAct}
           />
 
-          <div className="session__dock">
-            {state.mode === 'practice' && state.selectedQuestion && (
-              <button type="button" className="practice-strip" onClick={() => openPanel('practice')}>
-                <Target aria-hidden="true" />
-                <span className="practice-strip__q">
-                  <span className="sr-only">正在练：</span>
-                  {state.selectedQuestion}
-                </span>
-                {state.practiceCriteria.length > 0 && (
-                  <span className="practice-strip__c">关注：{state.practiceCriteria.join('、')}</span>
-                )}
-              </button>
-            )}
+          <div className="dock">
+            <ModeBar
+              mode={state.mode}
+              selectedQuestion={state.selectedQuestion}
+              practiceCriteria={state.practiceCriteria}
+              canAct={canAct}
+              busy={busy}
+              show={hasTalked && !['requesting_mic', 'recording', 'recorded', 'transcribing'].includes(activity) && !vm.transcriptDraft}
+              hasCard={!!currentCard}
+              onAssist={assist}
+              onBackToTalk={() => vm.setMode('listen')}
+              onAdjustPractice={() => {
+                settle();
+                setAdjustOpen(true);
+              }}
+            />
             <Composer
               vm={vm}
               draft={draft}
               setDraft={setDraft}
               onSend={send}
-              placeholder={placeholder}
               textareaRef={textareaRef}
-              onAddSource={addSource}
+              onAddMaterial={openMaterial}
+              sourceCount={sourceCount}
+              onOpenSources={() => openTray('sources')}
             />
           </div>
         </main>
 
-        {panelOpen && (
-          <WorkPanel
-            vm={vm}
-            variant={isDesktop ? 'aside' : 'sheet'}
-            tab={panelTab}
-            setTab={setPanelTab}
-            onClose={closePanel}
-            focusToken={panelFocus}
-            sourceFormOpen={sourceFormOpen}
-            setSourceFormOpen={setSourceFormOpen}
-            highlightSource={highlightSource}
-            onOpenSource={openSource}
-            practicePrefill={practicePrefill}
-            onPracticeFromFinding={(q) => {
-              setPracticePrefill(q);
-              setPanelTab('practice');
-            }}
-            onRequestSave={() => {
-              if (!currentCard) return;
-              if (busy) vm.stop();
-              setSaveSnap({
-                card: currentCard,
-                evidence: cardEvidence(currentCard, state.findings, { sources: state.sources, snapshot: null }),
-              });
-              setSaveOpen(true);
-            }}
-            onRedo={redo}
-            onAnswer={answer}
-            onOrganize={() => vm.setMode('organize')}
-          />
-        )}
+        {isDesktop && trayOpen && tray}
       </div>
+
+      {!isDesktop && (
+        <Dialog
+          open={trayOpen}
+          onClose={closeTray}
+          variant="sheet"
+          size="lg"
+          className="tray-sheet"
+          title="今晚的卡片与材料"
+          subtitle="只在这次对话里。你选“留下”的，才会存到这台设备。"
+          closeLabel="收起"
+        >
+          {trayOpen && tray}
+        </Dialog>
+      )}
+
+      <MaterialDialog
+        open={materialOpen}
+        onClose={() => {
+          setMaterialOpen(false);
+          focusComposer();
+        }}
+        prefill={materialPrefill}
+        error={vm.error}
+        maxChars={caps?.limits.maxSourceChars ?? null}
+        canAct={canAct}
+        onAdd={(text) => {
+          awaitingMaterial.current = true;
+          if (!vm.addMaterial(text)) { awaitingMaterial.current = false; return; }
+          // A long paste moved over from the composer shouldn't also stay there waiting to be sent.
+          if (materialFromDraft.current) setDraft('');
+          materialFromDraft.current = false;
+          setMaterialOpen(false);
+          focusComposer();
+        }}
+      />
+
+      <PracticeAdjust
+        open={adjustOpen}
+        onClose={() => {
+          setAdjustOpen(false);
+          focusComposer();
+        }}
+        question={state.selectedQuestion}
+        criteria={state.practiceCriteria}
+        busy={busy}
+        onApply={(q, c) => {
+          vm.setPractice(q, c);
+          setAdjustOpen(false);
+          focusComposer();
+        }}
+        onAnother={() => {
+          setAdjustOpen(false);
+          assist('practice');
+        }}
+      />
 
       {saveSnap && (
         <SavePreview
@@ -328,7 +375,12 @@ export function SessionView({ vm, intent, onOpenArchive, onOpenStatus }: Session
           practice={[]}
           notice={vm.notice}
           error={vm.error}
+          savedCases={vm.savedCases}
+          clearNotice={vm.clearNotice}
           onSave={vm.saveCard}
+          onExport={vm.exportCard}
+          onEdit={editFromPreview}
+          onRefresh={() => currentCard && setSaveSnap(freeze(currentCard))}
         />
       )}
 

@@ -7,17 +7,20 @@ import { EndView } from './EndView';
 import { EntryScreen } from './EntryScreen';
 import { Notices } from './Notices';
 import { SavedArchive } from './SavedArchive';
-import { StatusDialog, type TextSize } from './ServiceStatus';
+import { AboutSheet, type TextSize } from './ServiceStatus';
 import { SessionView, type EntryIntent } from './SessionView';
+import { STOP_BEFORE_MODAL } from './labels';
+import type { BreadVM } from './vm';
 
 export default function BreadApp() {
-  const vm = useBread();
+  const vm = useBread() as BreadVM;
   const { state } = vm;
   const [intent, setIntent] = useState<EntryIntent>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [statusOpen, setStatusOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [textSize, setTextSize] = useState<TextSize>('m');
   const pendingFirst = useRef<string | null>(null);
+  const pendingReview = useRef(false);
   const vmRef = useRef(vm);
   vmRef.current = vm;
 
@@ -25,17 +28,21 @@ export default function BreadApp() {
     document.documentElement.dataset.textSize = textSize;
   }, [textSize]);
 
-  // Load the local archive count for the entry screen. Read-only.
+  // The archive count on the entry screen. Read-only.
   useEffect(() => {
     void vmRef.current.refreshSaved();
   }, []);
 
-  // The entry box's first sentence is sent once the session has actually started.
+  // Whatever the user chose on the entry screen runs once the session has actually started.
   useEffect(() => {
-    const t = pendingFirst.current;
-    if (t && state.started && state.lifecycle === 'active') {
+    if (!state.started || state.lifecycle !== 'active') return;
+    const first = pendingFirst.current;
+    if (first) {
       pendingFirst.current = null;
-      void vmRef.current.send(t);
+      void vmRef.current.send(first);
+    } else if (pendingReview.current) {
+      pendingReview.current = false;
+      void vmRef.current.assist('review');
     }
   }, [state.started, state.lifecycle, state.sessionId]);
 
@@ -44,6 +51,12 @@ export default function BreadApp() {
     setIntent('talk');
     if (first) pendingFirst.current = first;
     vm.start('listen');
+  };
+
+  const review = () => {
+    setIntent('review');
+    pendingReview.current = true;
+    vm.start('review');
   };
 
   const resume = (saved: SavedCase) => {
@@ -58,13 +71,17 @@ export default function BreadApp() {
 
   const ended = state.lifecycle === 'ended';
   const sessionLive = state.started && !ended;
+
+  const settleBeforeModal = () => {
+    if (sessionLive && STOP_BEFORE_MODAL.includes(state.activity)) vm.stop();
+  };
   const openArchive = () => {
-    if (vm.busy && sessionLive) vm.stop();
+    settleBeforeModal();
     setArchiveOpen(true);
   };
-  const openStatus = () => {
-    if (vm.busy && sessionLive) vm.stop();
-    setStatusOpen(true);
+  const openAbout = () => {
+    settleBeforeModal();
+    setAboutOpen(true);
   };
 
   return (
@@ -74,7 +91,7 @@ export default function BreadApp() {
       </a>
 
       {ended ? (
-        <EndView vm={vm} onOpenArchive={openArchive} onReset={reset} />
+        <EndView vm={vm} onOpenArchive={openArchive} onReset={reset} onAgain={() => talk()} />
       ) : !state.started ? (
         <EntryScreen
           caps={vm.capabilities}
@@ -84,21 +101,12 @@ export default function BreadApp() {
             setIntent('welcome');
             vm.start('listen', true);
           }}
-          onReview={() => {
-            setIntent('review');
-            vm.start('review');
-          }}
+          onReview={review}
           onOpenArchive={openArchive}
-          onOpenStatus={openStatus}
+          onOpenAbout={openAbout}
         />
       ) : (
-        <SessionView
-          key={state.sessionId}
-          vm={vm}
-          intent={intent}
-          onOpenArchive={openArchive}
-          onOpenStatus={openStatus}
-        />
+        <SessionView key={state.sessionId} vm={vm} intent={intent} onOpenArchive={openArchive} onOpenAbout={openAbout} />
       )}
 
       <SavedArchive
@@ -117,13 +125,7 @@ export default function BreadApp() {
         error={vm.error}
       />
 
-      <StatusDialog
-        open={statusOpen}
-        onClose={() => setStatusOpen(false)}
-        caps={vm.capabilities}
-        textSize={textSize}
-        setTextSize={setTextSize}
-      />
+      <AboutSheet open={aboutOpen} onClose={() => setAboutOpen(false)} caps={vm.capabilities} textSize={textSize} setTextSize={setTextSize} />
 
       <Notices notice={vm.notice} error={vm.error} clearNotice={vm.clearNotice} />
     </>
