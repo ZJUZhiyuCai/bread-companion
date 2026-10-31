@@ -8,11 +8,15 @@ import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
 import type { AgentProvider } from './agent';
 import { readProviderJson } from './response';
+import { responseStyleErrors } from '@/domain/response-style';
 
 export class RealProvider implements AgentProvider {
   constructor(private fetcher: typeof fetch = fetch) {}
   async generate(input: TurnRequest, signal: AbortSignal): Promise<TurnCandidate> {
     const cfg = config();
+    const companion = input.mode === 'listen' && !!cfg.companionModel;
+    const model = companion ? cfg.companionModel : cfg.agentModel;
+    const protocol = companion ? cfg.companionProtocol : cfg.agentProtocol;
     if (!cfg.agentKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
     const meta = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, serviceMode: 'real' as const };
     if (needsImmediateSupport(input.userMessage)) return { ...meta, assistantText: SUPPORT_TEXT, findings: [], warnings: [], supportGuidance: true };
@@ -23,17 +27,17 @@ export class RealProvider implements AgentProvider {
       if (historyBytes + size > 12000) break;
       history.unshift(m); historyBytes += size;
     }
-    const data = JSON.stringify({ mode: input.mode, userMessage: input.userMessage, recentMessages: history, sourceSegments: selectSegments(input.context.sources, input.userMessage), selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
+    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages: history, sourceSegments: selectSegments(input.context.sources, input.userMessage), selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
     // Conservative UTF-8 byte ceiling for variable-tokenizer providers; never called an exact token count.
     // Actual generated tokens are independently limited by max_tokens; no unbounded history or audio is sent.
     if (Buffer.byteLength(data, 'utf8') > 36000) throw new AppError('INVALID_INPUT', 413);
     let repair = '';
     for (let attempt = 0; attempt < 2; attempt++) {
       signal.throwIfAborted();
-      const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion) + repair;
-      const anthropic = cfg.agentProtocol === 'anthropic';
-      const body = anthropic ? { model: cfg.agentModel, max_tokens: 4096, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
-        : { model: cfg.agentModel, max_tokens: 4096, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
+      const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion, input.channel) + repair;
+      const anthropic = protocol === 'anthropic';
+      const body = anthropic ? { model, max_tokens: 4096, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
+        : { model, max_tokens: 4096, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await this.fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'error', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
       const payload = await readProviderJson(response, 160000) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
@@ -55,7 +59,7 @@ export class RealProvider implements AgentProvider {
       const ids = new Map(p.findings.map(f => [f.id, `${input.runId}_${f.id}`]));
       const candidate = candidateSchema.parse({ ...meta, assistantText: p.assistantText, findings: p.findings.map(f => ({ ...f, id: ids.get(f.id), validity: 'draft' })), warnings: p.warnings, supportGuidance: p.supportGuidance, ...(p.practiceSetup ? { practiceSetup: p.practiceSetup } : {}),
         ...(p.card ? { cardDraft: { ...p.card, sections: p.card.sections.map(s => ({ ...s, findingIds: s.findingIds.map(id => ids.get(id) ?? id) })), id: `${input.runId}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'real' } } : {}) });
-      const errors = validateCandidate(candidate, input);
+      const errors = [...validateCandidate(candidate, input), ...responseStyleErrors(candidate.assistantText, input, candidate.supportGuidance)];
       if (!errors.length) return candidate;
       console.warn(JSON.stringify({ stage: 'agent_validation', code: 'CANDIDATE', errors }));
       repair = `\n上次候选被程序拒绝：${errors.join(',')}。重新核对模式、长度、引用和卡片关联，生成合法 JSON。不允许捏造原文。`;

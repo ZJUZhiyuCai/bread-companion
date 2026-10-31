@@ -78,7 +78,7 @@ test('one-box material becomes a review, then the agent prepares a practice ques
   await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('checkbox')).toHaveCount(0);
   await send(page,'我会先检查坐标轴和图例是否正确，再由两位同学独立复核；尚未做过正式实验，不报告成功率。');
   await expect(page.getByRole('heading',{name:'这一题，慢慢来'})).toBeVisible();await page.getByRole('button',{name:'看看 / 改改',exact:true}).click();
-  await expect(page.getByRole('complementary')).toContainText('第 2 版');await expect(page.getByRole('complementary')).toContainText('没有提供的数据先留空');
+  await expect(page.getByRole('complementary',{name:'今晚的卡片与材料'})).toContainText('第 2 版');await expect(page.getByRole('complementary',{name:'今晚的卡片与材料'})).toContainText('没有提供的数据先留空');
   await page.getByRole('button',{name:'不练了',exact:true}).click();await expect(page.getByText('在练这一题',{exact:true})).toHaveCount(0);
 });
 

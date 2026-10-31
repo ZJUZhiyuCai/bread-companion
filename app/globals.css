@@ -21,6 +21,18 @@
   --crust-fill: #d9934f;
   --crust-line: #8c4b1f;
   --crumb: #f7ddb0;
+  --crumb-face: #fbe8c6;
+  --crumb-hole: #e3bf86;
+  --face-ink: #2a2420;
+  --blush: #ef6b62;
+  --wheat: #e6ba5f;
+  --wheat-line: #9a6a1a;
+  --headset: #f3eadc;
+  --headset-pad: #e0a24c;
+  --call-btn: #ffd27e;
+  --call-btn-2: #f5b65a;
+  --call-btn-ink: #33200b;
+  --hangup: #d33f3a;
   --score: #f6e3c4;
   --kraft: #ebd9ba;
   --kraft-2: #e0c9a1;
@@ -64,6 +76,7 @@
 
   --col: 720px;
   --tray-w: 420px;
+  --corner-w: 320px;
   --radius: 16px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -85,6 +98,10 @@
     --crust-fill: #c98545;
     --crust-line: #6e3a16;
     --crumb: #e9c894;
+    --crumb-face: #eed4a4;
+    --crumb-hole: #c99d5e;
+    --wheat: #e2b65a;
+    --wheat-line: #8a5d15;
     --score: #f1d9b1;
     --kraft: #3a3026;
     --kraft-2: #4a3d2e;
@@ -739,86 +756,366 @@ kbd {
   place-items: center;
   flex: none;
 }
-.avatar__svg {
-  display: block;
-  overflow: visible;
-}
-.avatar--xs .avatar__svg {
+.avatar--xs .bread-mark {
   width: 30px;
 }
-.avatar--sm .avatar__svg {
+.avatar--sm .buddy-svg {
   width: 48px;
 }
-.avatar--md .avatar__svg {
+.avatar--md .buddy-svg {
   width: 72px;
 }
-.avatar--lg .avatar__svg {
+.avatar--lg .buddy-svg {
   width: 112px;
 }
 
-.loaf__shadow {
+.buddy-svg,
+.bread-mark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Every transform here is in the figure's own 200×224 coordinates. */
+.buddy {
+  --lvl-m: var(--lvl, 0);
+}
+.b-shadow {
   fill: var(--loaf-shadow);
 }
-.loaf__crust {
+.b-legs rect,
+.b-legs ellipse {
   fill: var(--crust-fill);
   stroke: var(--crust-line);
-  stroke-width: 2.6;
+  stroke-width: 2.4;
+}
+.b-crust {
+  fill: var(--crust-fill);
+  stroke: var(--crust-line);
+  stroke-width: 2.8;
   stroke-linejoin: round;
 }
-.loaf__crumb {
-  fill: var(--crumb);
-  opacity: 0.55;
+.b-crumb {
+  fill: var(--crumb-face);
 }
-.loaf__scores path {
+.b-shine {
   fill: none;
   stroke: var(--score);
-  stroke-width: 3.2;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.b-holes ellipse {
+  fill: var(--crumb-hole);
+  opacity: 0.55;
+}
+.b-seeds ellipse {
+  fill: var(--score);
+  stroke: color-mix(in srgb, var(--crust-line) 45%, transparent);
+  stroke-width: 0.8;
+}
+
+.b-sprig {
+  transform-box: view-box;
+  transform-origin: 100px 62px;
+  transition: transform 0.5s var(--ease);
+}
+.b-sprig__stem {
+  fill: none;
+  stroke: var(--wheat-line);
+  stroke-width: 2.4;
   stroke-linecap: round;
 }
-.loaf__face path {
+.b-sprig__grains ellipse {
+  fill: var(--wheat);
+  stroke: var(--wheat-line);
+  stroke-width: 1.4;
+}
+.b-sprig__awns {
   fill: none;
-  stroke: #2a2420;
-  stroke-width: 2.7;
+  stroke: var(--wheat-line);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.b-sprig--sway {
+  animation: sprig-sway 4.8s ease-in-out infinite;
+}
+.b-sprig--perk {
+  transform: rotate(-4deg) scale(1.05);
+}
+/* a voice makes the sprig twitch — loudness only, never meaning */
+.buddy:is([data-state='listening'], [data-state='hearing'], [data-state='recording']) .b-sprig--perk {
+  transform: rotate(calc(-4deg - var(--lvl-m) * 12deg)) scale(1.05);
+  transition-duration: 0.12s;
+}
+.b-sprig--droop {
+  transform: rotate(32deg);
+}
+.b-sprig--bob {
+  animation: sprig-bob 1.6s ease-in-out infinite;
+}
+
+.b-eye {
+  fill: var(--face-ink);
+}
+.b-glint {
+  fill: #fff;
+}
+.b-eyes-line path,
+.b-brows path,
+.b-mouth {
+  fill: none;
+  stroke: var(--face-ink);
+  stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.loaf__eye,
-.loaf__mouth {
-  fill: #2a2420;
+.b-brows path {
+  stroke-width: 2.4;
 }
-.loaf__glint {
-  fill: #fff;
+.b-mouth-fill > path,
+.b-mouth-fill ellipse {
+  fill: var(--face-ink);
 }
-.loaf__cheek {
-  fill: #e5484d;
-  opacity: 0.26;
+.b-mouth-fill .b-tongue {
+  fill: #e0736b;
 }
-.loaf__steam path {
+.b-cheek {
+  fill: var(--blush);
+  opacity: 0.3;
+  transition: opacity 0.4s;
+}
+.buddy:is([data-state='wave'], [data-state='speaking'], [data-state='hearing']) .b-cheek {
+  opacity: 0.48;
+}
+
+.b-gaze {
+  transform-box: view-box;
+  transition: transform 0.45s var(--ease);
+}
+.b-gaze--down {
+  transform: translate(3px, 3.5px);
+}
+.b-gaze--up {
+  transform: translate(3px, -4px);
+}
+.b-gaze--side {
+  transform: translate(-4px, -1px);
+}
+.buddy[data-state='idle'] .b-gaze {
+  animation: glance 13s ease-in-out infinite;
+}
+.b-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5.2s ease-in-out infinite;
+}
+.b-blink.is-wide .b-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.12);
+}
+
+.b-talk-outer {
+  transform-box: view-box;
+  transform-origin: 100px 140px;
+  transition: transform 0.1s;
+}
+.b-talk {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: talk 0.9s ease-in-out infinite;
+}
+
+.b-torso {
+  transform-box: view-box;
+  transform-origin: 100px 200px;
+  transition: transform 0.14s ease-out;
+}
+.buddy:is([data-state='idle'], [data-state='paused'], [data-state='attentive'], [data-state='muted']) .b-torso {
+  animation: breathe 5.5s ease-in-out infinite;
+}
+.buddy:is([data-state='thinking'], [data-state='transcribing']) .b-torso {
+  animation: ponder 3.2s ease-in-out infinite;
+}
+.buddy[data-state='speaking'] .b-torso {
+  animation: bob 0.9s ease-in-out infinite;
+}
+/* leaning in toward the cupped hand; a voice adds a small nod */
+.buddy:is([data-state='listening'], [data-state='hearing'], [data-state='recording']) .b-torso {
+  transform: rotate(calc(2deg + var(--lvl-m) * 3deg)) translateY(calc(var(--lvl-m) * -3px));
+}
+.buddy[data-state='wave'] .b-torso {
+  animation: hop 0.9s ease-in-out 2;
+}
+.buddy[data-state='connecting'] .b-torso {
+  transform: rotate(-1.5deg);
+}
+.buddy[data-state='error'] .b-torso {
+  transform: rotate(-2deg);
+}
+.buddy[data-state='asleep'] .b-torso {
+  animation: doze 7s ease-in-out infinite;
+}
+
+.b-arm__line {
+  fill: none;
+  stroke: var(--crust-line);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.b-arm__fill {
+  fill: none;
+  stroke: var(--crust-fill);
+  stroke-width: 7.4;
+  stroke-linecap: round;
+}
+.b-hand {
+  fill: var(--crust-fill);
+  stroke: var(--crust-line);
+  stroke-width: 2.4;
+}
+.b-arm {
+  transform-box: view-box;
+  animation: arm-in 0.38s var(--ease) both;
+}
+.b-arm--l {
+  transform-origin: 47px 146px;
+}
+.b-arm--r {
+  transform-origin: 153px 145px;
+}
+.b-arm--wave {
+  animation: arm-in 0.38s var(--ease) both, wave 1.1s 0.3s ease-in-out infinite;
+}
+.b-arm--talk {
+  animation: arm-in 0.38s var(--ease) both, gesture 2.6s 0.4s ease-in-out infinite;
+}
+.b-arm--scratch {
+  animation: arm-in 0.38s var(--ease) both, scratch 0.5s 0.4s ease-in-out infinite alternate;
+}
+
+.b-headset {
+  transform-box: view-box;
+  transform-origin: 100px 60px;
+  animation: headset-on 0.55s var(--ease) both;
+}
+.b-headset__band {
+  fill: none;
+  stroke: var(--headset);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.b-headset__cup,
+.b-headset__mic {
+  fill: var(--headset);
+  stroke: color-mix(in srgb, var(--crust-line) 55%, transparent);
+  stroke-width: 1.4;
+}
+.b-headset__pad {
+  fill: none;
+  stroke: var(--headset-pad);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.b-headset__boom {
+  fill: none;
+  stroke: var(--headset);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+}
+/* the little mic glows only while the microphone is really listening */
+.buddy:is([data-state='listening'], [data-state='hearing']) .b-headset__mic {
+  fill: var(--coral);
+}
+
+.b-mug__cup {
+  fill: var(--mug);
+  stroke: color-mix(in srgb, var(--mug) 60%, #000);
+  stroke-width: 1.6;
+}
+.b-mug__band {
+  stroke: color-mix(in srgb, #fff 55%, var(--mug));
+  stroke-width: 2.4;
+}
+.b-mug__steam {
   fill: none;
   stroke: var(--ink-3);
-  stroke-width: 2.4;
+  stroke-width: 2;
   stroke-linecap: round;
   opacity: 0;
-  animation: steam 1.9s ease-in-out infinite;
+  animation: steam 2.6s ease-in-out infinite;
 }
-.loaf__steam path:nth-child(2) {
-  animation-delay: 0.35s;
+
+.b-x--dots circle {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bubble 2.4s ease-in-out infinite;
 }
-.loaf__steam path:nth-child(3) {
-  animation-delay: 0.7s;
+.b-x--dots circle:nth-child(2) {
+  animation-delay: 0.25s;
 }
-.loaf__flour circle {
-  fill: var(--crust);
-  opacity: 0.55;
-  animation: flour 1.4s ease-in-out infinite;
+.b-x--dots circle:nth-child(3) {
+  animation-delay: 0.5s;
 }
-.loaf__flour circle:nth-child(2) {
-  animation-delay: 0.2s;
+.b-x--arcs path,
+.b-x--ripple path {
+  fill: none;
+  stroke: var(--crust);
+  stroke-width: 2.6;
+  stroke-linecap: round;
 }
-.loaf__flour circle:nth-child(3) {
-  animation-delay: 0.4s;
+.b-x--arcs path {
+  opacity: 0.7;
+  animation: arc 1.2s ease-out infinite;
 }
-.loaf__rec-ring {
+.b-x--arcs path:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.b-x--ripple path {
+  opacity: calc(0.18 + var(--lvl-m) * 0.82);
+  transition: opacity 0.12s;
+}
+.b-x--zz text {
+  fill: var(--ink-3);
+  font: 600 16px var(--font-serif);
+  animation: zz 3s ease-in-out infinite;
+}
+.b-x--zz text:nth-child(2) {
+  animation-delay: 0.6s;
+}
+.b-badge {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop 0.35s var(--ease) both;
+}
+.b-badge circle {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 2;
+}
+.b-badge text {
+  fill: var(--ink-2);
+  font: 700 16px var(--font-sans);
+}
+.b-badge--warn circle {
+  fill: var(--amber-soft);
+  stroke: var(--amber);
+}
+.b-badge--warn text {
+  fill: var(--amber);
+}
+.b-badge--mute path {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.b-badge--rec .b-rec-ring {
   fill: none;
   stroke: var(--coral);
   stroke-width: 2.2;
@@ -826,50 +1123,17 @@ kbd {
   transform-origin: center;
   animation: ring 1.6s ease-out infinite;
 }
-.loaf__rec-dot {
+.b-rec-dot {
   fill: var(--coral);
 }
-.loaf__badge circle {
-  fill: var(--amber-soft);
-  stroke: var(--amber);
-  stroke-width: 2;
-}
-.loaf__badge text {
-  fill: var(--amber);
-  font: 700 13px var(--font-sans);
-}
-.loaf__pause rect {
-  fill: var(--ink-3);
-}
-.loaf__zz text {
-  fill: var(--ink-3);
-  font: 600 13px var(--font-serif);
-  animation: zz 3s ease-in-out infinite;
-}
-.loaf__zz text:nth-child(2) {
-  animation-delay: 0.6s;
-}
 
-.loaf__body {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+/* the small face beside messages: thicker lines so it still reads at 30px */
+.bread-mark .b-crust {
+  stroke-width: 6;
 }
-.loaf[data-state='idle'] .loaf__body,
-.loaf[data-state='paused'] .loaf__body {
-  animation: breathe 6s ease-in-out infinite;
-}
-.loaf[data-state='generating'] .loaf__body,
-.loaf[data-state='validating'] .loaf__body,
-.loaf[data-state='transcribing'] .loaf__body {
-  animation: proof 2.4s ease-in-out infinite;
-}
-.loaf[data-state='speaking'] .loaf__body {
-  animation: bob 0.9s ease-in-out infinite;
-}
-.loaf__eyes {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: blink 5.5s ease-in-out infinite;
+.bread-mark .b-mouth,
+.bread-mark .b-eyes-line path {
+  stroke-width: 6;
 }
 
 /* ==========================================================================
@@ -1200,7 +1464,7 @@ kbd {
 .entry__stage {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: clamp(28px, 5vw, 80px);
   align-items: center;
   width: 100%;
@@ -1208,10 +1472,65 @@ kbd {
   margin: 0 auto;
   padding: clamp(12px, 4vh, 48px) 0;
 }
+.entry__hero {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  justify-self: center;
+}
 .entry__scene {
   width: 100%;
-  max-width: 440px;
-  justify-self: center;
+}
+/* 面包 introduces itself — as an AI — from beside the lamp */
+.hello-bubble {
+  position: absolute;
+  top: 13%;
+  left: 58%;
+  z-index: 1;
+  width: max-content;
+  max-width: min(17em, 46vw);
+  padding: 11px 16px 12px;
+  border-radius: 18px 18px 18px 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-paper);
+  animation: bubble-in 0.6s 0.5s var(--ease) both;
+}
+.hello-bubble::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-bottom-right-radius: 4px;
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+.hello-bubble__big {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.18rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.hello-bubble__small {
+  display: block;
+  color: var(--ink-2);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.doors {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 28px;
+}
+.doors .first-note {
+  margin-top: 0;
 }
 .entry__content {
   max-width: 560px;
@@ -1420,6 +1739,59 @@ kbd {
 .session.has-tray .session__body {
   grid-template-columns: minmax(0, 1fr) var(--tray-w);
 }
+.session.has-corner .session__body {
+  grid-template-columns: var(--corner-w) minmax(0, 1fr);
+}
+.session.has-corner.has-tray .session__body {
+  grid-template-columns: var(--corner-w) minmax(0, 1fr) var(--tray-w);
+}
+
+/* On a call the lights go down: the same tokens, a darker room. */
+.session {
+  transition: background-color 0.6s;
+}
+.session.is-calling {
+  color-scheme: dark;
+  --bg: #16130f;
+  --bg-deep: #100e0b;
+  --surface: #221d17;
+  --surface-2: #2c251d;
+  --line: #3a3128;
+  --line-strong: #5a4d3e;
+  --ink: #f6ecdc;
+  --ink-2: #ddd0bc;
+  --ink-3: #b3a590;
+  --crust: #f0b878;
+  --crust-fill: #cf8a48;
+  --crust-line: #6e3a16;
+  --crumb-face: #f1d7a6;
+  --crumb-hole: #cfa262;
+  --score: #f4dcb3;
+  --kraft: #3a3026;
+  --kraft-2: #4a3d2e;
+  --kraft-ink: #f1ddbf;
+  --lamp: #ffcb73;
+  --glow: rgba(255, 186, 96, 0.1);
+  --coral: #e0565b;
+  --coral-text: #ff9b92;
+  --coral-soft: #3a2224;
+  --amber: #f0c46c;
+  --amber-soft: #3a301b;
+  --green: #93d3a2;
+  --green-soft: #1d3224;
+  --focus: #9cc0f5;
+  --focus-ring: rgba(156, 192, 245, 0.3);
+  --loaf-shadow: rgba(0, 0, 0, 0.45);
+  --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.35);
+  background: var(--bg);
+  color: var(--ink);
+}
+.topbar--call .topbar__controls {
+  margin-left: auto;
+  padding-left: 0;
+  border-left: 0;
+}
 .stage {
   display: flex;
   flex-direction: column;
@@ -1583,20 +1955,96 @@ kbd {
 .conv-empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 7vh 12px 4vh;
-  text-align: center;
+  gap: 18px;
+  padding: 3vh 0 2vh;
   animation: rise 0.6s var(--ease) both;
 }
-.conv-empty__title {
-  margin-top: 8px;
-  font-family: var(--font-serif);
-  font-size: 1.35rem;
+.hello {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
-.conv-empty__body {
-  max-width: 26em;
+.hello__bubble {
+  max-width: 34em;
+  padding: 14px 18px 15px;
+  border-radius: 6px 18px 18px 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-s);
+}
+.hello__title {
+  font-family: var(--font-serif);
+  font-size: 1.22rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.hello__body {
+  margin-top: 4px;
+  color: var(--ink-2);
+}
+.starters,
+.conv-call {
+  margin-left: 42px;
+}
+.starters__h,
+.conv-call__lead {
+  margin-bottom: 8px;
+  font-size: 0.84rem;
   color: var(--ink-3);
+}
+.starters__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* starters look like the user's own notes: these are words for them to take */
+.starter {
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: 16px 16px 6px 16px;
+  border: 1px dashed color-mix(in srgb, var(--crust) 40%, transparent);
+  background: color-mix(in srgb, var(--kraft) 70%, var(--surface));
+  color: var(--kraft-ink);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  transition: background-color 0.15s, transform 0.2s var(--ease);
+}
+.starter:hover {
+  background: var(--kraft);
+  transform: translateY(-1px);
+}
+.conv-call {
+  max-width: 420px;
+}
+
+.call-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.call-divider__line {
+  flex: 1;
+  min-width: 16px;
+  height: 1px;
+  background: repeating-linear-gradient(to right, var(--line-strong) 0 4px, transparent 4px 8px);
+}
+.call-divider__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  text-align: center;
+}
+.call-divider .lucide {
+  width: 14px;
+  height: 14px;
+  color: var(--crust);
 }
 
 .support {
@@ -2235,45 +2683,7 @@ kbd {
 
 .composer-wrap {
   position: relative;
-  padding-top: 30px;
-  margin-top: 4px;
-}
-.presence {
-  position: absolute;
-  top: 0;
-  left: 16px;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  pointer-events: none;
-}
-.presence .avatar--sm .avatar__svg {
-  width: 46px;
-}
-.presence__text {
-  margin-top: 2px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-s);
-  font-size: 0.8rem;
-  color: var(--ink-2);
-  white-space: nowrap;
-  animation: rise 0.3s var(--ease) both;
-}
-.presence__name {
-  font-weight: 700;
-  margin-right: 4px;
-  color: var(--crust);
-}
-.presence__detail {
-  color: var(--ink-3);
-}
-.presence[data-state='recording'] .presence__text,
-.presence[data-state='requesting_mic'] .presence__text {
-  border-color: color-mix(in srgb, var(--coral) 55%, transparent);
+  margin-top: 8px;
 }
 
 .paste-hint {
@@ -2283,7 +2693,7 @@ kbd {
   justify-content: space-between;
   gap: 8px 12px;
   margin-bottom: 8px;
-  padding: 10px 14px 10px 72px;
+  padding: 10px 14px;
   border-radius: 16px;
   background: var(--kraft);
   color: var(--kraft-ink);
@@ -3156,6 +3566,758 @@ kbd {
 }
 
 /* ==========================================================================
+   面包's corner (desktop) and perch (phones)
+   ========================================================================== */
+
+.companion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 22px 20px;
+  border-right: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-deep) 70%, transparent), transparent 75%);
+}
+.companion__figure {
+  position: relative;
+  padding-top: 58px;
+}
+.companion__bubble {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: max-content;
+  max-width: 100%;
+  padding: 8px 15px 9px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-s);
+  font-family: var(--font-serif);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  transform: translateX(-50%);
+  animation: bubble-in-center 0.4s var(--ease) both;
+}
+.companion__bubble::after {
+  content: '';
+  position: absolute;
+  left: calc(50% - 7px);
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+.companion__bubble[data-state='error'] {
+  border-color: var(--amber);
+}
+.companion__scene {
+  display: block;
+  max-width: 300px;
+  margin: 0 auto;
+}
+.companion__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: -4px;
+  font-size: 0.84rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+.companion__name {
+  font-weight: 700;
+  color: var(--crust);
+}
+.companion__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.companion__dot:is([data-state='thinking'], [data-state='transcribing']) {
+  background: var(--amber);
+  animation: glow-breathe 1.6s ease-in-out infinite;
+}
+.companion__dot:is([data-state='speaking']) {
+  background: var(--crust-fill);
+}
+.companion__dot:is([data-state='recording'], [data-state='asking']) {
+  background: var(--coral);
+}
+.companion__dot:is([data-state='error']) {
+  background: var(--amber);
+}
+.companion__fine {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.perch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--bg-deep) 55%, var(--bg));
+}
+.perch__buddy {
+  flex: none;
+  width: 50px;
+  margin: -2px 0 -8px;
+}
+.perch__line {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+.perch__name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--crust);
+}
+.perch__say {
+  overflow: hidden;
+  font-family: var(--font-serif);
+  font-size: 0.96rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- the phone ---------- */
+
+.call-launch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.call-launch__btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 74px;
+  padding: 12px 20px 12px 12px;
+  border-radius: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--crust) 35%, transparent);
+  background: linear-gradient(135deg, var(--call-btn), var(--call-btn-2));
+  color: var(--call-btn-ink);
+  text-align: left;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--crust-line) 30%, transparent), var(--shadow-paper);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s, filter 0.2s;
+}
+.call-launch__btn:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.08);
+}
+.call-launch__btn:active {
+  transform: translateY(1px);
+}
+.call-launch__ring {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #2a1d10;
+  color: var(--call-btn);
+}
+.call-launch__ring::after {
+  /* a quiet, slow invitation — not a ringing phone */
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, #2a1d10 45%, transparent);
+  animation: invite 3.2s ease-out infinite;
+}
+.call-launch__ring .lucide {
+  width: 22px;
+  height: 22px;
+}
+.call-launch__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.call-launch__title {
+  font-size: 1.06rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.call-launch__sub {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--call-btn-ink) 80%, transparent);
+}
+.call-launch__pre {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  color: var(--ink-3);
+}
+.call-launch--panel .call-launch__btn {
+  min-height: 66px;
+  padding-right: 14px;
+}
+.call-launch.is-blocked .call-launch__btn {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  box-shadow: none;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+.call-launch.is-blocked .call-launch__ring {
+  background: var(--line-strong);
+  color: var(--surface);
+}
+.call-launch.is-blocked .call-launch__ring::after {
+  display: none;
+}
+.call-launch.is-blocked .call-launch__sub {
+  color: var(--ink-2);
+}
+
+.call-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 13px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(135deg, var(--call-btn), var(--call-btn-2));
+  color: var(--call-btn-ink);
+  font-size: 0.94rem;
+  font-weight: 700;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--crust-line) 30%, transparent);
+}
+.call-pill .lucide {
+  width: 17px;
+  height: 17px;
+}
+.call-pill.is-blocked {
+  background: var(--surface-2);
+  color: var(--ink-3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.call-pill__hint {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 12px;
+  z-index: 6;
+  max-width: min(300px, calc(100vw - 24px));
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  box-shadow: var(--shadow);
+  animation: rise 0.25s var(--ease) both;
+}
+.call-pill__hint:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   The call room
+   ========================================================================== */
+
+.callroom {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.callroom--wide {
+  grid-template-columns: minmax(0, 1fr) var(--tray-w);
+}
+.callroom__main {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+}
+.callroom__main::before {
+  /* the one lamp left on, right above 面包 */
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 75%;
+  z-index: -1;
+  background: radial-gradient(44% 58% at 50% 30%, rgba(255, 190, 100, 0.22), transparent 72%);
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+.callroom[data-phase='speaking'] .callroom__main::before {
+  animation: glow-breathe 2.4s ease-in-out infinite;
+}
+.callroom:is([data-phase='paused'], [data-phase='muted'], [data-phase='error']) .callroom__main::before {
+  opacity: 0.45;
+}
+
+.callroom__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 14px;
+  width: 100%;
+  max-width: 640px;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+.callroom__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.callroom__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: live-pulse 2s ease-out infinite;
+}
+.callroom:is([data-phase='paused'], [data-phase='error'], [data-phase='connecting']) .callroom__pulse {
+  background: var(--amber);
+  animation: none;
+}
+.callroom__time {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+}
+.callroom__ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.callroom__ai-tag {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.callroom__stage {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: min(300px, 62vw, 36dvh);
+  aspect-ratio: 1;
+  margin: 8px 0 2px;
+  transition: width 0.35s var(--ease);
+}
+.callroom__halo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.callroom__halo span {
+  grid-area: 1 / 1;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--lamp) 45%, transparent);
+  transition: transform 0.12s ease-out, opacity 0.4s, border-color 0.4s;
+}
+.callroom__halo span:nth-child(1) {
+  width: 68%;
+}
+.callroom__halo span:nth-child(2) {
+  width: 84%;
+  opacity: 0.6;
+}
+.callroom__halo span:nth-child(3) {
+  width: 100%;
+  opacity: 0.32;
+}
+/* listening: the rings follow the loudness of your voice */
+.callroom[data-phase='listening'] .callroom__halo span {
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.callroom[data-phase='listening'] .callroom__halo span:nth-child(1) {
+  transform: scale(calc(1 + var(--lvl, 0) * 0.14));
+}
+.callroom[data-phase='listening'] .callroom__halo span:nth-child(2) {
+  transform: scale(calc(1 + var(--lvl, 0) * 0.22));
+}
+.callroom[data-phase='listening'] .callroom__halo span:nth-child(3) {
+  transform: scale(calc(1 + var(--lvl, 0) * 0.3));
+}
+/* speaking: 面包's voice goes outward */
+.callroom:is([data-phase='speaking'], [data-phase='connecting']) .callroom__halo span {
+  animation: halo-out 2.4s ease-out infinite;
+}
+.callroom[data-phase='connecting'] .callroom__halo span {
+  animation-duration: 1.8s;
+}
+.callroom:is([data-phase='speaking'], [data-phase='connecting']) .callroom__halo span:nth-child(2) {
+  animation-delay: 0.8s;
+}
+.callroom:is([data-phase='speaking'], [data-phase='connecting']) .callroom__halo span:nth-child(3) {
+  animation-delay: 1.6s;
+}
+.callroom:is([data-phase='thinking'], [data-phase='transcribing']) .callroom__halo span {
+  animation: halo-breathe 3s ease-in-out infinite;
+}
+.callroom:is([data-phase='muted'], [data-phase='paused']) .callroom__halo span {
+  opacity: 0.2;
+}
+.callroom[data-phase='muted'] .callroom__halo span {
+  border-style: dashed;
+}
+.callroom[data-phase='error'] .callroom__halo span {
+  border-color: color-mix(in srgb, var(--amber) 40%, transparent);
+  opacity: 0.35;
+}
+.callroom__buddy {
+  position: relative;
+  width: 74%;
+  margin-top: 4%;
+}
+
+.callroom__status {
+  flex: none;
+  max-width: 34em;
+  text-align: center;
+}
+.callroom__phase {
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+.callroom__phase:focus {
+  outline: none;
+}
+.callroom__hint {
+  min-height: 1.7em;
+  margin-top: 4px;
+  font-size: 0.95rem;
+  color: var(--ink-2);
+}
+.callroom__error {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--amber);
+  background: var(--amber-soft);
+  font-size: 0.9rem;
+}
+
+.callroom__captions {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: safe flex-end;
+  overflow-y: auto;
+  gap: 10px;
+  width: 100%;
+  max-width: 620px;
+  min-height: 64px;
+  margin-top: 14px;
+}
+.cap {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  animation: rise 0.35s var(--ease) both;
+}
+.cap__who {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.cap--you .cap__text {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.95rem;
+  color: var(--ink-2);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.cap--bread {
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.cap--bread .cap__who {
+  background: color-mix(in srgb, var(--lamp) 20%, transparent);
+  color: var(--lamp);
+}
+.cap--bread .cap__text {
+  max-height: 5.5em;
+  overflow-y: auto;
+  font-family: var(--font-serif);
+  font-size: 1.18rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.cap--bread.is-live {
+  border-color: color-mix(in srgb, var(--lamp) 50%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lamp) 10%, transparent);
+}
+.cap--empty {
+  justify-content: center;
+  font-size: 0.9rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+.callroom__controls {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(16px, 6vw, 44px);
+  margin-top: 18px;
+}
+.callkey {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 92px;
+  text-align: center;
+}
+.callkey__btn {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+  transition: background-color 0.2s, color 0.2s, transform 0.15s var(--ease), box-shadow 0.2s, opacity 0.2s;
+}
+.callkey__btn .lucide {
+  width: 26px;
+  height: 26px;
+}
+.callkey__btn:hover:not([aria-disabled='true']) {
+  transform: translateY(-1px);
+}
+.callkey__btn:active:not([aria-disabled='true']) {
+  transform: scale(0.95);
+}
+.callkey__btn[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.callkey__label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.callkey__note {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.callkey--primary .callkey__btn {
+  width: 80px;
+  height: 80px;
+  border-color: transparent;
+  background: var(--lamp);
+  color: #2a1a08;
+  box-shadow: 0 8px 26px rgba(255, 190, 100, 0.28);
+}
+.callkey--primary .callkey__btn .lucide {
+  width: 30px;
+  height: 30px;
+}
+.callkey--primary .callkey__label {
+  color: var(--ink);
+}
+.callkey--cut .callkey__btn {
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.3);
+}
+.callkey--wait .callkey__btn,
+.callkey--wait .callkey__btn[aria-disabled='true'] {
+  border: 1.5px dashed var(--line-strong);
+  background: transparent;
+  color: var(--ink-3);
+  box-shadow: none;
+  opacity: 1;
+}
+.callkey--hangup .callkey__btn {
+  border-color: transparent;
+  background: var(--hangup);
+  color: #fff;
+}
+.callkey--hangup .callkey__btn:hover {
+  background: color-mix(in srgb, var(--hangup) 86%, #000);
+}
+.callkey--mute .callkey__btn[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.callroom__more {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 14px;
+  margin-top: 10px;
+}
+.callroom__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+.callroom__link:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.callroom__link .lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.callroom__side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+}
+
+.calllog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.calllog__h {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px 10px;
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+}
+.calllog__sub {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.calllog__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 22px 24px;
+}
+.calllog__scroll:focus-visible {
+  outline-offset: -3px;
+}
+.calllog__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.calllog__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.calllog__who {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.calllog__item--assistant .calllog__who {
+  color: var(--lamp);
+}
+.calllog__text {
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.calllog__item--assistant .calllog__text {
+  font-family: var(--font-serif);
+}
+.calllog__empty {
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+.calllog--compact {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 620px;
+  min-height: 140px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+.calllog--compact .calllog__h {
+  padding: 12px 16px 6px;
+}
+.calllog--compact .calllog__scroll {
+  padding: 4px 16px 14px;
+}
+.callroom.is-log .callroom__stage {
+  width: min(130px, 30vw, 18dvh);
+}
+
+/* ==========================================================================
    Toasts
    ========================================================================== */
 
@@ -3173,6 +4335,11 @@ kbd {
 }
 body:has(.session) .toasts {
   bottom: calc(176px + env(safe-area-inset-bottom));
+}
+/* on a call the bottom belongs to the call keys */
+body:has(.session.is-calling) .toasts {
+  top: calc(68px + env(safe-area-inset-top));
+  bottom: auto;
 }
 .toasts__slot {
   display: flex;
@@ -3224,6 +4391,21 @@ body:has(.session) .toasts {
   }
 }
 
+@media (max-width: 1360px) {
+  .session.has-tray {
+    --corner-w: 236px;
+  }
+  .session.has-tray .companion__fine {
+    display: none;
+  }
+}
+
+@media (max-width: 1079px) {
+  :root {
+    --corner-w: 272px;
+  }
+}
+
 @media (max-width: 900px) {
   .entry__stage,
   .end {
@@ -3234,9 +4416,38 @@ body:has(.session) .toasts {
     gap: 4px;
     padding-top: 4px;
   }
+  /* phones: 面包 and its hello sit side by side above the title */
+  .entry__hero {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 520px;
+  }
   .entry__scene {
-    max-width: 280px;
+    flex: none;
+    width: 52%;
+    max-width: 230px;
     margin-bottom: -6px;
+  }
+  .hello-bubble {
+    position: relative;
+    top: auto;
+    left: auto;
+    order: 2;
+    max-width: none;
+    flex: 1;
+    width: auto;
+    margin-bottom: 18%;
+    border-radius: 18px 18px 18px 6px;
+  }
+  .hello-bubble::after {
+    /* the tail turns to point left, at 面包 */
+    left: -7px;
+    bottom: 16px;
+    border-right: 0;
+    border-left: 1px solid var(--line);
+    border-radius: 0 0 0 4px;
+    transform: rotate(45deg);
   }
   .entry__content,
   .end__content {
@@ -3324,8 +4535,43 @@ body:has(.session) .toasts {
   .offers__lead {
     flex: none;
   }
-  .presence__detail {
+  .starters,
+  .conv-call {
+    margin-left: 0;
+  }
+  .conv-empty {
+    padding-top: 1vh;
+  }
+
+  .callroom__main {
+    padding-inline: 14px;
+  }
+  .callroom__ai {
     display: none;
+  }
+  .callroom__stage {
+    width: min(240px, 58vw, 30dvh);
+  }
+  .callroom__hint {
+    font-size: 0.9rem;
+  }
+  .cap--bread .cap__text {
+    font-size: 1.08rem;
+  }
+  .callroom__controls {
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .callkey {
+    width: 84px;
+  }
+  .callkey__btn {
+    width: 58px;
+    height: 58px;
+  }
+  .callkey--primary .callkey__btn {
+    width: 72px;
+    height: 72px;
   }
   .composer {
     padding: 12px 8px 6px 16px;
@@ -3390,6 +4636,34 @@ body:has(.session) .toasts {
   }
 }
 
+/* Compact phones leave room for captions and controls without overlapping the status. */
+@media (max-width: 700px) and (max-height: 760px) {
+  .callroom__stage {
+    width: min(180px, 44vw, 26dvh);
+  }
+}
+
+/* short screens, e.g. a phone with the keyboard up: 面包 steps back, the words and keys stay */
+@media (max-height: 600px) {
+  .perch__buddy {
+    width: 36px;
+    margin-bottom: -4px;
+  }
+  .perch {
+    padding-block: 3px;
+  }
+  .perch__name {
+    display: none;
+  }
+  .callroom__stage {
+    width: min(130px, 30vw, 24dvh);
+    margin-top: 2px;
+  }
+  .callroom__captions {
+    min-height: 0;
+  }
+}
+
 @media (max-width: 420px) {
   .entry {
     padding-inline: 16px;
@@ -3397,8 +4671,14 @@ body:has(.session) .toasts {
   .entry__title {
     font-size: 2.15rem;
   }
-  .entry__scene {
-    max-width: 230px;
+  .hello-bubble__big {
+    font-size: 1.05rem;
+  }
+  .call-launch__btn {
+    padding-right: 14px;
+  }
+  .call-pill {
+    padding: 0 13px 0 11px;
   }
   .first-note__row {
     flex-direction: column;
@@ -3457,8 +4737,19 @@ body:has(.session) .toasts {
   .offer,
   .pill,
   .ctl,
-  .send-btn {
+  .send-btn,
+  .call-launch__btn,
+  .call-pill,
+  .callkey__btn,
+  .hello__bubble,
+  .hello-bubble,
+  .companion__bubble,
+  .cap--bread,
+  .starter {
     border: 1px solid CanvasText;
+  }
+  .callkey__btn[aria-pressed='true'] {
+    border-width: 3px;
   }
   .paper.is-draft {
     outline: 1px dashed CanvasText;
@@ -3545,13 +4836,224 @@ body:has(.session) .toasts {
     transform: scale(1.008, 1.018);
   }
 }
-@keyframes proof {
+@keyframes ponder {
   0%,
   100% {
-    transform: scale(1, 1);
+    transform: rotate(-2deg);
   }
   50% {
-    transform: scale(1.025, 1.07);
+    transform: rotate(1deg) scale(1.01, 1.02);
+  }
+}
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-5px) scale(0.99, 1.02);
+  }
+  60% {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+}
+@keyframes doze {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(2px);
+  }
+  50% {
+    transform: rotate(-3deg) translateY(2px) scale(1.01, 1.025);
+  }
+}
+@keyframes sprig-sway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+@keyframes sprig-bob {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
+  50% {
+    transform: rotate(4deg) translateY(-2px);
+  }
+}
+@keyframes glance {
+  0%,
+  38%,
+  100% {
+    transform: translate(0, 0);
+  }
+  42%,
+  52% {
+    transform: translate(-3px, 0.5px);
+  }
+  56%,
+  80% {
+    transform: translate(0, 0);
+  }
+  84%,
+  90% {
+    transform: translate(2.5px, 2.5px);
+  }
+}
+@keyframes talk {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  20% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(0.55);
+  }
+  60% {
+    transform: scaleY(0.95);
+  }
+  80% {
+    transform: scaleY(0.45);
+  }
+}
+@keyframes arm-in {
+  from {
+    opacity: 0.4;
+    transform: rotate(-10deg) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-16deg);
+  }
+}
+@keyframes gesture {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+@keyframes scratch {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-4deg);
+  }
+}
+@keyframes headset-on {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bubble {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+@keyframes arc {
+  from {
+    opacity: 0.9;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bubble-in-center {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 5px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes invite {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.9);
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+@keyframes halo-out {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.82);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+@keyframes halo-breathe {
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.03);
   }
 }
 @keyframes bob {
@@ -3584,17 +5086,6 @@ body:has(.session) .toasts {
   100% {
     opacity: 0;
     transform: translateY(-7px);
-  }
-}
-@keyframes flour {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translateY(-4px);
-    opacity: 0.75;
   }
 }
 @keyframes ring {
@@ -3693,11 +5184,20 @@ body:has(.session) .toasts {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .loaf__steam path,
-  .ls__mug-steam path {
+  .ls__mug-steam path,
+  .b-mug__steam {
     opacity: 0.55;
   }
   .paper--slip {
     transform: rotate(-0.6deg);
+  }
+  /* no loudness-driven motion: the words "在听" and "听到了" carry it */
+  .buddy,
+  .callroom__stage {
+    --lvl: 0 !important;
+    --lvl-m: 0 !important;
+  }
+  .call-launch__ring::after {
+    display: none;
   }
 }

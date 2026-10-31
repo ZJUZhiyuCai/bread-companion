@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: '面包 · 今晚，先说说',
-  description: '收到面试拒信的那个晚上，可以说说话、留个记号，或者在你愿意时一起看一段回答、练一题。',
+  description: '收到面试拒信的那个晚上，可以和面包打字说说，也可以给它打个电话；在你愿意时，再一起留个记号、看一段回答或练一题。',
   icons: { icon: '/favicon.svg' },
   robots: { index: false, follow: false },
 };

@@ -76,6 +76,27 @@ describe('real provider candidates', () => {
   it('does not blindly retry ambiguous provider/network failures', async () => {
     setup(); const fetcher=vi.fn(async()=>new Response('private echo body',{status:503}));await expect(new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('repairs a verbose call reply once and applies the voice style at the provider boundary', async () => {
+    setup(); const input=requestFixture({mode:'listen',channel:'call'});
+    const fetcher=vi.fn().mockResolvedValueOnce(upstream({assistantText:'字'.repeat(101),findings:[],warnings:[]})).mockResolvedValueOnce(upstream({assistantText:'先不急着想清楚，慢慢说。',findings:[],warnings:[]}));
+    const c=await new RealProvider(fetcher).generate(input,new AbortController().signal);
+    expect(c.assistantText).toBe('先不急着想清楚，慢慢说。');expect(fetcher).toHaveBeenCalledTimes(2);
+    const body=JSON.parse(fetcher.mock.calls[1][1].body);expect(body.system).toContain('当前是电话');expect(body.system).toContain('STYLE_LENGTH_MAX_100');
+  });
+  it('will not publish an explicit false-human claim even if the model repeats it', async () => {
+    setup();const fetcher=vi.fn(async()=>upstream({assistantText:'我是真人。',findings:[],warnings:[]}));
+    await expect(new RealProvider(fetcher).generate(requestFixture({mode:'listen'}),new AbortController().signal)).rejects.toMatchObject({code:'INVALID_MODEL_OUTPUT'});expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('routes companionship independently while keeping the evidence model for review',async()=>{
+    setup();vi.stubEnv('AGENT_MODEL','analysis-fixture');vi.stubEnv('AGENT_COMPANION_MODEL','companion-fixture');vi.stubEnv('AGENT_COMPANION_PROTOCOL','openai');
+    const fetcher=vi.fn(async(url:RequestInfo|URL,init?:RequestInit)=>{
+      const body=JSON.parse(init!.body as string);
+      if(String(url).endsWith('/chat/completions')){expect(body.model).toBe('companion-fixture');return Response.json({choices:[{message:{content:JSON.stringify({assistantText:'可以，我们慢慢说。',findings:[]})}}]});}
+      expect(body.model).toBe('analysis-fixture');return upstream(modelOutput());
+    });
+    await new RealProvider(fetcher).generate(requestFixture({mode:'listen'}),new AbortController().signal);
+    await new RealProvider(fetcher).generate(requestFixture(),new AbortController().signal);expect(fetcher).toHaveBeenCalledTimes(2);
+  });
   it('narrow urgent-support path stops evaluation without claiming human handover', async () => {
     setup(); const fetcher=vi.fn();const c=await new RealProvider(fetcher).generate(requestFixture({userMessage:'我现在准备伤害自己'}),new AbortController().signal);
     expect(c.supportGuidance).toBe(true);expect(c.findings).toEqual([]);expect(c.cardDraft).toBeUndefined();expect(fetcher).not.toHaveBeenCalled();expect(c.assistantText).toContain('无法提供现场救援');

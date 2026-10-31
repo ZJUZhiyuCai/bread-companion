@@ -1,11 +1,22 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { HeartHandshake, LoaderCircle, Paperclip, Square, Volume2 } from 'lucide-react';
+import { Fragment, useEffect, useRef, type ReactNode } from 'react';
+import { HeartHandshake, LoaderCircle, Paperclip, Phone, PhoneOff, Square, Volume2 } from 'lucide-react';
 import type { Card, Message } from '@/domain/types';
 import { CardSlip } from './CardView';
 import { StateAvatar } from './StateAvatar';
 import { useReducedMotion } from './hooks';
+import { formatClock } from './labels';
+
+/** Where a voice call started and ended, as message indexes, so the transcript reads in place. */
+export interface CallMark {
+  start: number;
+  end: number | null;
+  seconds: number;
+}
+
+/** First lines people can take and change. They only fill the box; nothing is sent for you. */
+const STARTERS = ['刚收到拒信，有点懵', '不想分析，就想吐槽一下', '我觉得自己表现得很差', '陪我待一会儿就好'];
 
 interface ConversationProps {
   messages: Message[];
@@ -29,6 +40,11 @@ interface ConversationProps {
   onRedoCard: (card: Card) => void;
   busy: boolean;
   canAct: boolean;
+  callMarks: CallMark[];
+  /** Puts a starter line into the composer. */
+  onStarter?: (text: string) => void;
+  /** Extra content under the opening greeting (the phone card on small screens). */
+  emptyExtra?: ReactNode;
 }
 
 export function Conversation(props: ConversationProps) {
@@ -54,6 +70,9 @@ export function Conversation(props: ConversationProps) {
     onRedoCard,
     busy,
     canAct,
+    callMarks,
+    onStarter,
+    emptyExtra,
   } = props;
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -71,9 +90,10 @@ export function Conversation(props: ConversationProps) {
   }, []);
 
   const cardKey = card ? `${card.id}:${card.revision}:${card.validity}` : '';
+  const marksKey = callMarks.map((k) => `${k.start}-${k.end}`).join(',');
   useEffect(() => {
     if (stickToBottom.current) endRef.current?.scrollIntoView({ block: 'end', behavior: reduced ? 'auto' : 'smooth' });
-  }, [messages.length, thinking, cardKey, reduced]);
+  }, [messages.length, thinking, cardKey, marksKey, reduced]);
 
   const firstAssistantId = messages.find((m) => m.role === 'assistant')?.id;
 
@@ -83,7 +103,7 @@ export function Conversation(props: ConversationProps) {
         <p className="conv-opening">
           <span className="conv-opening__line" aria-hidden="true" />
           <span>
-            今晚的对话从这里开始。面包是 AI，不是真人，也没有人在后台看着；这些话默认不会保存。
+            今晚的对话从这里开始。面包是 AI，没有真人值守；这次对话默认不保存。
           </span>
           <span className="conv-opening__line" aria-hidden="true" />
         </p>
@@ -103,39 +123,66 @@ export function Conversation(props: ConversationProps) {
 
         {messages.length === 0 && !thinking && (
           <div className="conv-empty">
-            <StateAvatar state="idle" size="lg" decorative />
-            <p className="conv-empty__title">{reviewIntent ? '我们一起看看那一段。' : '想从哪里说起都可以。'}</p>
-            <p className="conv-empty__body">
-              {reviewIntent
-                ? '你记得的回答、拒信原文、岗位描述都可以，直接说或者粘贴进来。'
-                : '可以是这次面试，也可以只是现在的感受。不用说公司名，也不用先想清楚。'}
-            </p>
+            <div className="hello">
+              <span className="msg__mark" aria-hidden="true">
+                <StateAvatar state="idle" size="xs" decorative />
+              </span>
+              <div className="hello__bubble">
+                <p className="hello__title">{reviewIntent ? '我们一起看看那一段。' : '想从哪里说起都可以。'}</p>
+                <p className="hello__body">
+                  {reviewIntent
+                    ? '你记得的回答、拒信原文、岗位描述都可以，直接说或者粘贴进来。'
+                    : '可以是这次面试，也可以只是现在的感受。不用说公司名，也不用先想清楚。'}
+                </p>
+              </div>
+            </div>
+            {!reviewIntent && onStarter && canAct && (
+              <div className="starters" role="group" aria-labelledby="starters-h">
+                <p id="starters-h" className="starters__h">
+                  不知道怎么开口？点一句放进输入框，改成你的话再发：
+                </p>
+                <div className="starters__list">
+                  {STARTERS.map((s) => (
+                    <button key={s} type="button" className="starter" onClick={() => onStarter(s)}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {emptyExtra}
           </div>
         )}
 
         <div role="log" aria-label="对话" aria-live="polite" aria-relevant="additions">
           <ol className="messages">
-            {messages.map((m) => {
+            {messages.map((m, i) => {
+              const marks = marksAt(callMarks, i);
               if (m.role === 'user') {
                 return (
-                  <li key={m.id} className="msg msg--user">
-                    <div className="msg__note">
-                      <span className="sr-only">你说：</span>
-                      <p className="msg__text">{m.text}</p>
-                      {m.sourceId && (
-                        <button type="button" className="msg__source" onClick={() => onOpenSource(m.sourceId!)}>
-                          <Paperclip aria-hidden="true" /> 已放进材料 · 看看
-                        </button>
-                      )}
-                    </div>
-                  </li>
+                  <Fragment key={m.id}>
+                    {marks}
+                    <li className="msg msg--user">
+                      <div className="msg__note">
+                        <span className="sr-only">你说：</span>
+                        <p className="msg__text">{m.text}</p>
+                        {m.sourceId && (
+                          <button type="button" className="msg__source" onClick={() => onOpenSource(m.sourceId!)}>
+                            <Paperclip aria-hidden="true" /> 已放进材料 · 看看
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  </Fragment>
                 );
               }
               const isWelcome = welcomeIntent && m.id === firstAssistantId;
               const speakingThis = isSpeaking && speakingId === m.id;
               const pendingThis = speakPendingId === m.id && !speakingThis;
               return (
-                <li key={m.id} className={`msg msg--bread ${isWelcome ? 'msg--welcome' : ''} ${speakingThis ? 'is-speaking' : ''}`}>
+                <Fragment key={m.id}>
+                {marks}
+                <li className={`msg msg--bread ${isWelcome ? 'msg--welcome' : ''} ${speakingThis ? 'is-speaking' : ''}`}>
                   <span className="msg__mark" aria-hidden="true">
                     <StateAvatar state={speakingThis ? 'speaking' : 'idle'} size="xs" decorative />
                   </span>
@@ -180,8 +227,10 @@ export function Conversation(props: ConversationProps) {
                     )}
                   </div>
                 </li>
+                </Fragment>
               );
             })}
+            {marksAt(callMarks, messages.length)}
             {thinking && (
               <li className="msg msg--bread msg--thinking">
                 <span className="msg__mark" aria-hidden="true">
@@ -217,5 +266,32 @@ export function Conversation(props: ConversationProps) {
         <div ref={endRef} className="conversation__end" />
       </div>
     </div>
+  );
+}
+
+/** Dividers that belong right before message `i`, in the order the calls happened. */
+function marksAt(callMarks: CallMark[], i: number): ReactNode {
+  const out: ReactNode[] = [];
+  callMarks.forEach((k, n) => {
+    if (k.start === i && k.end === i) out.push(<CallDivider key={`b${n}`} kind="brief" seconds={k.seconds} />);
+    else if (k.start === i) out.push(<CallDivider key={`s${n}`} kind="start" />);
+    else if (k.end === i) out.push(<CallDivider key={`e${n}`} kind="end" seconds={k.seconds} />);
+  });
+  return out.length ? out : null;
+}
+
+function CallDivider({ kind, seconds = 0 }: { kind: 'start' | 'end' | 'brief'; seconds?: number }) {
+  const Icon = kind === 'start' ? Phone : PhoneOff;
+  return (
+    <li className={`call-divider call-divider--${kind}`}>
+      <span className="call-divider__line" aria-hidden="true" />
+      <span className="call-divider__text">
+        <Icon aria-hidden="true" />
+        {kind === 'start' && '开始语音通话 · 下面是通话字幕'}
+        {kind === 'end' && `通话结束 · ${formatClock(seconds)} · 可以接着打字`}
+        {kind === 'brief' && `打过一次电话 · ${formatClock(seconds)} · 没有留下字幕`}
+      </span>
+      <span className="call-divider__line" aria-hidden="true" />
+    </li>
   );
 }

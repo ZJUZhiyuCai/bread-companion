@@ -45,9 +45,9 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
       <div className="about__who">
         <StateAvatar state="idle" size="md" decorative />
         <div>
-          <p className="about__lede">面包是一个 AI 程序，不是真人，也没有人在后台看着这段对话。</p>
+          <p className="about__lede">面包是一个 AI 程序，没有真人值守。</p>
           <p className="small muted">
-            它可以陪你说说话、帮你留个记号、在你想要时一起看一段回答或练一题。它不做心理诊断，也不知道招聘方没有公开的决定原因——不知道的，它会说不知道。
+            它可以陪你说说话（打字或打电话）、帮你留个记号、在你想要时一起看一段回答或练一题。它的表情只表示它自己在听、在想还是在说，不会判断你的情绪。它不做心理诊断，也不知道招聘方没有公开的决定原因——不知道的，它会说不知道。
           </p>
         </div>
       </div>
@@ -74,9 +74,18 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
               </dd>
             </div>
             <div>
+              <dt>打电话</dt>
+              <dd>
+                <strong>{caps.agent.configured && caps.asr.available && caps.tts.available ? '可以，点电话按钮才会接通' : '现在不可用，打字照样可以'}</strong>
+                <span className="about__meta">
+                  网页里和 AI 的语音对话，不是电话线路，也没有真人接听。你停一下，它就把这句转成字、回一句短的、念出来，再接着听；想插话点“插话”。字幕留在这次对话里，挂断后可以接着打字。
+                </span>
+              </dd>
+            </div>
+            <div>
               <dt>说给它听</dt>
               <dd>
-                <strong>{caps.asr.available ? '可以，点麦克风才开始录' : '现在不可用'}</strong>
+                <strong>{caps.asr.available ? '可以，只在通话中或你点“录一段”时才听' : '现在不可用'}</strong>
                 <span className="about__meta">
                   {caps.asr.label}
                   {caps.asr.reason ? ` · ${caps.asr.reason}` : ''}
@@ -86,9 +95,12 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
             <div>
               <dt>念给你听</dt>
               <dd>
-                <strong>{caps.tts.available ? '可以，点“听”才播放，不会自动响' : '现在不可用，读文字就好'}</strong>
+                <strong>
+                  {caps.tts.available ? '文字聊天里点“听”才播放；通话中会自动念出回复' : '现在不可用，读文字就好'}
+                </strong>
                 <span className="about__meta">
-                  {caps.tts.label}
+                  声音固定是一种温暖的女声
+                  {caps.tts.label ? ` · ${caps.tts.label}` : ''}
                   {caps.tts.reason ? ` · ${caps.tts.reason}` : ''}
                 </span>
               </dd>
@@ -137,12 +149,13 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
         <h3 id="about-keys">键盘</h3>
         <ul className="about__keys">
           <li>
-            <kbd>Esc</kbd> 停止正在进行的回应、播放或转写
+            <kbd>Esc</kbd> 停止正在进行的回应、播放或转写；通话中是暂停
           </li>
+          <li>通话里的静音、说完了 / 插话、挂断都是普通按钮，可以用 <kbd>Tab</kbd> 走到、<kbd>Enter</kbd> 或空格按下</li>
           <li>
             <kbd>Enter</kbd> 发出，<kbd>Shift</kbd> + <kbd>Enter</kbd> 换行（输入法组字时不会发出）
           </li>
-          <li>顶栏右侧始终是“停止”和“结束”</li>
+          <li>顶栏右侧始终有“结束”；文字聊天时旁边还有“停止”</li>
         </ul>
       </section>
     </Dialog>

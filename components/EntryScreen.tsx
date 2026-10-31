@@ -3,26 +3,31 @@
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { ArrowRight, Archive, Headphones, MessageCircle, ScanText } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
+import { CallLauncher } from './Companion';
 import { LampScene } from './NightWindow';
 import { AiStamp } from './ServiceStatus';
-import { useAutoGrow } from './hooks';
+import { useAutoGrow, useFlash } from './hooks';
 
 interface EntryScreenProps {
   caps: Capabilities | null;
   savedCount: number;
   onTalk: (firstText?: string) => void;
+  onCall: (draft?: string) => void;
   onWelcome: () => void;
   onReview: () => void;
   onOpenArchive: () => void;
   onOpenAbout: () => void;
 }
 
-export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onOpenArchive, onOpenAbout }: EntryScreenProps) {
+export function EntryScreen(props: EntryScreenProps) {
+  const { caps, savedCount, onTalk, onCall, onWelcome, onReview, onOpenArchive, onOpenAbout } = props;
   const [text, setText] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
   useAutoGrow(ref, text, 200);
+  const waving = useFlash(true, 2800);
   const maxInput = caps?.limits.maxInputChars ?? null;
   const over = maxInput !== null && text.length > maxInput;
+  const typing = text.trim().length > 0;
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -55,39 +60,49 @@ export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onO
       </div>
 
       <div className="entry__stage">
-        <div className="entry__scene">
-          <LampScene lit idPrefix="entry-lamp" />
+        <div className="entry__hero">
+          <p className="hello-bubble">
+            <span className="hello-bubble__big">嗨，我是面包。</span>
+            <span className="hello-bubble__small">一个 AI。今晚想说什么，我都听着。</span>
+          </p>
+          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} idPrefix="entry-lamp" className="entry__scene" />
         </div>
 
         <div className="entry__content">
           <h1 className="entry__title">今晚，先说说。</h1>
-          <p className="entry__lede">可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。</p>
+          <p className="entry__lede">打字可以，打个电话也可以。说到哪儿算哪儿，想停的时候随时停。</p>
 
-          <form className="first-note" onSubmit={submit}>
-            <label htmlFor="entry-first" className="first-note__label">
-              写下第一句，不用整理好
-            </label>
-            <textarea
-              id="entry-first"
-              ref={ref}
-              className="first-note__input"
-              rows={2}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKey}
-              placeholder="比如：刚收到拒信。我准备了三天，最后只收到一句“不合适”。"
-              aria-describedby="entry-first-help"
-              aria-invalid={over || undefined}
-            />
-            <div className="first-note__row">
-              <p id="entry-first-help" className={`small ${over ? 'warn-text' : 'muted'}`}>
-                {over ? `超过 ${maxInput} 字了，可以先说一部分` : '不用填公司，不用传简历，也不用给心情打分。'}
-              </p>
-              <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
-                说给面包 <ArrowRight aria-hidden="true" />
-              </button>
+          <div className="doors">
+            <form className="first-note door" onSubmit={submit}>
+              <label htmlFor="entry-first" className="first-note__label">
+                写下第一句，不用整理好
+              </label>
+              <textarea
+                id="entry-first"
+                ref={ref}
+                className="first-note__input"
+                rows={2}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={onKey}
+                placeholder="比如：刚收到拒信。我准备了三天，最后只收到一句“不合适”。"
+                aria-describedby="entry-first-help"
+                aria-invalid={over || undefined}
+              />
+              <div className="first-note__row">
+                <p id="entry-first-help" className={`small ${over ? 'warn-text' : 'muted'}`}>
+                  {over ? `超过 ${maxInput} 字了，可以先说一部分` : '不用填公司，不用传简历，也不用给心情打分。'}
+                </p>
+                <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
+                  说给面包 <ArrowRight aria-hidden="true" />
+                </button>
+              </div>
+            </form>
+
+            <div className="door door--call">
+            <CallLauncher variant="hero" caps={caps} onCall={() => onCall(text)} />
             </div>
-          </form>
+          </div>
 
           <div className="ways">
             <p className="ways__title" id="ways-title">
@@ -99,7 +114,7 @@ export function EntryScreen({ caps, savedCount, onTalk, onWelcome, onReview, onO
                   <MessageCircle aria-hidden="true" className="way__icon" />
                   <span className="way__text">
                     <span className="way__title">我想说几句</span>
-                    <span className="way__sub">打字，或者自己点开录音</span>
+                    <span className="way__sub">进去再慢慢打字，或者自己点开录一段</span>
                   </span>
                 </button>
               </li>

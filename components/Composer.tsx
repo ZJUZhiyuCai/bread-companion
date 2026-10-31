@@ -2,9 +2,8 @@
 
 import { useEffect, useState, type ClipboardEvent, type KeyboardEvent, type RefObject } from 'react';
 import { ArrowUp, Check, LoaderCircle, Mic, Paperclip, Trash2, X } from 'lucide-react';
-import { StateAvatar } from './StateAvatar';
 import { useAutoGrow, useDomId, useMediaQuery } from './hooks';
-import { ACTIVITY_META, formatClock } from './labels';
+import { formatClock } from './labels';
 import type { BreadVM } from './vm';
 
 interface ComposerProps {
@@ -83,24 +82,11 @@ export function Composer(props: ComposerProps) {
     void vm.startRecording();
   };
 
-  const presence = (
-    <div className="presence" data-state={a}>
-      <StateAvatar state={a} size="sm" />
-      {a !== 'idle' && (
-        <p className="presence__text">
-          <span className="presence__name">面包</span>
-          {ACTIVITY_META[a].label}
-          <span className="presence__detail"> · {ACTIVITY_META[a].detail}</span>
-        </p>
-      )}
-    </div>
-  );
-
+  // What 面包 is doing now lives with the figure (companion corner / perch), not on the composer.
   if (voicePhase) {
     const pct = Math.min(100, (recordedSeconds / maxSec) * 100);
     return (
       <div className="composer-wrap">
-        {presence}
         <div className={`composer composer--rec is-${voicePhase}`} role="group" aria-labelledby={`${id}-rec`}>
           <div className="rec__head">
             {voicePhase === 'recording' && <span className="rec__dot" aria-hidden="true" />}
@@ -183,7 +169,6 @@ export function Composer(props: ComposerProps) {
   if (transcriptOpen) {
     return (
       <div className="composer-wrap">
-        {presence}
         <div className="composer composer--transcript">
           <label htmlFor={`${id}-tr`} className="composer__label">
             转好的文字 <span className="muted">可能有错字，改好再发</span>
@@ -232,7 +217,6 @@ export function Composer(props: ComposerProps) {
 
   return (
     <div className="composer-wrap">
-      {presence}
       {pasteHint && draft.length >= LONG_PASTE && (
         <div className="paste-hint" role="group" aria-label="长段落">
           <p>这段比较长，像是材料。放进材料里，面包引用时会照原文，不改一个字。</p>
@@ -294,8 +278,8 @@ export function Composer(props: ComposerProps) {
               className={`icon-btn icon-btn--mic ${micBlock ? 'is-blocked' : ''}`}
               onClick={startMic}
               aria-disabled={!!micBlock || undefined}
-              aria-label={micBlock ? `说给面包听（${micBlock}）` : '说给面包听：点一下开始录音'}
-              title={micBlock || '点一下开始录这一段'}
+              aria-label={micBlock ? `录一段话（${micBlock}）` : '录一段话：转成字后先给你改，再决定发不发'}
+              title={micBlock || '录一段，转成字后先改再发'}
             >
               <Mic aria-hidden="true" />
             </button>

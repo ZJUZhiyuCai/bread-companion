@@ -9,6 +9,8 @@ import { deleteSavedCase, fromSnapshot, invalidateSaved, listSaved, MAX_IMPORT_B
 import { downloadArchive } from './export';
 import { MediaController, normalizeRecording } from './media-controller';
 import { RunController } from './run-controller';
+import { CallController, idleCall } from './call-controller';
+import type { CallAudioPort } from './call-audio';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -21,13 +23,43 @@ export class BreadController {
   private artifactVersion = 0;
   private listeners = new Set<() => void>();
   private view: BreadViewModel;
-  constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController()) { this.view = this.buildView(); }
+  private call = idleCall();
+  private callController: CallController;
+  constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController(), callAudio?: CallAudioPort) {
+    this.callController = new CallController({
+      update: call => { this.call = call; this.publish(); },
+      cancelReply: () => this.stopWork(),
+      transcribe: async (file, signal) => {
+        const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
+        const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
+        const json = await response.json(); signal.throwIfAborted();
+        if (!response.ok || json.requestId !== requestId || typeof json.text !== 'string') throw new Error(json.error?.userMessage || '这句没听清，可以再说一次，或改用文字。');
+        return json.text;
+      },
+      reply: async (text, signal) => {
+        signal.throwIfAborted();
+        const previous = this.state.messages.at(-1)?.id;
+        await this.sendMessage(text, 'call'); signal.throwIfAborted();
+        if (this.error) throw new Error(this.error);
+        const last = this.state.messages.at(-1);
+        return last?.role === 'assistant' && last.id !== previous ? last.text : null;
+      },
+      synthesize: async (text, signal) => {
+        const token = { sessionId: this.state.sessionId, runId: uid('call'), epoch: this.state.epoch, contextRevision: this.state.contextRevision };
+        const response = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
+        if (!response.ok) { const json = await response.json(); throw new Error(json.error?.userMessage || '声音暂时没出来，文字回复还在。'); }
+        return response.blob();
+      },
+    }, callAudio);
+    this.view = this.buildView();
+  }
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
   getSnapshot = () => this.view;
   private publish() { this.view = this.buildView(); for (const f of this.listeners) f(); }
   private dispatch(event: Event) { this.state = reducer(this.state, event); this.publish(); }
   private buildView(): BreadViewModel {
     return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds,
+      call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.callController.resume,
       busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice };
   }
   async initialize() {
@@ -36,7 +68,7 @@ export class BreadController {
     catch { if (!this.disposed) { this.error = '暂时无法读取服务状态，请刷新重试。'; this.publish(); } }
     await this.refreshSaved();
   }
-  dispose() { this.disposed = true; this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
+  dispose() { this.disposed = true; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
   private cancelResources() { this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。') { this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   clearNotice = () => { this.notice = ''; this.error = ''; this.publish(); };
@@ -44,17 +76,30 @@ export class BreadController {
     if (this.state.lifecycle !== 'active') return;
     this.dispatch({ type: 'START', mode, welcome: welcome ? WELCOME : mode === 'listen' ? '想从哪里说起都可以。' : '可以直接说说面试里让你挂心的片段，或贴一段当时的回答。我来帮你理一理。' });
   };
-  stop = () => { this.dispatch({ type: 'STOP' }); this.cancelResources(); this.publish(); };
-  end = () => { this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
-  reset = () => { this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
+  private stopWork = () => { this.dispatch({ type: 'STOP' }); this.cancelResources(); this.publish(); };
+  stop = () => { if (this.call.active) this.callController.pause(); else this.stopWork(); };
+  pauseForBackground = () => { if (this.call.active) this.callController.pause('页面已切到后台，麦克风与播放都暂停了。回来后可以继续。'); else if (['requesting_mic', 'recording', 'speaking'].includes(this.state.activity)) this.stop(); };
+  end = () => { this.callController.hangup(); this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
+  reset = () => { this.callController.hangup(); this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
+  startCall = async () => {
+    if (this.call.active || this.state.lifecycle !== 'active') return;
+    if (!this.capabilities?.asr.available || !this.capabilities?.tts.available || !this.capabilities.agent.configured) { this.fail(new Error('语音连接暂时不可用，可以先打字聊。')); return; }
+    this.stopWork(); this.error = ''; this.notice = '';
+    const first = !this.state.started; if (first) this.start('listen');
+    await this.callController.start(first ? this.state.messages.at(-1)?.text : '');
+  };
+  hangupCall = () => { this.callController.hangup(); };
   setMode = (mode: Mode) => {
     if (this.state.lifecycle !== 'active') return;
+    this.hangupCall();
     this.dispatch({ type: 'MODE', mode }); this.cancelResources(); this.error = '';
     if (mode === 'organize' && this.state.sources.length) void this.requestTurn('请把我提供的内容留成一个以后可以看的记号，不添加能力评价。');
     else this.publish();
   };
-  send = async (text: string) => {
+  send = async (text: string) => { if (!text.trim()) return; this.hangupCall(); await this.sendMessage(text, 'text'); };
+  private sendMessage = async (text: string, channel: 'text' | 'call') => {
     text = text.trim(); if (!text || this.state.lifecycle !== 'active') return;
+    if (channel === 'call' && /^(?:好[的吧]?[，,\s]*)?(?:先)?(?:挂了|挂断(?:电话)?|挂电话|不聊了|再见|晚安)[。！!，,\s]*$/.test(text)) { this.hangupCall(); return; }
     const intent = explicitIntent(text);
     if (intent === 'stop') { this.stop(); return; } if (intent === 'end') { this.end(); return; }
     if (text.length > 4000) { this.fail(new Error('每次最多发送 4,000 个字符，可以分几段说。')); return; }
@@ -64,17 +109,17 @@ export class BreadController {
     this.error = '';
     const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
     this.dispatch({ type: 'USER', text, source });
-    await this.requestTurn(text);
+    await this.requestTurn(text, channel);
   };
   assist = async (mode: Exclude<Mode, 'listen'>) => {
     const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。' };
     await this.send(requests[mode]);
   };
-  private async requestTurn(text: string) {
+  private async requestTurn(text: string, channel: 'text' | 'call' = 'text') {
     if (this.state.lifecycle !== 'active') return;
     const { token, signal } = this.run.begin(this.state);
     this.dispatch({ type: 'RUN', runId: token.runId, activity: 'generating' });
-    const request = buildTurn(this.state, text, token.runId, uid('request'));
+    const request = { ...buildTurn(this.state, text, token.runId, uid('request')), channel };
     try {
       const validated = turnRequestSchema.safeParse(request); if (!validated.success) throw new Error('这段内容有点长，可以分几段发送。');
       const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
@@ -92,7 +137,7 @@ export class BreadController {
     const source = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin: 'user_recollection', label: `粘贴的材料 ${this.state.sources.filter(s => s.label.startsWith('粘贴的材料')).length + 1}`, text: text.trim(), confirmed: true });
     if (!source.success) { this.fail(new Error('可以粘贴 1—20,000 字符的片段。')); return false; }
     if (this.state.sources.length >= 24) { this.fail(new Error('这次已有不少材料了，可以先留下卡片，再开始新的会话。')); return false; }
-    this.dispatch({ type: 'ADD_SOURCE', source: source.data }); this.cancelResources();
+    this.hangupCall(); this.dispatch({ type: 'ADD_SOURCE', source: source.data }); this.cancelResources();
     this.notice = '材料收到了。你可以直接说想一起看看什么。'; this.error = ''; this.publish(); return true;
   };
   addSource = (text: string, origin: Origin, label: string) => {
@@ -100,22 +145,22 @@ export class BreadController {
     const s = sourceSchema.safeParse({ id: uid('source'), revision: 1, origin, label: label.trim() || '补充材料', text: text.trim(), confirmed: false });
     if (!s.success) { this.fail(new Error('材料需为 1—20,000 字符，标题最多 100 字符。')); return; }
     if (this.state.sources.length >= 24) { this.fail(new Error('当前案例材料已较多，请先结束并开始新案例。')); return; }
-    this.dispatch({ type: 'ADD_SOURCE', source: s.data }); this.cancelResources(); this.publish();
+    this.hangupCall(); this.dispatch({ type: 'ADD_SOURCE', source: s.data }); this.cancelResources(); this.publish();
   };
   correctSource = (id: string, text: string) => {
     if (this.state.lifecycle !== 'active' || !text.trim() || text.length > 20000) return;
     const previousRevision = this.state.sources.find(s => s.id === id)?.revision;
     if (previousRevision === undefined) return;
     if (this.state.messages.some(m => m.sourceId === id) && text.length > 4000) { this.fail(new Error('聊天原话最多 4,000 字符，较长材料可另行添加。')); return; }
-    this.artifactVersion++;
+    this.hangupCall(); this.artifactVersion++;
     const caseId = this.state.caseId;
     this.dispatch({ type: 'CORRECT_SOURCE', id, text: text.trim() }); this.cancelResources();
     this.notice = '原话改好了，旧的整理也已作废。需要时我可以根据新内容重新整理。'; this.publish();
     void invalidateSaved(caseId, id, undefined, previousRevision).then(this.refreshSaved).catch(e => this.fail(e));
   };
-  confirmSource = (id: string) => { this.dispatch({ type: 'CONFIRM_SOURCE', id }); this.cancelResources(); this.publish(); };
+  confirmSource = (id: string) => { this.hangupCall(); this.dispatch({ type: 'CONFIRM_SOURCE', id }); this.cancelResources(); this.publish(); };
   rejectFinding = (id: string) => {
-    this.artifactVersion++;
+    this.hangupCall(); this.artifactVersion++;
     const caseId = this.state.caseId; this.dispatch({ type: 'REJECT', id }); this.cancelResources();
     this.notice = '已标记为有争议，相关卡片需重新整理和确认。'; this.publish();
     void invalidateSaved(caseId, undefined, id).then(this.refreshSaved).catch(e => this.fail(e));
@@ -172,6 +217,7 @@ export class BreadController {
   resumeSaved = (input: SavedCase) => {
     try {
       const saved = validateArchive(input);
+      this.hangupCall();
       this.artifactVersion++;
       this.stop(); const state = initialState(); state.started = true; state.mode = 'listen';
       const evidence = saved.selectedEvidence.filter(e => saved.findings.some(f => f.validity === 'confirmed' && f.evidenceRefs.some(r => refKey(r) === refKey(e))));
@@ -182,10 +228,11 @@ export class BreadController {
   };
   setPractice = (question: string, criteria: string[]) => {
     if (!question.trim() || question.length > 1000 || criteria.length > 2 || criteria.some(c => !c.trim() || c.length > 100)) { this.fail(new Error('请选定一道题和一到两个练习维度。')); return; }
-    this.dispatch({ type: 'PRACTICE', question: question.trim(), criteria: criteria.length ? criteria : ['把自己的思路说具体'] }); this.cancelResources(); this.publish();
+    this.hangupCall(); this.dispatch({ type: 'PRACTICE', question: question.trim(), criteria: criteria.length ? criteria : ['把自己的思路说具体'] }); this.cancelResources(); this.publish();
   };
   startRecording = async () => {
     if (this.state.lifecycle !== 'active') return;
+    this.hangupCall();
     if (!this.capabilities?.asr.available || !globalThis.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { this.fail(new Error('当前环境无法录音或转写，请使用文字输入。')); return; }
     this.stop(); this.error = ''; this.transcriptDraft = '';
     const { token, signal } = this.run.begin(this.state); this.recording = { token, signal, blob: null, submitted: false };
@@ -228,7 +275,7 @@ export class BreadController {
   speak = async (text: string) => {
     if (this.state.lifecycle !== 'active' || !this.capabilities?.tts.available) return;
     if (!this.state.messages.some(m => m.role === 'assistant' && m.text === text)) { this.fail(new Error('只能播放当前会话中已展示的回复。')); return; }
-    this.stop(); this.error = '';
+    this.hangupCall(); this.stop(); this.error = '';
     const { token, signal } = this.run.begin(this.state); this.dispatch({ type: 'RUN', runId: token.runId, activity: 'speaking' });
     try {
       const res = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });

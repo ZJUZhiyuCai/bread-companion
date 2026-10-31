@@ -33,6 +33,18 @@ export function anyDialogOpen(): boolean {
   return typeof document !== 'undefined' && !!document.querySelector('dialog[open]');
 }
 
+/** True for `ms` after mount (when `on`), then false. Same first render on server and client. */
+export function useFlash(on: boolean, ms: number): boolean {
+  const [flash, setFlash] = useState(on);
+  useEffect(() => {
+    if (!on) return;
+    const t = window.setTimeout(() => setFlash(false), ms);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return flash;
+}
+
 /** Textarea grows with its content up to `maxPx`, then scrolls. */
 export function useAutoGrow(ref: RefObject<HTMLTextAreaElement | null>, value: string, maxPx = 220) {
   useLayoutEffect(() => {

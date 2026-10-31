@@ -1,4 +1,4 @@
-import type { Capabilities, Card, Mode, Origin, SavedCase, SessionState } from './types';
+import type { CallState, Capabilities, Card, Mode, Origin, SavedCase, SessionState } from './types';
 /** Stable frontend boundary. Codex implements services/use-bread.ts; Claude owns UI. */
 export interface BreadViewModel {
   state: SessionState;
@@ -10,6 +10,14 @@ export interface BreadViewModel {
   transcriptDraft: string;
   recordedSeconds: number;
   busy: boolean;
+  call: CallState;
+  /** User initiated, continuous voice conversation; never a real telephone/PSTN call. */
+  startCall: () => Promise<void>;
+  hangupCall: () => void;
+  toggleCallMute: () => void;
+  interruptCall: () => void;
+  finishCallTurn: () => void;
+  resumeCall: () => Promise<void>;
   start: (mode?: Mode, welcome?: boolean) => void;
   send: (text: string) => Promise<void>;
   assist: (mode: Exclude<Mode, 'listen'>) => Promise<void>;

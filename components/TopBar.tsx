@@ -14,6 +14,8 @@ interface TopBarProps {
   trayCount: number;
   /** A card is on the table that hasn't been kept yet — a hint, never a blocker. */
   cardWaiting: boolean;
+  /** During a call the room has its own pause and hang-up; only 结束 stays up here. */
+  inCall?: boolean;
   onToggleTray: () => void;
   onOpenArchive: () => void;
   onOpenAbout: () => void;
@@ -22,8 +24,44 @@ interface TopBarProps {
 }
 
 export function TopBar(props: TopBarProps) {
-  const { caps, activity, active, working, trayOpen, trayCount, cardWaiting, onToggleTray, onOpenArchive, onOpenAbout, onStop, onEnd } =
-    props;
+  const {
+    caps,
+    activity,
+    active,
+    working,
+    trayOpen,
+    trayCount,
+    cardWaiting,
+    inCall = false,
+    onToggleTray,
+    onOpenArchive,
+    onOpenAbout,
+    onStop,
+    onEnd,
+  } = props;
+
+  if (inCall) {
+    return (
+      <header className="topbar topbar--call">
+        <div className="topbar__id">
+          <p className="wordmark wordmark--sm">面包</p>
+          <AiStamp caps={caps} onClick={onOpenAbout} />
+        </div>
+        <div className="topbar__controls" role="group" aria-label="会话控制">
+          <button
+            type="button"
+            className="ctl ctl--end"
+            onClick={onEnd}
+            disabled={!active}
+            title="挂断并结束今晚的整段对话；只想挂断，用下面的“挂断”"
+          >
+            <Moon aria-hidden="true" />
+            结束
+          </button>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="topbar">

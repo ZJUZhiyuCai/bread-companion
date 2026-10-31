@@ -24,7 +24,7 @@ test('browser recording converts to WAV, requires transcript confirmation, and c
     tts++;await route.fulfill({body:Buffer.from(encodeWav(new Float32Array(16000*4))),contentType:'audio/wav'});
   });
   await page.goto('/');await page.getByRole('button',{name:/我想说几句/}).click();
-  await page.getByRole('button',{name:'说给面包听：点一下开始录音',exact:true}).click();
+  await page.getByRole('button',{name:'录一段话：转成字后先给你改，再决定发不发',exact:true}).click();
   await expect(page.locator('time')).toHaveText('0:01',{timeout:7000});
   await page.getByRole('button',{name:'说完了',exact:true}).click();
   const draft=page.getByRole('textbox',{name:/转好的文字/});
@@ -33,8 +33,8 @@ test('browser recording converts to WAV, requires transcript confirmation, and c
   await expect(page.getByRole('log')).not.toContainText('我准备了三天。');
   await draft.fill('其实我准备了一天。');await page.getByRole('button',{name:'发出去',exact:true}).click();
   await expect(page.getByRole('log')).toContainText('其实我准备了一天。');
-  await expect(page.getByRole('button',{name:'说给面包听：点一下开始录音',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'说给面包听：点一下开始录音',exact:true}).click();
+  await expect(page.getByRole('button',{name:'录一段话：转成字后先给你改，再决定发不发',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'录一段话：转成字后先给你改，再决定发不发',exact:true}).click();
   await expect(page.getByText('在录这一段',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'不要这段',exact:true}).click();
   expect(uploads).toBe(1);await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeVisible();

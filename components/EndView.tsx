@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Archive, MessageCircle } from 'lucide-react';
+import { Archive, MessageCircle, Phone } from 'lucide-react';
 import { CardView } from './CardView';
 import { LampScene } from './NightWindow';
 import { SavePreview } from './SavePreview';
@@ -13,13 +13,17 @@ interface EndViewProps {
   onOpenArchive: () => void;
   onReset: () => void;
   onAgain: () => void;
+  /** A new conversation that starts as a call — only after this tap. */
+  onCall: () => void;
 }
 
+type Leave = 'again' | 'reset' | 'call';
+
 /** Reads only state.endSnapshot — sources are already cleared and nothing here talks to a model or plays audio. */
-export function EndView({ vm, onOpenArchive, onReset, onAgain }: EndViewProps) {
+export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndViewProps) {
   const snapshot = vm.state.endSnapshot;
   const [saveOpen, setSaveOpen] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState<null | 'again' | 'reset'>(null);
+  const [confirmLeave, setConfirmLeave] = useState<null | Leave>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -30,13 +34,18 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain }: EndViewProps) {
   const evidence = snapshot ? cardEvidence(snapshot.card, snapshot.findings, ctx) : [];
   const saved = snapshot ? isCardSaved(snapshot.card, vm.savedCases) : false;
 
-  const leave = (kind: 'again' | 'reset') => {
+  const go = (kind: Leave) => {
+    if (kind === 'again') onAgain();
+    else if (kind === 'call') onCall();
+    else onReset();
+  };
+
+  const leave = (kind: Leave) => {
     if (snapshot && !saved) {
       setConfirmLeave(kind);
       return;
     }
-    if (kind === 'again') onAgain();
-    else onReset();
+    go(kind);
   };
 
   return (
@@ -89,12 +98,12 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain }: EndViewProps) {
         <div className="end__actions">
           {confirmLeave ? (
             <div className="inline-confirm" role="group" aria-label="确认清掉这张卡片">
-              <p>这张卡片还没留下。{confirmLeave === 'again' ? '重新开始' : '回到开始'}后，它会从页面上消失。</p>
+              <p>这张卡片还没留下。{confirmLeave === 'reset' ? '回到开始' : '重新开始'}后，它会从页面上消失。</p>
               <div className="row gap-s wrap">
                 <button type="button" className="btn btn--primary" onClick={() => setSaveOpen(true)}>
                   先留下它
                 </button>
-                <button type="button" className="btn btn--ghost" onClick={() => (confirmLeave === 'again' ? onAgain() : onReset())}>
+                <button type="button" className="btn btn--ghost" onClick={() => go(confirmLeave)}>
                   不用了，清掉
                 </button>
                 <button type="button" className="btn btn--ghost" onClick={() => setConfirmLeave(null)}>
@@ -107,6 +116,9 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain }: EndViewProps) {
               <button type="button" className="btn btn--quiet" onClick={() => leave('again')}>
                 <MessageCircle aria-hidden="true" /> 再说一会儿
               </button>
+              <button type="button" className="btn btn--ghost" onClick={() => leave('call')}>
+                <Phone aria-hidden="true" /> 打个电话
+              </button>
               <button type="button" className="btn btn--ghost" onClick={() => leave('reset')}>
                 回到开始
               </button>
@@ -116,7 +128,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain }: EndViewProps) {
             </>
           )}
         </div>
-        <p className="end__fine small muted">“再说一会儿”会开始一次新的对话，刚才的聊天不会带过去。</p>
+        <p className="end__fine small muted">“再说一会儿”和“打个电话”都会开始一次新的对话，刚才的聊天不会带过去。</p>
       </div>
 
       {snapshot && (
