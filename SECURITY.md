@@ -12,8 +12,11 @@ The maintainer will respond on a best-effort basis; this is not a staffed incide
 
 - Bind to loopback. The current API has no user accounts or per-user authorization and is **not a multi-user public deployment**. Publishing the source does not change this boundary.
 - Keep provider keys on the server. Never use `NEXT_PUBLIC_*` for credentials. Provider billing, data retention, and availability remain outside this repository's control.
+- Provider endpoints and CLI evaluation targets are trusted operator configuration, not client-editable settings. Do not expose them to untrusted users without adding destination validation and an explicit network policy.
 - Treat pasted materials, imported files, model output and recalled content as untrusted. Candidate validation, evidence checks and storage permissions live outside the model.
 - Cancellation prevents late local publication; it cannot prove an upstream provider stopped computation or billing.
 - IndexedDB is browser-local storage, not encryption or user isolation. Import/export files must be handled as personal data if users put personal data in them.
 
 For intentional data flows, see [Data handling](docs/data-handling.md). Functional and accessibility tests, dependency alerts and static analysis are complementary checks, not a security certification.
+
+The [initial CodeQL triage](docs/security-triage.md) records the source-to-sink reasoning for findings reviewed on 2026-10-31.
