@@ -1,0 +1,22 @@
+name: Product or evaluation proposal / 产品与评估建议
+description: Improve a user experience or add a reproducible evaluation
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who needs this, in what situation, and what is difficult today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and evidence
+      description: Include alternatives, a synthetic dialogue if useful, and a measurable acceptance criterion.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: User control and data
+      description: What does the user confirm, correct, stop or delete? Does this add memory, external calls or costs?

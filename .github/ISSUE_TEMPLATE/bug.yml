@@ -1,0 +1,25 @@
+name: Bug report / 问题反馈
+description: A reproducible problem with Bread
+body:
+  - type: markdown
+    attributes:
+      value: Use synthetic text and redact personal data. Report security vulnerabilities privately through the Security tab.
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Commit/version, OS, browser, and Mock or real provider mode. No keys.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include expected behavior and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Sanitized errors, screenshots, or a synthetic conversation; distinguish physical from virtual microphone tests.

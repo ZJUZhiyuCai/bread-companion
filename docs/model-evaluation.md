@@ -1,6 +1,6 @@
 # 陪伴文本模型：第三轮评估记录
 
-第四轮已把电话倾听单独切到快速 DeepSeek 路由，文字倾听保留 Gemini；最新指标、失败样例与v11约束见 [自然电话评估](natural-call-evaluation.md)。以下保留第三轮当时的比较与选型。
+当前文字与电话已统一使用低延迟 DeepSeek；见 [最新升级验收](upgrade-validation.md) 和 [公开对标与新样本](competitive-benchmark.md)。以下仅保留第三轮 Gemini 选型时的历史记录。
 
 2026-10-31。倾听与通话选用 Magpie 中的 `mfapi/gemini-3.8-flash`，整理、复盘和练习保留 `wanjie/deepseek-v4.1-flash-1017`。MiniMax 继续负责转写和 `Chinese (Mandarin)_Warm_Bestie` 播报。当前 Magpie 列表没有可调用的豆包，因此没有声称比较过豆包，也没有新建付费账号。
 

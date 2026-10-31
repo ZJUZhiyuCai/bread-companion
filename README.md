@@ -1,91 +1,127 @@
-# 面包
+# 面包 · Bread
 
-面试拒信当晚，可以先说说；愿意时，再整理真实材料、复盘并练一题。
+**把复杂留给 agent，把温暖留给用户。**
 
-前端由用户指定的“Claude 控制”项目中的官方 Claude Opus 5.5 / high 设计与实现。Codex 负责领域规则、后端、模型/语音适配、存档和整体验证。第三轮加入有表情和动作的面包伙伴、连续语音通话与文字切换。第四轮加入直接开口打断、电话专用快速路由和更简洁的界面。选题、默认关注点和材料整理交给 agent，细节按需展开。
+收到拒信的那个晚上，先说说。想复盘时，再把真实材料整理成一张卡片、练一道题。
 
-## 打开
+[English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md)
 
-双击本目录的 **启动面包.command**，或访问已运行的 [本地应用](http://127.0.0.1:3210)。它只监听本机，不是公开网站。
+[![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
+
+![面包首页：灯下的拟人面包、一句话输入框和打电话入口](docs/assets/bread-home.png)
+
+*实际本机界面。真实语音需服务端配置；无密钥启动会清楚标为规则演示。*
+
+## 它能做什么
+
+- **直接开口或打字。** 不填情绪标签，不先选模式；面包用简短中文回应。
+- **自然插话。** 网页电话按停顿接话；面包在想或在说时可以直接开口打断，也能静音、暂停、挂断。
+- **想整理时再整理。** 贴材料、留个记号、看回答、练一题；题目与关注点由 agent 准备。
+- **每个判断能回到原话。** 卡片可以改、删、否认和重做；原话纠正后旧引用失效。
+- **保存由你决定。** 卡片预览确认后才写入当前浏览器，支持 Markdown / JSON 导出和 JSON 导入。
+- **失败有退路。** 原话旁重试不重复发话；超时、停止、结束和迟到结果由控制器处理。
+
+这是 **0.1 预览版、本机单用户应用**。有界上下文不是跨天关系记忆；当前没有账号、云同步或公网多用户服务。下一阶段优先改善连续记忆、回复质感和语音首响，而不是增加配置表单。见 [我们与领先产品的差距](docs/competitive-benchmark.md)。
+
+## 快速开始
+
+建议使用 [.nvmrc](.nvmrc) 中的 Node.js 版本；已安装对应 Node 时可跳过 `nvm use`。
 
 ```sh
+git clone https://github.com/ZJUZhiyuCai/bread-companion.git
+cd bread-companion
+nvm use
 npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-本机已配置服务端 `.env.local`：
+打开 **http://127.0.0.1:3210**。默认 Mock 无需账号和密钥，能体验文字、材料、卡片与练习流程；它是固定规则演示。已有 `.env.local` 时保留自己的配置。
 
-- 文字与电话聊天、整理、复盘和练习：Magpie → 万界方舟 / DeepSeek V4.1 Flash（`wanjie/deepseek-v4.1-flash-1017`）。这是本机路由中的模型标识。需要 Magpie 在 `127.0.0.1:3425` 运行。
-- 播报：MiniMax Speech 2.8 HD，沿用已配置的 `Chinese (Mandarin)_Warm_Bestie`，语速 1。
-- 转写：MiniMax asr-1.0；浏览器录音先在本机转为 16 kHz 单声道 WAV。
-
-密钥只在 `.env.local`，已排除版本控制，不发往浏览器，也不传给前端设计环境。更换设备请自行建立 `.env.local`，参照 `.env.example` 配置；不要复制密钥到 `NEXT_PUBLIC_*` 变量。
-
-无密钥演示：
-
-```sh
-AGENT_PROVIDER=mock ASR_PROVIDER=disabled TTS_PROVIDER=disabled npm run dev
-```
-
-页面会明确标识“规则演示”；文字闭环仍然可用，语音会显示不可用。Mock 是固定规则与测试案例，不声称理解任意开放话题。
-
-生产构建与本机运行：
+生产模式：
 
 ```sh
 npm run build
-npm run start
+npm start
 ```
 
-实际开发环境：Node.js 26.12.1、npm 11.17.0；依赖锁定在 package-lock.json。
+macOS 也可以双击 `启动面包.command`。它只在本机启动应用。仓库公开不等于应用已部署到公网。
 
-## 可以验收的行为
+### 接入真实文字与语音
 
-- 直接写下第一句就能开始；也可以先听一小段，或直接说想复盘什么。
-- 连接失败后可原地重试上一句，聊天不重复；长会话自动限制上下文，记住本次明确的交流偏好。
-- 无须配置模式或材料类型：点击“看看那段回答”“留个记号”“练一题”，agent 接着已有内容处理；练习题和关注点自动准备，想改时再展开。
-- 首页点“给面包打个电话”，允许麦克风后直接说：停顿会自动转写、发送、回复和播报，接着听下一句。直接开口即可中止旧回复并继续说，按钮可备用；支持静音、暂停和挂断；挂断后保留当前文字对话，也保留未发出的草稿。
-- 通话切到后台或安静一分钟会暂停并关闭麦克风，需要主动继续。挂断、结束和迟到回包不会重新打开麦克风或播放。
-- 文字聊天仍保留单段录音：转写可修改后再发，回复点“听”才播放。
-- 卡片可改字、删栏、展开依据；保存预览里一次点击“就留下这些”，才存到当前浏览器。支持按案例删除、MD/JSON 导出和 JSON 导入。
-- 改正原话或否认判断会使相关旧卡片失效；不重复要求核对已提交的文字。结束清除原始聊天，只保留已展示有效卡片的最小只读快照，仍可主动保存或导出。
+配置都在服务端，用户不需要填写模型表单。完整变量与步骤见 [配置指南](docs/setup.md)。
 
-本轮按痛点、完整旅程和 Harness 升级的说明：[产品与 Harness](docs/product-harness.md)，实测与限制：[升级验收](docs/upgrade-validation.md)。
+| 能力 | 当前验证过的配置 |
+| --- | --- |
+| 文字 / 电话回复 / 复盘 | 本机 Magpie，Anthropic 兼容协议，DeepSeek 路由 `wanjie/deepseek-v4.1-flash-1017` |
+| 语音转写 | MiniMax `asr-1.0` |
+| 语音合成 | MiniMax `speech-2.8-hd`，`Chinese (Mandarin)_Warm_Bestie` |
 
-具体步骤：[演示与验收路径](docs/demo.md)。测试结果、兼容矩阵和剩余限制见 [验收记录](docs/acceptance.md)。数据说明见 [数据处理](docs/data-handling.md)，架构取舍见 [实现决定](docs/decisions.md)。设计参考见 [案例研究](docs/companion-research.md)，文本模型选择及输出约束见 [陪伴模型评估](docs/model-evaluation.md) 和 [电话延迟评估](docs/natural-call-evaluation.md)，本轮心理学依据见 [电话体验研究](docs/call-research.md)。
+这些是维护者已测路由，不是所有服务商都通用的模型 ID。也可按适配器协议配置自己的接入服务。密钥只放 `.env.local`，不要放进 `NEXT_PUBLIC_*`。
 
-## 验证命令
+## 如何判断它真的好用
+
+我们公开测试口径和失败样本，不把请求成功当作“情商通过”。
+
+| 检查 | 已有证据 |
+| --- | --- |
+| 工程回归 | 137 项单元/集成、21 条浏览器流程；CI 跑类型、测试、构建与 Chromium |
+| 新中文对话样本 | 8 个情境、16 轮真实 API 调用；完整响应中位 **1.157 s**，p90 **1.646 s**；未测首 token |
+| 语音链路 | 既有两轮虚拟麦克风实测：说完至出声 **3.718 / 3.369 s**，开口至停止旧声约 **360 ms** |
+| 仍然会失败的体验 | 偶尔补写原因、过度解释；一次明确道别后仍追问。原始合成样本已公开 |
+
+样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。详见 [工程验收](docs/upgrade-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
 
 ```sh
 npm run typecheck
 npm test
-npm run test:e2e
 npm run build
+npx playwright install chromium
+CI=true BREAD_E2E_PORT=3213 npm run test:e2e
 ```
 
-GitHub Actions 自动检查类型、单元/集成测试、生产构建与 Chromium 用户流程，不调用收费模型。
-
-本机 E2E 使用 Chrome，单独在 3211 端口启动 Mock 服务，产物写入 `.next-e2e`，不调用收费模型。端口被其他本机任务占用时，可用 `BREAD_E2E_PORT=3213 npm run test:e2e` 指定空闲端口，不关闭其他任务。Playwright 浏览器验收截图在 `output/playwright/`。
-
-以下命令会调用本机已配置的真实模型；测试文本均为虚构。`--speech` 额外生成一条短语音样本，请按需执行：
+正常测试不调用付费模型。单独进行真实对话评估：
 
 ```sh
-node scripts/smoke-live.mjs
-node scripts/smoke-live.mjs --speech
-node scripts/evaluate-live.mjs
-node scripts/evaluate-companion.mjs --app http://127.0.0.1:3210
-BREAD_URL=http://127.0.0.1:3210 node scripts/evaluate-companion-holdout.mjs
-node scripts/evaluate-natural-call.mjs
+npm run eval:companion -- --dry-run
+# 以下命令会调用你配置的真实服务，可能产生费用
+npm run eval:companion -- --live --app http://127.0.0.1:3210
 ```
 
-## 结构
+## 架构
 
-- `domain/`：可脱离 React 的类型、运行时校验、reducer、来源版本、引文与明确意图。
-- `services/`：会话控制器、React hook、媒体生命周期、IndexedDB 事务与导出。
-- `server/`、`app/api/`：限流/同源/本机检查、真实及 Mock 适配器、MiniMax。
-- `prompts/`：带版本号的模式提示词。
-- `components/`、`app/page.tsx`、`app/globals.css`：Claude 的前端设计。
-- `tests/`：取消与存档竞态、来源证据、接口及用户路径检查。
+```mermaid
+flowchart LR
+  UI[文字 / 电话 / 材料] --> C[会话控制器]
+  C --> H[有界上下文与运行版本]
+  H --> API[本机同源 API]
+  API --> LLM[文本供应商]
+  API --> Speech[MiniMax ASR / TTS]
+  LLM --> V[结构 / 风格 / 原文引用校验]
+  V --> C
+  C --> UI
+  C --> Preview[用户预览确认]
+  Preview --> Store[浏览器 IndexedDB / 导出]
+```
 
-## 范围
+模型产出内容候选；确认、存储、权限、超时和取消由应用控制。
 
-默认临时会话。电话是网页中的轮流语音对话，不接入电话运营商；回复仍有切句、转写、模型及合成的等待；开口打断依赖本地语音检测、浏览器回声消除和播放参考过滤，嘈杂环境仍可能误判，按钮继续可用。不提供账号、云同步、自动通知、专用硬件、同时生成多个语音回合或心理诊断。服务端无正文数据库。供应商及本机 Magpie 可能有其独立保留策略，本轮未逐项核验。公开部署、真机兼容性和目标用户访谈均需要单独完成，不能以本轮工程测试代替。
+| 目录 | 职责 |
+| --- | --- |
+| `domain/` | 类型、校验、reducer、来源版本与原文证据 |
+| `services/` | 会话与媒体生命周期、存档事务、导出 |
+| `server/`、`app/api/` | 供应商适配、同源边界、限流、截止时间与去重 |
+| `prompts/` | 有版本的倾听、分析与电话提示词 |
+| `components/`、`app/` | Claude 设计的界面与面包形象 |
+| `tests/`、`evaluations/` | 工程回归、合成情境和可复现的评估记录 |
+
+[完整文档导航](docs/README.md) · [数据处理](docs/data-handling.md) · [安全策略](SECURITY.md) · [更新记录](CHANGELOG.md)
+
+## 贡献与许可
+
+欢迎从中文对话失败案例、真机语音复现、可控记忆或文档入手。先看 [贡献指南](CONTRIBUTING.md)、[路线图](ROADMAP.md) 和 [社区约定](CODE_OF_CONDUCT.md)。
+
+前端由官方 Claude Code 协作完成，Codex 负责后端、集成与验证，维护者负责项目取舍；原稿哈希与接入差异保留在设计溯源中。
+
+**[MIT License](LICENSE)** © 2026 Zhiyu Cai and Bread contributors。依赖及合成测试素材的来源见 [Third-party notices](THIRD_PARTY_NOTICES.md)。

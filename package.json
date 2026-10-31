@@ -9,7 +9,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "check": "npm run typecheck && npm test && npm run build"
+    "check": "npm run typecheck && npm test && npm run build",
+    "eval:companion": "node scripts/benchmark-companion.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -31,5 +32,16 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "type": "module"
+  "type": "module",
+  "description": "Bread: a warm, local-first text and voice companion with a bounded agent harness.",
+  "license": "MIT",
+  "author": "Zhiyu Cai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZJUZhiyuCai/bread-companion.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZJUZhiyuCai/bread-companion/issues"
+  },
+  "homepage": "https://github.com/ZJUZhiyuCai/bread-companion#readme"
 }
