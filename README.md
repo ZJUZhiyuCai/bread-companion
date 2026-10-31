@@ -11,7 +11,7 @@
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v030.png)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v030.jpg)
 
 *实际本机界面。真实语音需服务端配置；无密钥启动会清楚标为规则演示。*
 

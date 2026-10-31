@@ -11,7 +11,7 @@ After an interview rejection, stay for a moment without having to explain. When 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/bread-home-v030.png)
+![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/bread-home-v030.jpg)
 
 ## What works
 

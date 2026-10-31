@@ -2,7 +2,7 @@
 
 2026-11-01，0.3.0 本机验收记录。DeepSeek 提交电话与版式补丁；官方 Claude Code 在该稿和 Codex 功能修复上完成安抚优先的开场。Codex 负责代码审查、Blender 重建、集成和功能对抗测试。设计意图见 [Claude 原稿](design-calm-entry.md)，来源与接入差异见 [溯源](calm-entry-provenance.json)。
 
-![0.3.0 生产首页：照片版面包与 3D 电话](assets/bread-home-v030.png)
+![0.3.0 生产首页：照片版面包与 3D 电话](assets/bread-home-v030.jpg)
 
 ## 发现与修复
 
