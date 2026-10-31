@@ -44,11 +44,8 @@ export function EntryScreen(props: EntryScreenProps) {
     submit();
   };
 
-  const welcomeSub = !caps
-    ? '一段二三十秒的话，文字先到'
-    : caps.tts.available
-      ? '一段二三十秒的话。文字先到，想听再点'
-      : '一段二三十秒的话，现在以文字呈现';
+  // Only the fact that changes what happens: whether there is a voice to play at all.
+  const welcomeSub = caps && !caps.tts.available ? '一段二三十秒的话，现在只有文字' : '一段二三十秒的话';
 
   return (
     <main id="main" className="entry">
@@ -61,6 +58,7 @@ export function EntryScreen(props: EntryScreenProps) {
 
       <div className="entry__stage">
         <div className="entry__hero">
+          {/* Says it is an AI once, in its own greeting; the stamp beside it opens the rest. */}
           <p className="hello-bubble">
             <span className="hello-bubble__big">嗨，我是面包。</span>
             <span className="hello-bubble__small">一个 AI。今晚想说什么，我都听着。</span>
@@ -90,8 +88,9 @@ export function EntryScreen(props: EntryScreenProps) {
                 aria-invalid={over || undefined}
               />
               <div className="first-note__row">
-                <p id="entry-first-help" className={`small ${over ? 'warn-text' : 'muted'}`}>
-                  {over ? `超过 ${maxInput} 字了，可以先说一部分` : '不用填公司，不用传简历，也不用给心情打分。'}
+                {/* Only speaks up when it has to: the placeholder already shows what a first line is. */}
+                <p id="entry-first-help" className="first-note__help small warn-text">
+                  {over ? `超过 ${maxInput} 字了，可以先说一部分` : ''}
                 </p>
                 <button type="submit" className="btn btn--primary" disabled={!text.trim() || over}>
                   说给面包 <ArrowRight aria-hidden="true" />
@@ -114,7 +113,7 @@ export function EntryScreen(props: EntryScreenProps) {
                   <MessageCircle aria-hidden="true" className="way__icon" />
                   <span className="way__text">
                     <span className="way__title">我想说几句</span>
-                    <span className="way__sub">进去再慢慢打字，或者自己点开录一段</span>
+                    <span className="way__sub">进去慢慢打字</span>
                   </span>
                 </button>
               </li>
@@ -139,6 +138,7 @@ export function EntryScreen(props: EntryScreenProps) {
             </ul>
           </div>
 
+          {/* No disclaimer footer: what 面包 is and where words go is one tap away, in 关于. */}
           <footer className="entry__foot">
             <button type="button" className="drawer-link" onClick={onOpenArchive} aria-haspopup="dialog">
               <Archive aria-hidden="true" />
@@ -147,9 +147,6 @@ export function EntryScreen(props: EntryScreenProps) {
                 <small>只在这台设备的这个浏览器里</small>
               </span>
             </button>
-            <p className="entry__fine small muted">
-              这次对话默认不保存，结束或刷新就没有了。面包是 AI，提供一般性的陪伴和整理，不是心理诊断或治疗。
-            </p>
           </footer>
         </div>
       </div>

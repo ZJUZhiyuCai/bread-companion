@@ -7,14 +7,15 @@ export class VoiceActivity {
   private silence = 0;
   private floor = 0.002;
   private started = false;
-  constructor(readonly sampleRate: number, private gapSeconds = 1.3, private maxSeconds = 55) {}
-  reset() { this.pre = []; this.frames = []; this.duration = this.voiced = this.silence = 0; this.started = false; }
-  push(frame: Float32Array): { level: number; heardSpeech: boolean; utterance: Float32Array | null } {
+  private announced = false;
+  constructor(readonly sampleRate: number, private gapSeconds = 0.85, private maxSeconds = 55) {}
+  reset() { this.pre = []; this.frames = []; this.duration = this.voiced = this.silence = 0; this.started = this.announced = false; }
+  push(frame: Float32Array, allowVoice = true): { level: number; heardSpeech: boolean; speechStarted: boolean; utterance: Float32Array | null } {
     const dt = frame.length / this.sampleRate;
     const rms = Math.sqrt(frame.reduce((n, v) => n + v * v, 0) / Math.max(1, frame.length));
     const threshold = Math.max(0.009, Math.min(0.04, this.floor * 3));
-    const loud = rms > threshold;
-    if (!this.started && !loud) this.floor = this.floor * 0.97 + rms * 0.03;
+    const loud = allowVoice && rms > threshold;
+    if (!this.started && !loud && allowVoice) this.floor = this.floor * 0.97 + rms * 0.03;
     if (!this.started) {
       this.pre.push(frame.slice());
       while (this.pre.reduce((n, f) => n + f.length, 0) > this.sampleRate * 0.28 && this.pre.length > 1) this.pre.shift();
@@ -23,15 +24,17 @@ export class VoiceActivity {
       this.frames.push(frame.slice()); this.duration += dt;
       if (loud) { this.voiced += dt; this.silence = 0; } else this.silence += dt;
     }
-    const heardSpeech = this.started && this.voiced >= 0.2;
+    const heardSpeech = this.started && this.voiced >= 0.16;
+    const speechStarted = heardSpeech && !this.announced;
+    if (speechStarted) this.announced = true;
     const utterance = this.started && (this.silence >= this.gapSeconds || this.duration >= this.maxSeconds) ? this.finish() : null;
-    return { level: Math.min(1, rms * 8), heardSpeech, utterance };
+    return { level: Math.min(1, rms * 8), heardSpeech, speechStarted, utterance };
   }
   finish(): Float32Array | null {
     let out: Float32Array | null = null;
-    if (this.voiced >= 0.2) {
+    if (this.voiced >= 0.16) {
       const length = this.frames.reduce((n, f) => n + f.length, 0);
-      // Keep a short tail for final consonants, not 1.3 seconds of silence in every ASR request.
+      // Keep final consonants without uploading the whole end-of-turn silence.
       const trim = Math.floor(Math.max(0, this.silence - 0.2) * this.sampleRate);
       out = new Float32Array(Math.max(0, length - trim)); let offset = 0;
       for (const frame of this.frames) { const n = Math.min(frame.length, out.length - offset); if (n <= 0) break; out.set(frame.subarray(0, n), offset); offset += n; }

@@ -17,8 +17,9 @@ interface CallLauncherProps {
 }
 
 /**
- * The phone. Always visible and always says how a call works before it starts. When a call can't
- * happen it stays in place, says why, and points back to typing — it never fakes a connection.
+ * The phone. "打电话" needs no manual on the page, so how a call works is the button's own
+ * description rather than a paragraph under it. When a call can't happen the button stays in place,
+ * says why, and points back to typing — it never fakes a connection.
  */
 export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLauncherProps) {
   const id = useDomId('call');
@@ -83,9 +84,9 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           <span className="call-launch__sub">{block || '用说的，不用打字'}</span>
         </span>
       </button>
-      <p id={`${id}-pre`} className="call-launch__pre">
-        {CALL_PREFACE}
-      </p>
+      <span id={`${id}-pre`} className="sr-only">
+        {block || CALL_PREFACE}
+      </span>
       <p className="sr-only" aria-live="polite">
         {hint}
       </p>
@@ -117,8 +118,8 @@ export function CompanionPanel({ buddy, status, caps, onCall, callBlocked }: Com
         <span className="companion__dot" data-state={buddy} aria-hidden="true" />
         {status}
       </p>
+      {/* Identity and the data rules live behind the AI stamp in the top bar, not in this corner. */}
       <CallLauncher variant="panel" caps={caps} onCall={onCall} blocked={callBlocked} />
-      <p className="companion__fine">面包是 AI，没有真人值守。这次对话默认不保存。</p>
     </aside>
   );
 }

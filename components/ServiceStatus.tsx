@@ -78,7 +78,7 @@ export function AboutSheet({ open, onClose, caps, textSize, setTextSize }: About
               <dd>
                 <strong>{caps.agent.configured && caps.asr.available && caps.tts.available ? '可以，点电话按钮才会接通' : '现在不可用，打字照样可以'}</strong>
                 <span className="about__meta">
-                  网页里和 AI 的语音对话，不是电话线路，也没有真人接听。你停一下，它就把这句转成字、回一句短的、念出来，再接着听；想插话点“插话”。字幕留在这次对话里，挂断后可以接着打字。
+                  网页里和 AI 的语音对话，不是电话线路。停顿后自动接话，想插话时直接开口；也保留“插话”按钮。字幕留在这次对话里，挂断后可以接着打字。
                 </span>
               </dd>
             </div>

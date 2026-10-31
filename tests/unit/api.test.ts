@@ -81,7 +81,7 @@ describe('real provider candidates', () => {
     const fetcher=vi.fn().mockResolvedValueOnce(upstream({assistantText:'字'.repeat(101),findings:[],warnings:[]})).mockResolvedValueOnce(upstream({assistantText:'先不急着想清楚，慢慢说。',findings:[],warnings:[]}));
     const c=await new RealProvider(fetcher).generate(input,new AbortController().signal);
     expect(c.assistantText).toBe('先不急着想清楚，慢慢说。');expect(fetcher).toHaveBeenCalledTimes(2);
-    const body=JSON.parse(fetcher.mock.calls[1][1].body);expect(body.system).toContain('当前是电话');expect(body.system).toContain('STYLE_LENGTH_MAX_100');
+    const body=JSON.parse(fetcher.mock.calls[1][1].body);expect(body.system).toMatch(/(?:这是|当前是)电话/);expect(body.system).toContain('STYLE_LENGTH_MAX_100');
   });
   it('will not publish an explicit false-human claim even if the model repeats it', async () => {
     setup();const fetcher=vi.fn(async()=>upstream({assistantText:'我是真人。',findings:[],warnings:[]}));
@@ -101,6 +101,19 @@ describe('real provider candidates', () => {
     setup(); const fetcher=vi.fn();const c=await new RealProvider(fetcher).generate(requestFixture({userMessage:'我现在准备伤害自己'}),new AbortController().signal);
     expect(c.supportGuidance).toBe(true);expect(c.findings).toEqual([]);expect(c.cardDraft).toBeUndefined();expect(fetcher).not.toHaveBeenCalled();expect(c.assistantText).toContain('无法提供现场救援');
     expect(needsImmediateSupport('我没有准备伤害自己')).toBe(false);
+  });
+  it('uses the fast route only for phone listening and removes the duplicated current utterance', async() => {
+    setup(); vi.stubEnv('AGENT_CALL_MODEL','phone-fixture'); vi.stubEnv('AGENT_CALL_PROTOCOL','anthropic'); vi.stubEnv('AGENT_COMPANION_MODEL','text-fixture'); vi.stubEnv('AGENT_COMPANION_PROTOCOL','anthropic');
+    const input=requestFixture({mode:'listen',channel:'call'}); input.context.recentMessages=[{role:'user',text:'上一句。'},{role:'assistant',text:'接话。'},{role:'user',text:input.userMessage}];
+    const fetcher=vi.fn(async(_url:RequestInfo|URL,init?:RequestInit)=>{
+      const body=JSON.parse(init!.body as string),data=JSON.parse(body.messages[0].content);
+      expect(data.recentMessages.at(-1).text).toBe('接话。'); expect(body.max_tokens).toBeLessThanOrEqual(768);
+      return upstream({assistantText:'嗯，就聊这个。',findings:[]});
+    });
+    await new RealProvider(fetcher).generate(input,new AbortController().signal);
+    expect(JSON.parse(fetcher.mock.calls[0][1]!.body as string).model).toBe('phone-fixture');
+    await new RealProvider(fetcher).generate({...input,channel:'text'},new AbortController().signal);
+    expect(JSON.parse(fetcher.mock.calls[1][1]!.body as string).model).toBe('text-fixture');
   });
 });
 describe('MiniMax adapter', () => {

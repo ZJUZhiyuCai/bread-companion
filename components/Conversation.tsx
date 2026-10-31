@@ -102,9 +102,7 @@ export function Conversation(props: ConversationProps) {
       <div className="conversation__inner">
         <p className="conv-opening">
           <span className="conv-opening__line" aria-hidden="true" />
-          <span>
-            今晚的对话从这里开始。面包是 AI，没有真人值守；这次对话默认不保存。
-          </span>
+          <span>今晚的对话从这里开始</span>
           <span className="conv-opening__line" aria-hidden="true" />
         </p>
 
@@ -116,7 +114,8 @@ export function Conversation(props: ConversationProps) {
                 先把面试放一放。
               </h2>
               <p>如果你现在可能伤害自己，请先联系一位你信任的人陪着你；如果危险就在眼前，请联系当地的急救或紧急服务。</p>
-              <p className="small muted">面包是一个程序，不能代替真人或专业帮助，也不会替你联系任何人。停止、结束随时都可以用。</p>
+              {/* Kept, not trimmed further: this one has to be unambiguous. */}
+              <p className="small muted">面包是一个程序，不能代替真人或专业帮助，也不会替你联系任何人。</p>
             </div>
           </section>
         )}
@@ -132,14 +131,14 @@ export function Conversation(props: ConversationProps) {
                 <p className="hello__body">
                   {reviewIntent
                     ? '你记得的回答、拒信原文、岗位描述都可以，直接说或者粘贴进来。'
-                    : '可以是这次面试，也可以只是现在的感受。不用说公司名，也不用先想清楚。'}
+                    : '可以是这次面试，也可以只是现在的感受。'}
                 </p>
               </div>
             </div>
             {!reviewIntent && onStarter && canAct && (
               <div className="starters" role="group" aria-labelledby="starters-h">
                 <p id="starters-h" className="starters__h">
-                  不知道怎么开口？点一句放进输入框，改成你的话再发：
+                  不知道怎么开口，点一句改成你的话
                 </p>
                 <div className="starters__list">
                   {STARTERS.map((s) => (
@@ -217,12 +216,11 @@ export function Conversation(props: ConversationProps) {
                             )}
                           </button>
                         ))}
-                      {speakingThis && <span className="msg__caption">正在念，上面的文字就是字幕</span>}
                     </div>
-                    {isWelcome && (
+                    {/* Only the one case that changes what's possible — not a note on what you may do. */}
+                    {isWelcome && ttsAvailable === false && (
                       <p className="msg__after">
-                        {ttsAvailable === false && `现在没有语音播报${ttsReason ? `（${ttsReason}）` : ''}，读文字就好。`}
-                        听完想说就说，不想说，点右上角“结束”也完全可以。
+                        现在没有语音播报{ttsReason ? `（${ttsReason}）` : ''}，读文字就好。
                       </p>
                     )}
                   </div>
@@ -245,7 +243,6 @@ export function Conversation(props: ConversationProps) {
                       <span />
                     </span>
                   </p>
-                  <p className="msg__after">想好、核对过才会一起给你。不想等就点“停止”。</p>
                 </div>
               </li>
             )}

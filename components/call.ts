@@ -2,8 +2,12 @@ import type { Activity, CallPhase, CallState, Capabilities } from '@/domain/type
 import type { BuddyState } from './BreadBuddy';
 import type { AvatarState } from './labels';
 
-/** Said once, before anyone taps the phone: how a call works, in one natural sentence. */
-export const CALL_PREFACE = '接通后直接说就好。你停一下，面包就接话；它说话时想插话，点一下就行。';
+/**
+ * The phone button's own description. Not printed on the page — "打电话" needs no manual, and the real
+ * gate is the browser's permission prompt. It stays for screen readers, where the consequence of
+ * pressing isn't otherwise visible.
+ */
+export const CALL_PREFACE = '网页里和 AI 的语音对话，会先请求麦克风权限。接通后直接说话就行。';
 
 export const IDLE_CALL: CallState = {
   active: false,
@@ -25,28 +29,33 @@ export function isCallOpen(call: CallState): boolean {
 /** Phases in which the microphone or speaker may be busy; a modal would put the controls out of reach. */
 export const CALL_RUNNING: CallPhase[] = ['connecting', 'listening', 'transcribing', 'thinking', 'speaking', 'muted'];
 
+/**
+ * One short line per phase, in 面包's own voice. `hint` is only for the four phases where something
+ * about the device or the error genuinely needs saying — the running phases say nothing, because the
+ * keys carry their own names and speaking up no longer needs instructions.
+ *
+ * 转写 and 思考 deliberately share a title: which one is running is an implementation detail, and
+ * swapping headings twice inside a second just reads as a machine busy with itself.
+ */
 export function callMeta(call: CallState): { title: string; hint: string } {
   switch (call.phase) {
     case 'idle':
       return { title: '还没接通', hint: '' };
     case 'connecting':
-      return { title: '正在接通', hint: '在打开麦克风。浏览器问你时，选“允许”就好。' };
+      return { title: '正在接通', hint: '浏览器问你时，选“允许”就好。' };
     case 'listening':
-      return call.heardSpeech
-        ? { title: '在听，你说', hint: '说完停一下，面包就接话；也可以点“说完了”。' }
-        : { title: '在听你说', hint: '想到什么说什么，慢一点也没关系。' };
+      return { title: call.heardSpeech ? '嗯，在听' : '在听', hint: '' };
     case 'transcribing':
-      return { title: '在听清你说的', hint: '马上就好。想重说，点“插话”。' };
     case 'thinking':
-      return { title: '在想怎么回你', hint: '想插话就点“插话”，它会停下来听你。' };
+      return { title: '嗯，让我想想', hint: '' };
     case 'speaking':
-      return { title: '面包在说', hint: '想插话随时点，它会马上停下来听你。' };
+      return { title: '面包在说', hint: '' };
     case 'muted':
-      return { title: '你静音了', hint: '面包现在听不到你。想说的时候，点“打开麦克风”。' };
+      return { title: '你静音了', hint: '面包听不到你。' };
     case 'paused':
-      return { title: '通话暂停了', hint: '麦克风关上了。想继续就点“继续通话”，或者挂断后接着打字。' };
+      return { title: '通话暂停了', hint: '麦克风关上了。' };
     case 'error':
-      return { title: '这次没接上', hint: '可以再试一次，或者挂断后接着打字。刚才的文字都还在。' };
+      return { title: '这次没接上', hint: '刚才的文字都还在。' };
   }
 }
 

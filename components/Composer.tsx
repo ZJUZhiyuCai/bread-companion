@@ -122,12 +122,14 @@ export function Composer(props: ComposerProps) {
             </div>
           )}
 
-          <p className="rec__note">
-            {voicePhase === 'recording' && '只录你点击之后的这一段。说完点“说完了”，转成字后可以先改再发。'}
-            {voicePhase === 'recorded' && '录到的部分还在。要转成字，还是不要了？'}
-            {voicePhase === 'requesting_mic' && '在浏览器弹窗里选择。不允许，就不会录。'}
-            {voicePhase === 'transcribing' && '转好的文字会先给你看，不会自动发出。'}
-          </p>
+          {/* The buttons below carry the choice; this says only what they can't. */}
+          {voicePhase !== 'transcribing' && (
+            <p className="rec__note">
+              {voicePhase === 'recording' && '说完点“说完了”。转成字后先给你改。'}
+              {voicePhase === 'recorded' && '录到的部分还在。'}
+              {voicePhase === 'requesting_mic' && '在浏览器弹窗里选择。'}
+            </p>
+          )}
 
           <div className="rec__actions">
             {voicePhase === 'recording' && (
@@ -184,7 +186,7 @@ export function Composer(props: ComposerProps) {
           />
           <div className="composer__row">
             <p id={`${id}-trc`} className={`composer__help ${transcriptOver ? 'is-over' : ''}`}>
-              {transcriptOver ? `超过 ${maxInput} 字了，删掉一些再发` : '你点“发出去”之前，这段不会发送。'}
+              {transcriptOver ? `超过 ${maxInput} 字了，删掉一些再发` : ''}
             </p>
             <div className="row gap-s">
               <button
@@ -219,7 +221,7 @@ export function Composer(props: ComposerProps) {
     <div className="composer-wrap">
       {pasteHint && draft.length >= LONG_PASTE && (
         <div className="paste-hint" role="group" aria-label="长段落">
-          <p>这段比较长，像是材料。放进材料里，面包引用时会照原文，不改一个字。</p>
+          <p>这段像是材料。放进材料里，引用会照原文。</p>
           <div className="row gap-s">
             <button
               type="button"

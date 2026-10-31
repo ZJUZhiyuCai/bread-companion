@@ -15,8 +15,9 @@ export class RealProvider implements AgentProvider {
   async generate(input: TurnRequest, signal: AbortSignal): Promise<TurnCandidate> {
     const cfg = config();
     const companion = input.mode === 'listen' && !!cfg.companionModel;
-    const model = companion ? cfg.companionModel : cfg.agentModel;
-    const protocol = companion ? cfg.companionProtocol : cfg.agentProtocol;
+    const call = input.mode === 'listen' && input.channel === 'call' && !!cfg.callModel;
+    const model = call ? cfg.callModel : companion ? cfg.companionModel : cfg.agentModel;
+    const protocol = call ? cfg.callProtocol : companion ? cfg.companionProtocol : cfg.agentProtocol;
     if (!cfg.agentKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
     const meta = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, serviceMode: 'real' as const };
     if (needsImmediateSupport(input.userMessage)) return { ...meta, assistantText: SUPPORT_TEXT, findings: [], warnings: [], supportGuidance: true };
@@ -27,7 +28,11 @@ export class RealProvider implements AgentProvider {
       if (historyBytes + size > 12000) break;
       history.unshift(m); historyBytes += size;
     }
-    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages: history, sourceSegments: selectSegments(input.context.sources, input.userMessage), selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
+    const segments = selectSegments(input.context.sources, input.userMessage);
+    // Listening already has the recent utterances: don't send the same text a third time as evidence.
+    const sourceSegments = input.mode === 'listen' ? segments.filter(s => !history.some(m => m.role === 'user' && m.text.includes(s.text)) && !input.userMessage.includes(s.text)) : segments;
+    const recentMessages = history.at(-1)?.role === 'user' && history.at(-1)?.text === input.userMessage ? history.slice(0, -1) : history;
+    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages, sourceSegments, selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
     // Conservative UTF-8 byte ceiling for variable-tokenizer providers; never called an exact token count.
     // Actual generated tokens are independently limited by max_tokens; no unbounded history or audio is sent.
     if (Buffer.byteLength(data, 'utf8') > 36000) throw new AppError('INVALID_INPUT', 413);
@@ -36,8 +41,9 @@ export class RealProvider implements AgentProvider {
       signal.throwIfAborted();
       const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion, input.channel) + repair;
       const anthropic = protocol === 'anthropic';
-      const body = anthropic ? { model, max_tokens: 4096, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
-        : { model, max_tokens: 4096, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
+      const maxTokens = input.mode === 'listen' ? 768 : 4096;
+      const body = anthropic ? { model, max_tokens: maxTokens, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
+        : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await this.fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'error', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
       const payload = await readProviderJson(response, 160000) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
