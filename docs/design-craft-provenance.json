@@ -1,0 +1,28 @@
+{
+  "task": "20261101-bread-craft-release",
+  "session": "9eb3201c-7bee-4c44-aa93-720c69b35c8c",
+  "rawSha256": {
+    "app/globals.css": "cbb68e1fc6ff70f47fe40dd64442c18d239a69edbc6c0779a0d642ac21f60e38",
+    "app/layout.tsx": "8e673dfb916df389d0b4b06cafce84173490d1c8bcd51f127d3b88d870b91ed5",
+    "components/BreadBuddy.tsx": "37ebb4844fd78d7b300ca5e17679a064a0c59430707ffba2b13261cdbc75ad02",
+    "components/EntryScreen.tsx": "84368a27f51f3afb56517ae6923d7673747c203d2e4944a5acfa662dd752a01a",
+    "docs/design-craft-release.md": "34794533a3f24bfb095e2d10a3b22d1fd8af913e3a7fc143904300f495284eb3"
+  },
+  "protectedInputUnchanged": true,
+  "date": "2026-11-01",
+  "source": "Official Claude Code, Opus 5.5, high effort",
+  "codexIntegration": [
+    "Three-way integration against the immutable task input; protected controller/backend/phone engine source preserved.",
+    "Replaced local-only font placeholder with self-hosted renamed OFL subsets, core preload and attribution.",
+    "Reduced paper alpha from .55/-.2 to .45/-.18 and page grain opacity from .8/.45 to .45/.25 after visual inspection.",
+    "Parallel preparation, hosted admission, failure isolation, deployment and tests are Codex changes.",
+    "Reduced kraft fibre alpha after mobile conversation review to keep texture behind readable user text."
+  ],
+  "integratedSha256": {
+    "app/globals.css": "ec098979ab4b6ef52f0d79f1c0678dbfaef5285228ddfbfa3c0af5996f5cdad0",
+    "app/layout.tsx": "d37fa23bbcbe8d063539b4f3c5355b2eecd3b89232d809d03b9c594491b71717",
+    "components/BreadBuddy.tsx": "37ebb4844fd78d7b300ca5e17679a064a0c59430707ffba2b13261cdbc75ad02",
+    "components/EntryScreen.tsx": "84368a27f51f3afb56517ae6923d7673747c203d2e4944a5acfa662dd752a01a",
+    "docs/design-craft-release.md": "34794533a3f24bfb095e2d10a3b22d1fd8af913e3a7fc143904300f495284eb3"
+  }
+}

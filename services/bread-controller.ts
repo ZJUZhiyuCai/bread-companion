@@ -49,17 +49,18 @@ export class BreadController {
         const last = this.state.messages.at(-1);
         return last?.role === 'assistant' && last.id !== previous ? last.text : null;
       },
+      prepareGreeting: async signal => {
+        if (this.capabilities?.tts.greeting !== CALL_GREETING.url) return null;
+        try {
+          const cached = await fetchComplete(this.fetcher, CALL_GREETING.url, { signal, cache: 'force-cache' }, 1200);
+          if (cached.ok && cached.headers.get('Content-Type')?.startsWith('audio/')) {
+            const blob = await cached.blob(); signal.throwIfAborted();
+            if (blob.size > 0) return blob;
+          }
+        } catch { signal.throwIfAborted(); }
+        return null;
+      },
       synthesize: async (text, signal) => {
-        if (text === CALL_GREETING.text && this.capabilities?.tts.greeting === CALL_GREETING.url) {
-          try {
-            const cached = await fetchComplete(this.fetcher, CALL_GREETING.url, { signal, cache: 'force-cache' }, 1200);
-            if (cached.ok && cached.headers.get('Content-Type')?.startsWith('audio/')) {
-              const blob = await cached.blob(); signal.throwIfAborted();
-              if (blob.size > 0) return blob;
-            }
-          } catch { signal.throwIfAborted(); }
-          // Missing static asset can fall back to the configured voice once, without caching any chat.
-        }
         signal.throwIfAborted();
         const token = { sessionId: this.state.sessionId, runId: uid('call'), epoch: this.state.epoch, contextRevision: this.state.contextRevision };
         const response = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
@@ -81,9 +82,10 @@ export class BreadController {
   async initialize() {
     this.disposed = false;
     const initialization = ++this.initialization;
+    const archive = this.refreshSaved();
     try { const res = await this.fetcher('/api/capabilities', { cache: 'no-store' }); if (!res.ok) throw new Error(); const caps = await res.json(); if (!this.disposed && initialization === this.initialization) { this.capabilities = caps; this.publish(); } }
     catch { if (!this.disposed && initialization === this.initialization) { this.error = '暂时没连上面包，刷新再试一下。'; this.publish(); } }
-    await this.refreshSaved();
+    await archive;
   }
   dispose() { this.disposed = true; this.initialization++; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
   private cancelResources() { this.failedTurn = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }

@@ -7,6 +7,7 @@ export interface CallDeps {
   transcribe: (file: File, signal: AbortSignal) => Promise<string>;
   reply: (text: string, signal: AbortSignal) => Promise<string | null>;
   synthesize: (text: string, signal: AbortSignal) => Promise<Blob>;
+  prepareGreeting?: (signal: AbortSignal) => Promise<Blob | null>;
   cancelReply: () => void;
 }
 
@@ -16,6 +17,7 @@ export class CallController {
   private generation = 0;
   private turn = 0;
   private pending: AbortController | null = null;
+  private opening: AbortController | null = null;
   private clock: ReturnType<typeof setInterval> | null = null;
   private idle: ReturnType<typeof setTimeout> | null = null;
   private startedAt = 0;
@@ -26,7 +28,7 @@ export class CallController {
   get snapshot() { return this.state; }
   private patch(patch: Partial<CallState>) { this.state = { ...this.state, ...patch }; this.deps.update(this.state); }
   private clearIdle() { if (this.idle) clearTimeout(this.idle); this.idle = null; }
-  private cancelTurn(preserveCapture = false) { this.turn++; this.pending?.abort(); this.pending = null; this.clearIdle(); if (!preserveCapture) this.audio.listen(false); this.audio.stopPlayback(); this.deps.cancelReply(); }
+  private cancelTurn(preserveCapture = false) { this.turn++; this.pending?.abort(); this.pending = null; this.opening?.abort(); this.opening = null; this.clearIdle(); if (!preserveCapture) this.audio.listen(false); this.audio.stopPlayback(); this.deps.cancelReply(); }
   private monitor() { this.audio.listen(!this.state.muted, { interruptible: true }); }
   private clearAudio() { this.untranscribed = this.continuation = null; }
   async start(greeting = '') {
@@ -41,6 +43,9 @@ export class CallController {
     let openingTurn = this.turn;
     const valid = () => this.state.active && generation === this.generation;
     this.patch({ phase: 'connecting', error: '', level: 0, heardSpeech: false });
+    const opening = new AbortController(); this.opening?.abort(); this.opening = opening;
+    // Only a fixed public asset is prepared in parallel; no paid synthesis before mic approval.
+    const prepared = greeting && this.deps.prepareGreeting ? Promise.resolve().then(() => this.deps.prepareGreeting!(opening.signal)).catch(() => null) : Promise.resolve(null);
     try {
       const opened = await this.audio.open({
         meter: (level, heardSpeech) => {
@@ -61,11 +66,15 @@ export class CallController {
         const turn = ++this.turn; openingTurn = turn; const pending = new AbortController(); this.pending = pending;
         this.patch({ caption: greeting, phase: 'connecting' });
         this.monitor();
-        await this.say(greeting, pending.signal, () => valid() && turn === this.turn);
+        const cached = await prepared;
+        if (!valid() || turn !== this.turn) return;
+        if (cached) await this.audio.play(cached, pending.signal, () => { if (valid() && turn === this.turn) this.patch({ phase: 'speaking' }); });
+        else await this.say(greeting, pending.signal, () => valid() && turn === this.turn);
         if (!valid() || turn !== this.turn) return;
       }
       this.listen(true);
     } catch (e) { if (valid() && openingTurn === this.turn) this.fail(e); }
+    finally { opening.abort(); if (this.opening === opening) this.opening = null; }
   }
   private listen(preserveCapture = false) {
     if (!this.state.active) return;

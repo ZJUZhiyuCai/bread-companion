@@ -14,6 +14,8 @@ export class RealProvider implements AgentProvider {
   constructor(private fetcher: typeof fetch = fetch) {}
   async generate(input: TurnRequest, signal: AbortSignal): Promise<TurnCandidate> {
     const cfg = config();
+    // Worker fetch is receiver-sensitive; do not invoke a stored function as this.fetcher().
+    const fetcher = this.fetcher;
     const companion = input.mode === 'listen' && !!cfg.companionModel;
     const call = input.mode === 'listen' && input.channel === 'call' && !!cfg.callModel;
     const model = call ? cfg.callModel : companion ? cfg.companionModel : cfg.agentModel;
@@ -46,7 +48,7 @@ export class RealProvider implements AgentProvider {
       const maxTokens = input.mode === 'listen' ? 768 : 4096;
       const body = anthropic ? { model, max_tokens: maxTokens, temperature: 0.4, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
         : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
-      const response = await this.fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'error', cache: 'no-store' });
+      const response = await fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'manual', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
       const payload = await readProviderJson(response, 160000, signal) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
       let content: unknown;

@@ -8,6 +8,8 @@ Bread's original source, documentation, embedded SVG character illustrations and
 | React / React DOM | [facebook/react](https://github.com/facebook/react) | MIT |
 | Lucide icons | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) | ISC; includes inherited Feather icons under MIT |
 | Three.js | [mrdoob/three.js](https://github.com/mrdoob/three.js) | MIT |
+| Bread Voice font subsets | [LXGW WenKai Screen v1.530](https://github.com/lxgw/LxgwWenKai-Screen/releases/tag/v1.530) by LXGW | [SIL OFL 1.1](public/design/fonts/OFL-LXGW.txt); modified family renamed Bread Voice |
+| Vinext / Vite / Drizzle ORM | [Vinext](https://github.com/cloudflare/vinext), [Vite](https://github.com/vitejs/vite), [Drizzle](https://github.com/drizzle-team/drizzle-orm) | MIT; deployment adapter only |
 | Zod | [colinhacks/zod](https://github.com/colinhacks/zod) | MIT |
 | TypeScript, Playwright | [microsoft](https://github.com/microsoft) | Apache-2.0 |
 | Vitest | [vitest-dev/vitest](https://github.com/vitest-dev/vitest) | MIT |
@@ -23,3 +25,5 @@ Frontend design and illustrations were produced with official Claude Code, with 
 The new plush body is an original asset generated with the built-in image-generation tool; its moving eyes and red telephone are code-rendered. The short opening voice is synthetic MiniMax speech, not a human recording. [Asset provenance and generation prompt](docs/living-companion-assets.md) document both. The user-supplied reference photograph is not distributed.
 
 The procedural 3D telephone is authored for Bread with Blender and rendered with Three.js. Its generator is `scripts/3d/build_companion.py`; dial numerals are Blender built-in text converted to mesh. No external phone model, font file, texture, or HDR environment is bundled. Blender is a separate GPL-licensed authoring tool; its output is covered by its [artwork policy](https://www.blender.org/about/license/), not automatically by the program license. The SVG remains the fallback. [Functional audit](docs/phone3d-audit.md) records the candidate validation and remaining work.
+
+Self-hosted font source, subsetting and attribution are documented in [fonts.md](docs/fonts.md). The font retains OFL 1.1 and is not relicensed under the project MIT license.

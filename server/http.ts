@@ -2,10 +2,22 @@ import { z } from 'zod';
 import { AppError, asAppError } from './errors';
 import { readStream } from './read-stream';
 import { timeoutSignal } from './limits';
+import { publicOrigin, requestPrincipal } from './visitor';
 
 export const NO_STORE = { 'Cache-Control': 'no-store, max-age=0', 'X-Content-Type-Options': 'nosniff' };
-export function assertLocalRequest(req: Request) {
+let readingBodies = 0;
+export function assertAppRequest(req: Request) {
   const url = new URL(req.url);
+  const hosted = publicOrigin();
+  if (hosted) {
+    const expected = new URL(hosted);
+    if (url.origin !== hosted || (req.headers.get('host') ?? url.host) !== expected.host) throw new AppError('PERMISSION_DENIED', 403);
+    const origin = req.headers.get('origin');
+    if ((req.method !== 'GET' && origin !== hosted) || (origin && origin !== hosted)) throw new AppError('PERMISSION_DENIED', 403);
+    if (['cross-site', 'same-site'].includes(req.headers.get('sec-fetch-site') ?? '')) throw new AppError('PERMISSION_DENIED', 403);
+    if (req.method !== 'GET') requestPrincipal(req);
+    return;
+  }
   if (!['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw new AppError('PERMISSION_DENIED', 403);
   // NextURL normalizes loopback addresses to localhost. Compare the browser's
   // Origin with its validated Host header, never an untrusted forwarded header.
@@ -22,7 +34,10 @@ export async function readBytes(req: Request, limit: number, signal = timeoutSig
   const declared = req.headers.get('content-length');
   if (declared && (!/^\d+$/.test(declared) || Number(declared) > limit)) throw new AppError('INVALID_INPUT', 413);
   if (!req.body) throw new AppError('INVALID_INPUT');
-  return readStream(req.body, limit, signal, () => new AppError('INVALID_INPUT', 413));
+  if (readingBodies >= 4) throw new AppError('RATE_LIMITED', 429, true, 1);
+  readingBodies++;
+  try { return await readStream(req.body, limit, signal, () => new AppError('INVALID_INPUT', 413)); }
+  finally { readingBodies--; }
 }
 export async function readJson<T>(req: Request, schema: z.ZodType<T>): Promise<T> {
   if (!(req.headers.get('content-type') ?? '').startsWith('application/json')) throw new AppError('INVALID_INPUT', 415);
@@ -36,7 +51,7 @@ export async function readJson<T>(req: Request, schema: z.ZodType<T>): Promise<T
 export function errorResponse(error: unknown, requestId: string, stage: string): Response {
   const err = asAppError(error);
   // Deliberately no exception body, input, headers or third-party error strings in logs/responses.
-  return Response.json({ error: { code: err.code, userMessage: err.message, retryable: err.retryable, requestId, stage } }, { status: err.status, headers: { ...NO_STORE, 'X-Request-Id': requestId, ...(err.status === 429 ? { 'Retry-After': String(err.retryAfterSeconds ?? 60) } : {}) } });
+  return Response.json({ error: { code: err.code, userMessage: err.message, retryable: err.retryable, requestId, stage } }, { status: err.status, headers: { ...NO_STORE, 'X-Request-Id': requestId, ...(err.status === 429 || err.retryAfterSeconds ? { 'Retry-After': String(err.retryAfterSeconds ?? 60) } : {}) } });
 }
 export function timingHeaders(start: number, requestId: string, providerMs: number) {
   return { ...NO_STORE, 'X-Request-Id': requestId, 'Server-Timing': `provider;dur=${providerMs.toFixed(1)}, total;dur=${(performance.now() - start).toFixed(1)}` };

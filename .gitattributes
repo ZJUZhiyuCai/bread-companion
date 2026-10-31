@@ -1,3 +1,6 @@
 * text=auto eol=lf
 *.png binary
 *.wav binary
+
+# Keep the vendored OFL text byte-for-byte identical to the upstream license.
+public/design/fonts/OFL-LXGW.txt -whitespace

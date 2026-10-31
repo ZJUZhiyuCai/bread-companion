@@ -1,6 +1,6 @@
 # Security policy
 
-Bread is currently a local, single-user application. Only the latest `main` is maintained; old preview releases do not have a separate security support window.
+Bread supports loopback development and a capacity-limited HTTPS public trial. Only the latest `main` is maintained; old preview releases do not have a separate security support window.
 
 ## Report a vulnerability privately
 
@@ -10,7 +10,9 @@ The maintainer will respond on a best-effort basis; this is not a staffed incide
 
 ## Trust boundaries
 
-- Bind to loopback. The current API has no user accounts or per-user authorization and is **not a multi-user public deployment**. Publishing the source does not change this boundary.
+- Local development binds to loopback. Hosted mode requires an exact canonical HTTPS `BREAD_PUBLIC_ORIGIN`, a server-only signing secret, same-origin POSTs, and a signed short-lived anonymous visitor cookie. Forwarded host headers do not authorize a request.
+- Public paid endpoints require shared D1 accounting: atomic rolling budgets, capability capacities, active leases and 24-hour deduplication. Missing accounting fails closed. Anonymous cookies are not user accounts and can be reacquired; the global budget remains the cost boundary. This is not a comprehensive bot or DDoS defense.
+- D1 stores only keyed anonymous/request identifiers, capability lane and timestamps. It does not store conversations, audio, materials or provider credentials. Expired rows are deleted on the next admission, not by a precise-time erasure scheduler. Worker runtime bindings and secrets are scoped to each request with AsyncLocalStorage.
 - Keep provider keys on the server. Never use `NEXT_PUBLIC_*` for credentials. Provider billing, data retention, and availability remain outside this repository's control.
 - Provider endpoints and CLI evaluation targets are trusted operator configuration, not client-editable settings. Do not expose them to untrusted users without adding destination validation and an explicit network policy.
 - Treat pasted materials, imported files, model output and recalled content as untrusted. Candidate validation, evidence checks and storage permissions live outside the model.

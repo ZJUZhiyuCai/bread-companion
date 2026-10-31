@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import '../public/design/fonts/fonts.css';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,14 +16,18 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F6F1E7' },
-    { media: '(prefers-color-scheme: dark)', color: '#14161D' },
+    // the page's --bg in each scheme, so the browser chrome is the same paper
+    { media: '(prefers-color-scheme: light)', color: '#F5EFE4' },
+    { media: '(prefers-color-scheme: dark)', color: '#17150F' },
   ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN" data-text-size="m">
+      <head>
+        <link rel="preload" href="/design/fonts/bread-voice-core-835e939dbc07.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -28,6 +28,26 @@ function harness(overrides: Partial<CallDeps> = {}) {
   const call=new CallController(deps,audio);active.push(call);return {call,audio,deps};
 }
 describe('continuous call ownership',()=>{
+  it('prepares the fixed greeting while microphone permission is pending, and never bills TTS for it', async()=>{
+    const ready=deferred<boolean>(), clip=new Blob(['cached']);
+    const prepareGreeting=vi.fn(async()=>clip);const {call,audio,deps}=harness({prepareGreeting});
+    audio.open.mockImplementationOnce(events=>{audio.events=events;return ready.promise;});
+    const opening=call.start('你好');await tick();
+    expect(prepareGreeting).toHaveBeenCalledTimes(1);expect(audio.play).not.toHaveBeenCalled();expect(deps.synthesize).not.toHaveBeenCalled();
+    ready.resolve(true);await opening;expect(audio.play.mock.calls[0][0]).toBe(clip);expect(deps.synthesize).not.toHaveBeenCalled();expect(call.snapshot.phase).toBe('listening');
+  });
+  it('aborts the parallel greeting on hangup and ignores late permission and audio', async()=>{
+    const permission=deferred<boolean>(), prepared=deferred<Blob|null>();let signal!:AbortSignal;
+    const {call,audio,deps}=harness({prepareGreeting:vi.fn(s=>{signal=s;return prepared.promise;})});
+    audio.open.mockImplementationOnce(events=>{audio.events=events;return permission.promise;});
+    const opening=call.start('你好');await tick();call.hangup();expect(signal.aborted).toBe(true);
+    permission.resolve(true);prepared.resolve(new Blob(['late']));await opening;expect(audio.play).not.toHaveBeenCalled();expect(deps.synthesize).not.toHaveBeenCalled();
+  });
+  it('does not synthesize after microphone denial even when greeting preparation fails', async()=>{
+    const {call,audio,deps}=harness({prepareGreeting:vi.fn(async()=>{throw new Error('asset unavailable');})});
+    audio.open.mockRejectedValueOnce(new DOMException('permission denied','NotAllowedError'));
+    await call.start('你好');expect(call.snapshot.phase).toBe('error');expect(deps.synthesize).not.toHaveBeenCalled();expect(audio.play).not.toHaveBeenCalled();
+  });
   it('runs ASR → reply → actual playback → listening for successive turns',async()=>{
     const {call,audio,deps}=harness();await call.start();expect(call.snapshot.phase).toBe('listening');
     audio.say();expect(call.snapshot.phase).toBe('transcribing');await tick();
