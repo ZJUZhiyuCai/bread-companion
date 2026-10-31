@@ -12,6 +12,7 @@ import { RunController } from './run-controller';
 import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
+import { CALL_GREETING } from '@/domain/call-greeting';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -49,6 +50,17 @@ export class BreadController {
         return last?.role === 'assistant' && last.id !== previous ? last.text : null;
       },
       synthesize: async (text, signal) => {
+        if (text === CALL_GREETING.text && this.capabilities?.tts.greeting === CALL_GREETING.url) {
+          try {
+            const cached = await fetchComplete(this.fetcher, CALL_GREETING.url, { signal, cache: 'force-cache' }, 1200);
+            if (cached.ok && cached.headers.get('Content-Type')?.startsWith('audio/')) {
+              const blob = await cached.blob(); signal.throwIfAborted();
+              if (blob.size > 0) return blob;
+            }
+          } catch { signal.throwIfAborted(); }
+          // Missing static asset can fall back to the configured voice once, without caching any chat.
+        }
+        signal.throwIfAborted();
         const token = { sessionId: this.state.sessionId, runId: uid('call'), epoch: this.state.epoch, contextRevision: this.state.contextRevision };
         const response = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
         if (!response.ok) { const json = await response.json(); throw new Error(json.error?.userMessage || '声音暂时没出来，文字回复还在。'); }
@@ -91,8 +103,8 @@ export class BreadController {
     if (this.call.active || this.state.lifecycle !== 'active') return;
     if (!this.capabilities?.asr.available || !this.capabilities?.tts.available || !this.capabilities.agent.configured) { this.fail(new Error('语音连接暂时不可用，可以先打字聊。')); return; }
     this.stopWork(); this.error = ''; this.notice = '';
-    const first = !this.state.started; if (first) this.start('listen');
-    await this.callController.start(first ? this.state.messages.at(-1)?.text : '');
+    const first = !this.state.started; if (first) this.dispatch({ type: 'START', mode: 'listen', welcome: CALL_GREETING.text });
+    await this.callController.start(CALL_GREETING.text);
   };
   hangupCall = () => { this.callController.hangup(); };
   setMode = (mode: Mode) => {

@@ -1,0 +1,27 @@
+{
+  "author": "Official Claude Code / Claude Opus 5.5 / high",
+  "task": "20261031-bread-living-companion",
+  "session": "672a59e7-a130-463a-82c6-8b4451f575d7",
+  "completedBeijing": "2026-10-31T16:12:12+08:00",
+  "originalSha256": {
+    "app/globals.css": "2fc54de3aeeddb25f2ef18d650a5f7d6635fbaad08b6b0f958a9c561c701426a",
+    "docs/design-living-companion.md": "f7d7f63ffc4cdfb913ae371e21883bed9858114bb495b82bc9dadb0fa70d23f1",
+    "components/EntryScreen.tsx": "b7ab182b6e696507d362de434623c6000645754b8d660d05024641e3db9f60b0",
+    "components/Companion.tsx": "b6b367c32bcf961472b902ce1e4e8f26be535dc18ff985bfb2c364d85451afc9",
+    "components/CallStage.tsx": "b0e4bd4f1398fe9b3b10b43eea40df282e561e1ba8bd618ebd1b460ab2ce3245",
+    "components/call.ts": "c6c34ccbce30f84bc7a6f421e9d44163b9a9aaeac5445f3cdd0df4b6d037b12b",
+    "components/NightWindow.tsx": "35b7f5b44600012f52a0d671bbb371f00854313643e4ffbdfb6b29ce94b210cd",
+    "components/CallRoom.tsx": "7035a2765ad3a1132682c44a859509a4e37ec7bfcbf339be893c07b68bec079b",
+    "components/EndView.tsx": "278ba8fcb6497e6c176bd58b74b54793e977fa58a9383fb9c05d54428ae0bfbb",
+    "components/RedPhone.tsx": "48e6269e81438f0a4e9ad3db0f5804753db4b038aa5e55c1f53e1d3399174098",
+    "components/BreadBuddy.tsx": "2311e6ac93757745c48064e87fe8ebd6c34f0febebdcbd4126da93ce3bf22276"
+  },
+  "originalRetention": "Unmodified task source retained in the local Claude control project; task-specific reference photograph is not published.",
+  "codexIntegrationChanges": [
+    "Small-screen entry scene uses independent grid rows for the greeting and telephone. This fixes the greeting obscuring the phone at 320 px; tested at 320/375/390 px. Mobile title size adjusted to keep the label readable.",
+    "Backend integration, cached MiniMax greeting, local ringback, cancellation, response-style constraints and tests are separate Codex changes. No remote backend files replaced local implementations.",
+    "Appended a separately attributed integration note to the design document; original design prose and original source are retained.",
+    "Bound the call stage to its container during desktop-to-portrait width transitions. Reproduced a 410 px internal scroll width in a 390 px viewport; added a regression assertion before fixing it."
+  ],
+  "verification": "See living-companion-validation.md for tests and limits."
+}

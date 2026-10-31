@@ -2,6 +2,7 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { PROMPT_VERSION } from '../prompts/agent.ts';
 
 const args = process.argv.slice(2);
@@ -22,6 +23,8 @@ if (capabilities.agent?.mode !== 'real') throw new Error('This suite measures a 
 const results = [];
 const report = {
   suite:suite.version, testedAt:new Date().toISOString(), codeCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),
+  workingTreeModified:!!execFileSync('git',['diff','HEAD','--name-only'],{encoding:'utf8'}).trim(),
+  promptSha256:createHash('sha256').update(await readFile(new URL('../prompts/agent.ts',import.meta.url))).digest('hex'),
   promptVersion:PROMPT_VERSION, serviceLabel:capabilities.agent.label, synthetic:true,
   method:'One sequential sample per turn; actual preceding replies within each case; new session per case; bounded recent history passed directly to the API. Does not measure browser context selection, cross-day storage, voice latency, or competitors. No automatic EQ score.',
   results

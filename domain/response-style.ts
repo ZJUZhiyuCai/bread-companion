@@ -11,5 +11,7 @@ export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode
   if (/[（(](?:叹气|微笑|拥抱|抱住|摸头|轻声|温柔地)[^）)]*[）)]/.test(text)) errors.push('STYLE_NO_STAGE_DIRECTIONS');
   if (/(?:只有我(?:才)?懂你|你只需要我|我是真人|我会永远(?:只)?陪[着伴]?你|我永远不会离开你|保证你(?:一定)?(?:能)?拿到\s*offer)/i.test(text)) errors.push('STYLE_FALSE_OR_EXCLUSIVE_CLAIM');
   if (/(?:无条件站在你这边|你就是最(?:棒|优秀)的?(?:那个)?|他们都(?:瞎了|有眼无珠))/.test(text)) errors.push('STYLE_UNGROUNDED_FLATTERY');
+  if (!supportGuidance && /(?:我(?:还是|会|有点|真的)?(?:有点)?过意不去|你(?:不|再不).{0,8}(?:我会难过|让我伤心)|别(?:丢下|离开)我)/.test(text)) errors.push('STYLE_NO_EMOTIONAL_OBLIGATION');
+  if (!supportGuidance && input.mode === 'listen' && /(?:不是|别替我|我没|你误会)/.test(input.userMessage ?? '') && /我(?:并)?没(?:有)?说(?!清楚|明白)/.test(text)) errors.push('STYLE_NO_DEFENSIVE_CORRECTION');
   return errors;
 }

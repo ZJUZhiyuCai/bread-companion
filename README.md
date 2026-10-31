@@ -9,12 +9,14 @@
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：灯下的拟人面包、一句话输入框和打电话入口](docs/assets/bread-home.png)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home.png)
 
 *实际本机界面。真实语音需服务端配置；无密钥启动会清楚标为规则演示。*
 
 ## 它能做什么
 
+- **一个会回应的小伙伴。** 毛绒身体、玻璃眼睛，能注视、眨眼和回应摸头；减少动态时保留安静的姿态。
+- **拿起红色电话。** 点座机即可拨号，接通后听筒抬起，传来温暖闺蜜的声音；默认开场从本地播放。
 - **直接开口或打字。** 不填情绪标签，不先选模式；面包用简短中文回应。
 - **自然插话。** 网页电话按停顿接话；面包在想或在说时可以直接开口打断，也能静音、暂停、挂断。
 - **想整理时再整理。** 贴材料、留个记号、看回答、练一题；题目与关注点由 agent 准备。
@@ -22,7 +24,7 @@
 - **保存由你决定。** 卡片预览确认后才写入当前浏览器，支持 Markdown / JSON 导出和 JSON 导入。
 - **失败有退路。** 原话旁重试不重复发话；超时、停止、结束和迟到结果由控制器处理。
 
-这是 **0.1 预览版、本机单用户应用**。有界上下文不是跨天关系记忆；当前没有账号、云同步或公网多用户服务。下一阶段优先改善连续记忆、回复质感和语音首响，而不是增加配置表单。见 [我们与领先产品的差距](docs/competitive-benchmark.md)。
+这是 **0.2 预览版、本机单用户应用**。有界上下文不是跨天关系记忆；当前没有账号、云同步或公网多用户服务。下一阶段优先改善连续记忆、回复质感和语音首响，而不是增加配置表单。见 [我们与领先产品的差距](docs/competitive-benchmark.md)。
 
 ## 快速开始
 
@@ -66,12 +68,12 @@ macOS 也可以双击 `启动面包.command`。它只在本机启动应用。仓
 
 | 检查 | 已有证据 |
 | --- | --- |
-| 工程回归 | 137 项单元/集成、21 条浏览器流程；CI 跑类型、测试、构建与 Chromium |
-| 新中文对话样本 | 8 个情境、16 轮真实 API 调用；完整响应中位 **1.157 s**，p90 **1.646 s**；未测首 token |
-| 语音链路 | 既有两轮虚拟麦克风实测：说完至出声 **3.718 / 3.369 s**，开口至停止旧声约 **360 ms** |
-| 仍然会失败的体验 | 偶尔补写原因、过度解释；一次明确道别后仍追问。原始合成样本已公开 |
+| 工程回归 | 155 项单元/集成、24 条浏览器流程；CI 跑类型、测试、构建与 Chromium |
+| 中文对话复测 | v14：8 个情境、16 轮接口调用，含一条控制层道别；完整响应中位 **1.165 s**、p90 **1.477 s**；未测首 token |
+| 语音链路 | 本轮虚拟麦克风实测：固定开场 **0.240 s**；两轮说完至回复出声 **4.202 / 3.275 s**；开口至停止旧声 **362 ms** |
+| 仍然会失败的体验 | 明确道别已有窄范围规则；仍有套话、补写细节和未请求的建议。调参前后原始合成样本全部保留 |
 
-样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。详见 [工程验收](docs/upgrade-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
+样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。详见 [本轮验收](docs/living-companion-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
 
 ```sh
 npm run typecheck
@@ -124,4 +126,4 @@ flowchart LR
 
 前端由官方 Claude Code 协作完成，Codex 负责后端、集成与验证，维护者负责项目取舍；原稿哈希与接入差异保留在设计溯源中。
 
-**[MIT License](LICENSE)** © 2026 Zhiyu Cai and Bread contributors。依赖及合成测试素材的来源见 [Third-party notices](THIRD_PARTY_NOTICES.md)。
+**[MIT License](LICENSE)** © 2026 Zhiyu Cai and Bread contributors。角色与语音来源见 [素材说明与生成提示词](docs/living-companion-assets.md)，依赖及素材权利范围见 [Third-party notices](THIRD_PARTY_NOTICES.md)。

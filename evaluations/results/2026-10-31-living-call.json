@@ -1,0 +1,150 @@
+{
+  "startedAt": "2026-10-31T08:22:15.020Z",
+  "inputs": [
+    {
+      "name": "first",
+      "at": 35306.800000190735,
+      "endsAt": 40252.675000190735,
+      "seconds": 4.945875
+    },
+    {
+      "name": "interrupt",
+      "at": 45056,
+      "endsAt": 49955.4375,
+      "seconds": 4.8994375
+    }
+  ],
+  "outputs": [
+    {
+      "at": 31747.20000076294,
+      "duration": 3.1463125
+    },
+    {
+      "at": 44454.400000572205,
+      "duration": 4.945875
+    },
+    {
+      "at": 53230.800000190735,
+      "duration": 5.7585625
+    }
+  ],
+  "stops": [
+    45417.5
+  ],
+  "phases": [
+    {
+      "phase": "connecting",
+      "at": 31650.5
+    },
+    {
+      "phase": "speaking",
+      "at": 31747.900000572205
+    },
+    {
+      "phase": "listening",
+      "at": 34905.60000038147
+    },
+    {
+      "phase": "transcribing",
+      "at": 40834.10000038147
+    },
+    {
+      "phase": "thinking",
+      "at": 42013.20000076294
+    },
+    {
+      "phase": "speaking",
+      "at": 44455
+    },
+    {
+      "phase": "listening",
+      "at": 45419
+    },
+    {
+      "phase": "transcribing",
+      "at": 50541.10000038147
+    },
+    {
+      "phase": "thinking",
+      "at": 51279.70000076294
+    },
+    {
+      "phase": "speaking",
+      "at": 53231.300000190735
+    },
+    {
+      "phase": "listening",
+      "at": 58990.5
+    },
+    {
+      "phase": "idle",
+      "at": 89066.20000076294
+    }
+  ],
+  "network": [
+    {
+      "url": "/api/speech/transcribe",
+      "at": 40833.20000076294,
+      "status": 200,
+      "ms": 1171.3999996185303,
+      "text": "今天的面试结束了，我有一点累，先不想复盘，就想跟你说说话。"
+    },
+    {
+      "url": "/api/agent/turn",
+      "at": 42010.400000572205,
+      "status": 200,
+      "ms": 1684.8000001907349,
+      "text": "面试结束了，累就先不复盘。想聊什么，我陪你随便说。"
+    },
+    {
+      "url": "/api/speech/synthesize",
+      "at": 43698.800000190735,
+      "status": 200,
+      "ms": 747.8000001907349
+    },
+    {
+      "url": "/api/speech/transcribe",
+      "at": 50540.60000038147,
+      "status": 200,
+      "ms": 734.6000003814697,
+      "text": "等一下，我不想聊面试了。我今天买了一张很可爱的猫咪贴纸。"
+    },
+    {
+      "url": "/api/agent/turn",
+      "at": 51277.5,
+      "status": 200,
+      "ms": 1178.1000003814697,
+      "text": "好，不聊面试。猫咪贴纸长什么样，是那种圆脸小猫吗？"
+    },
+    {
+      "url": "/api/speech/synthesize",
+      "at": 52459.900000572205,
+      "status": 200,
+      "ms": 766.8000001907349
+    }
+  ],
+  "barge": true,
+  "inputScheduled": true,
+  "fixture": "Synthetic Chinese speech, real browser audio graph and real providers; no physical microphone",
+  "tapAt": 31506.900000572205,
+  "tracks": [
+    {
+      "kind": "audio",
+      "state": "ended"
+    }
+  ],
+  "contextState": "closed",
+  "summary": {
+    "tapToOpeningMs": 240.30000019073486,
+    "inputEndToReplyMs": [
+      4201.72500038147,
+      3275.362500190735
+    ],
+    "speechOnsetToStopMs": 361.5,
+    "allRequestsSucceeded": true,
+    "tracksEnded": true,
+    "contextClosed": true
+  },
+  "codeBase": "9a5f622 + uncommitted 0.2.0 changes",
+  "conditions": "Local production build on macOS, Chrome, synthetic speech sent through Web Audio virtual microphone. Real MiniMax ASR/TTS and configured DeepSeek route. Opening is the bundled MiniMax recording. No physical microphone, acoustic echo, Bluetooth, or mobile hardware measured."
+}

@@ -1,6 +1,6 @@
 import type { Card, Finding, TurnCandidate, TurnRequest } from '@/domain/types';
 import { requestSegments } from '@/domain/context-builder';
-import { needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
+import { farewellReply, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
 import type { AgentProvider } from './agent';
 
 export function mockCandidate(input: TurnRequest): TurnCandidate {
@@ -13,6 +13,8 @@ export function mockCandidate(input: TurnRequest): TurnCandidate {
     return { ...base, assistantText: `就从这一题开始：${question} 按你平常说话的方式回答就好，也可以让我换一道。`, practiceSetup: { question, criteria: ['说清自己做了什么', '用真实例子说明判断依据'] } };
   }
   if (input.mode === 'listen') {
+    const farewell = farewellReply(input.userMessage);
+    if (farewell) return { ...base, assistantText: farewell };
     const text = /准备了三天/.test(input.userMessage) ? '准备了三天，最后却只得到很简短的回复。你现在最想说的是这个结果，还是面试里某个一直放不下的片段？'
       : /不想.*(复盘|分析)/.test(input.userMessage) ? '好，今晚不做分析。可以继续说，也可以停在这里。'
       : /benchmark|科研绘图/.test(input.userMessage) ? '那道题让你挂心。我们还不知道它是否影响了结果。你想先说说当时的感受吗？'

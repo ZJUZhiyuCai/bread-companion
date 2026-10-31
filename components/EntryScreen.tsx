@@ -57,13 +57,15 @@ export function EntryScreen(props: EntryScreenProps) {
       </div>
 
       <div className="entry__stage">
+        {/* 面包 and its red phone share the light: the phone is the call button itself. */}
         <div className="entry__hero">
           {/* Says it is an AI once, in its own greeting; the stamp beside it opens the rest. */}
           <p className="hello-bubble">
             <span className="hello-bubble__big">嗨，我是面包。</span>
             <span className="hello-bubble__small">一个 AI。今晚想说什么，我都听着。</span>
           </p>
-          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} idPrefix="entry-lamp" className="entry__scene" />
+          <LampScene state={waving ? 'wave' : typing ? 'attentive' : 'idle'} className="entry__scene" pokeable />
+          <CallLauncher variant="hero" caps={caps} onCall={() => onCall(text)} />
         </div>
 
         <div className="entry__content">
@@ -97,10 +99,6 @@ export function EntryScreen(props: EntryScreenProps) {
                 </button>
               </div>
             </form>
-
-            <div className="door door--call">
-            <CallLauncher variant="hero" caps={caps} onCall={() => onCall(text)} />
-            </div>
           </div>
 
           <div className="ways">

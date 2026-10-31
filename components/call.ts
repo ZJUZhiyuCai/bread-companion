@@ -118,7 +118,7 @@ export const BUDDY_LINE: Record<BuddyState, string> = {
   transcribing: '在把你说的转成字。',
   thinking: '嗯，让我想想…',
   speaking: '念给你听。',
-  connecting: '戴上耳机…',
+  connecting: '电话响了，我来接…',
   asking: '等你允许麦克风。',
   recording: '在听这一段。',
   muted: '你静音了，我等着。',

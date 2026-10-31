@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 — 2026-10-31
+
+A plush companion and a red rotary telephone, with a shorter path from tapping to hearing a voice.
+
+- Original textured plush body; animated glass eyes, blinks, gaze, touch response and call-state expressions.
+- A red desk phone is the call button. Its dial turns while connecting and its handset lifts when the audio starts; motion follows the actual call state.
+- Locally served MiniMax Warm Bestie opening for the matching voice configuration, plus quiet local ringback. Other voices use their configured TTS; missing assets fall back once.
+- Natural interruption also cancels an opening still being prepared. Hangup prevents late playback and releases devices/audio nodes.
+- Narrow direct-goodbye handling, correction and emotional-obligation constraints; v13/v14 synthetic outputs retained with remaining quality failures.
+- Small-screen greeting/phone overlap fixed; reduced-motion and text focus preserved.
+
+See [validation and limits](docs/living-companion-validation.md), [asset provenance](docs/living-companion-assets.md), and [Claude design provenance](docs/living-companion-provenance.json).
+
 ## 0.1.0 — 2026-10-31
 
 First open-source preview. This is a working local application, not a hosted multi-user service.

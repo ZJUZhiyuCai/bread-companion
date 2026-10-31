@@ -1,6 +1,7 @@
 import { encodeWav } from './media-controller';
 import { resampleMono, VoiceActivity } from './voice-activity';
 import { PlaybackEchoGuard, speechLikeFrame } from './playback-echo';
+import { startDialTone } from './dial-tone';
 
 export interface CallAudioEvents {
   meter: (level: number, heardSpeech: boolean) => void;
@@ -14,6 +15,7 @@ export interface CallAudioPort {
   finish: () => void;
   play: (blob: Blob, signal: AbortSignal, onStart: () => void) => Promise<void>;
   stopPlayback: () => void;
+  stopDialTone?: () => void;
   close: () => void;
 }
 
@@ -31,6 +33,8 @@ export class BrowserCallAudio implements CallAudioPort {
   private interruptible = false;
   private echo = new PlaybackEchoGuard();
   private events: CallAudioEvents | null = null;
+  private stopRingback: (() => void) | null = null;
+  stopDialTone = () => { this.stopRingback?.(); this.stopRingback = null; };
 
   async open(events: CallAudioEvents): Promise<boolean> {
     this.close(); const generation = this.generation;
@@ -38,6 +42,7 @@ export class BrowserCallAudio implements CallAudioPort {
     // Created/resumed synchronously inside the user's click, before permission/network awaits.
     const context = new AudioContext(); this.context = context;
     const resumed = context.resume(); void resumed.catch(() => {});
+    this.stopRingback = startDialTone(context);
     let stream: MediaStream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }, video: false }); }
     catch { if (generation === this.generation) this.close(); throw new Error('还没能打开麦克风。允许麦克风后可以重试，也可以继续打字。'); }
@@ -94,6 +99,7 @@ export class BrowserCallAudio implements CallAudioPort {
     signal.throwIfAborted();
   }
   stopPlayback() {
+    this.stopDialTone();
     if (this.context) this.echo.stop(this.context.currentTime);
     const source = this.playback; this.playback = null;
     if (source) { try { source.stop(); } catch { /* already stopped */ } }

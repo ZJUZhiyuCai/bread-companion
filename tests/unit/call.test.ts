@@ -116,9 +116,10 @@ describe('call and text continuity',()=>{
     const c=new BreadController(async(url,init)=>{
       if(String(url).endsWith('/capabilities')){const caps=getCapabilities();caps.asr.available=true;caps.tts.available=true;return Response.json(caps);}
       if(String(url).endsWith('/transcribe'))return Response.json({requestId:(init!.body as FormData).get('requestId'),text:'保留已经说过的话。'});
+      if(String(url).endsWith('/synthesize'))return new Response(new Blob(['greeting']));
       request=JSON.parse(init!.body as string);return late.promise;
     },undefined,audio);
-    await c.initialize();c.start();await c.startCall();audio.say();await tick();c.hangupCall();const count=c.getSnapshot().state.messages.length;late.resolve(Response.json(mockCandidate(request)));await tick();
+    await c.initialize();c.start();await c.startCall();audio.play.mockClear();audio.say();await tick();c.hangupCall();const count=c.getSnapshot().state.messages.length;late.resolve(Response.json(mockCandidate(request)));await tick();
     expect(c.getSnapshot().state.messages.length).toBe(count);expect(c.getSnapshot().state.messages.at(-1)?.role).toBe('user');expect(audio.play).not.toHaveBeenCalled();c.dispose();
   });
 });

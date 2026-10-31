@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Hand, LoaderCircle, MessageSquareText, Mic, MicOff, Pause, Phone, PhoneOff, RotateCcw } from 'lucide-react';
 import type { CallPhase, Message } from '@/domain/types';
-import { BreadBuddy } from './BreadBuddy';
-import { CALL_RUNNING, IDLE_CALL, buddyForCall, callMeta } from './call';
+import { CallStage } from './CallStage';
+import { CALL_RUNNING, IDLE_CALL, callMeta } from './call';
 import { useDomId } from './hooks';
 import { formatClock } from './labels';
 import type { BreadVM } from './vm';
@@ -27,7 +27,8 @@ interface PrimaryKey {
 const CUTTABLE: CallPhase[] = ['transcribing', 'thinking', 'speaking'];
 
 /**
- * The voice call. The lights go down, 面包 puts on a headset, and one key in the middle always does
+ * The voice call. The lights go down, the red phone on 面包's table is dialled and rings, and the
+ * handset comes up to 面包's cheek only when the line is really open. One key in the middle always does
  * the single most useful thing for the current phase. Hang up keeps the text; nothing is faked.
  *
  * Speaking up now interrupts on its own, so this room explains nothing and acknowledges instead:
@@ -140,14 +141,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           </p>
         </header>
 
-        <div className="callroom__stage" style={{ '--lvl': level.toFixed(3) } as CSSProperties}>
-          <div className="callroom__halo" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <BreadBuddy state={buddyForCall(call)} level={level} headset decorative className="callroom__buddy" />
-        </div>
+        <CallStage call={call} level={level} className="callroom__stage" />
 
         <div className="callroom__status">
           <h2 id={`${id}-h`} ref={headingRef} tabIndex={-1} className="callroom__phase">
@@ -183,7 +177,8 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
                 <span className="cap__text">{call.caption}</span>
               </p>
             ) : (
-              !call.lastHeard && <p className="cap cap--empty">开个头就好，比如“今天有点累”。</p>
+              // Only once the line is open; while it is still ringing there is nothing to answer yet.
+              !call.lastHeard && phase === 'listening' && <p className="cap cap--empty">开个头就好，比如“今天有点累”。</p>
             )}
           </div>
         )}

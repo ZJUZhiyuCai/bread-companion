@@ -55,9 +55,11 @@ export class CallController {
         speechStart: () => { if (valid()) this.onSpeechStart(); },
       });
       if (!opened || !valid()) return;
+      // Finish local ringback before enabling capture; it must not masquerade as user speech.
+      this.audio.stopDialTone?.();
       if (greeting) {
         const turn = ++this.turn; openingTurn = turn; const pending = new AbortController(); this.pending = pending;
-        this.patch({ caption: greeting, phase: 'thinking' });
+        this.patch({ caption: greeting, phase: 'connecting' });
         this.monitor();
         await this.say(greeting, pending.signal, () => valid() && turn === this.turn);
         if (!valid() || turn !== this.turn) return;
@@ -68,6 +70,7 @@ export class CallController {
   private listen(preserveCapture = false) {
     if (!this.state.active) return;
     this.clearIdle();
+    this.audio.stopDialTone?.();
     this.patch({ phase: this.state.muted ? 'muted' : 'listening', level: 0, heardSpeech: false, error: '' });
     if (this.state.muted) this.audio.listen(false);
     else if (preserveCapture) this.audio.listen(true, { preserve: true });
@@ -127,7 +130,7 @@ export class CallController {
   private onSpeechStart() {
     if (!this.state.active || this.state.muted) return;
     if (this.state.phase === 'listening') { this.clearIdle(); return; }
-    if (!['transcribing', 'thinking', 'speaking'].includes(this.state.phase)) return;
+    if (!['transcribing', 'thinking', 'speaking'].includes(this.state.phase) && !(this.state.phase === 'connecting' && this.pending)) return;
     const caption = this.state.phase === 'speaking' ? this.state.caption : '';
     // A natural mid-sentence pause can beat ASR. Retain that prefix, but never replay a stale reply.
     if (this.state.phase === 'transcribing' && this.untranscribed) this.continuation = this.untranscribed;
@@ -135,7 +138,7 @@ export class CallController {
     this.cancelTurn(true); this.patch({ caption }); this.listen(true);
   }
   interrupt = () => {
-    if (!this.state.active || this.state.phase === 'connecting') return;
+    if (!this.state.active || (this.state.phase === 'connecting' && !this.pending)) return;
     if (['paused', 'error'].includes(this.state.phase)) { void this.resume(); return; }
     // Explicit "say again" discards an unfinished audio prefix; voice continuation keeps it above.
     this.cancelTurn(); this.clearAudio(); this.patch({ muted: false, caption: '' }); this.listen();

@@ -4,7 +4,8 @@
 
 - [配置与运行](setup.md)：从无密钥 Mock 到真实文字和语音。
 - [痛点、用户旅程与 Harness](product-harness.md)：角色、上下文、工具权限和失败控制。
-- [工程验收](upgrade-validation.md)：测试结果、真实延迟及未测范围。
+- [毛绒形象与红色电话验收](living-companion-validation.md)：本轮测试、出声延迟与未测范围。
+- [Harness 工程验收](upgrade-validation.md)：有界上下文、失败恢复与此前语音证据。
 - [竞品对标](competitive-benchmark.md)：Nomi、Kindroid、Replika、Character.AI、星野与面包的差距。
 - [对话评估](../evaluations/README.md)：合成案例、完整输出、复现方法和人工评审。
 - [数据处理](data-handling.md)：什么发送到哪里、什么保存在本机、如何删除。
@@ -13,6 +14,7 @@
 
 ## 设计与研究
 
+- [毛绒伙伴与座机设计](design-living-companion.md)、[原创素材与生成提示词](living-companion-assets.md)。
 - [自然电话设计](design-natural-call.md)、[心理学研究与取舍](call-research.md)、[初期产品参考](companion-research.md)。
 - `*-provenance.json` 记录 Claude 原稿哈希与 Codex 接入修改，不是模型性能认证。
 

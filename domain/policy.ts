@@ -1,5 +1,17 @@
 import type { Mode } from './types';
 
+/** Only direct, unambiguous leave-taking. Quoted stories, requests and ambiguous prefixes go to the model. */
+export function farewellReply(text: string): string | null {
+  const parts = text.trim().replace(/[。！!，,\s]+$/g, '').split(/[。！!，,\n]+/).map(s => s.trim());
+  const last = parts.pop();
+  if (!last || !/^(?:晚点(?:再)?(?:聊|说)|一会儿再聊|回头聊|明天(?:再)?聊|改天(?:再)?聊|拜拜|再见|晚安|先不聊了|今天(?:就)?到这(?:里)?)$/.test(last)) return null;
+  if (!parts.every(s => /^(?:好(?:的|吧)?|行|嗯|那(?:就)?先这样|今天先这样|我(?:先)?(?:去|要)?(?:吃饭|睡觉|休息|出门|上班|洗澡|忙一会儿?)(?:了)?)$/.test(s))) return null;
+  if (last === '晚安') return '晚安。';
+  if (/^(?:拜拜|再见)$/.test(last)) return '拜拜。';
+  if (/^(?:先不聊了|今天)/.test(last)) return '好，那先这样。';
+  return /明天/.test(last) ? '好，明天聊。' : '好，回头聊。';
+}
+
 // Direct requests only. Quoted material is not a command, and declining analysis takes priority.
 export function explicitIntent(text: string): Mode | 'stop' | 'end' | null {
   const t = text.trim().replace(/[。！!，,？?\s]+$/g, '');

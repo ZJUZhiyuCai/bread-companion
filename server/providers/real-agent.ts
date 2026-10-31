@@ -2,7 +2,7 @@ import type { TurnCandidate, TurnRequest } from '@/domain/types';
 import { candidateSchema, modelContentSchema } from '@/domain/schemas';
 import { requestSegments } from '@/domain/context-builder';
 import { validateCandidate } from '@/domain/evidence';
-import { needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
+import { farewellReply, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
 import { systemPrompt } from '@/prompts/agent';
 import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
@@ -21,6 +21,8 @@ export class RealProvider implements AgentProvider {
     if (!cfg.agentKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
     const meta = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, serviceMode: 'real' as const };
     if (needsImmediateSupport(input.userMessage)) return { ...meta, assistantText: SUPPORT_TEXT, findings: [], warnings: [], supportGuidance: true };
+    const farewell = input.mode === 'listen' ? farewellReply(input.userMessage) : null;
+    if (farewell) { signal.throwIfAborted(); return { ...meta, assistantText: farewell, findings: [], warnings: [] }; }
     const history: typeof input.context.recentMessages = [];
     let historyBytes = 0;
     for (const m of [...input.context.recentMessages].reverse()) {
@@ -42,7 +44,7 @@ export class RealProvider implements AgentProvider {
       const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion, input.channel) + repair;
       const anthropic = protocol === 'anthropic';
       const maxTokens = input.mode === 'listen' ? 768 : 4096;
-      const body = anthropic ? { model, max_tokens: maxTokens, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
+      const body = anthropic ? { model, max_tokens: maxTokens, temperature: 0.4, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
         : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await this.fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'error', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);

@@ -2,7 +2,11 @@
 
 这里评估面包是否接住具体内容、尊重用户的控制权，而不是给模型贴一个“情商分数”。所有公开输入均为本项目编写的虚构情境，不含真人聊天。
 
-## 当前基线
+## 当前复测
+
+0.2 的 [v13/v14 输出与逐情境评审](living-companion-review.md) 已公开；包含提示词调整后仍存在的问题。下面保留开源初版 v12 基线，不覆盖历史失败。
+
+## 开源初版基线
 
 - 案例：[companion-scenarios.json](companion-scenarios.json)，`companion-zh-v1`，8 个情境、16 轮。
 - 原始输出：[2026-10-31-bread.json](results/2026-10-31-bread.json)。每个多轮情境都带入模型在上一轮实际生成的回复，情境之间使用新 session。

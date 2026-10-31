@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Archive, MessageCircle, Phone } from 'lucide-react';
+import { Archive, MessageCircle } from 'lucide-react';
 import { CardView } from './CardView';
 import { LampScene } from './NightWindow';
+import { PhoneGlyph } from './RedPhone';
 import { SavePreview } from './SavePreview';
 import { cardEvidence, isCardSaved, type EvidenceContext } from './labels';
 import type { BreadVM } from './vm';
@@ -51,7 +52,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
   return (
     <main id="main" className="end">
       <div className="end__scene">
-        <LampScene lit={false} idPrefix="end-lamp" />
+        <LampScene lit={false} phone />
       </div>
 
       <div className="end__content">
@@ -118,7 +119,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
                 <MessageCircle aria-hidden="true" /> 再说一会儿
               </button>
               <button type="button" className="btn btn--ghost" onClick={() => leave('call')}>
-                <Phone aria-hidden="true" /> 打个电话
+                <PhoneGlyph /> 打个电话
               </button>
               <button type="button" className="btn btn--ghost" onClick={() => leave('reset')}>
                 回到开始

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Phone } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
 import { BreadBuddy, type BuddyState } from './BreadBuddy';
 import { LampScene } from './NightWindow';
+import { PhoneGlyph, RedPhone } from './RedPhone';
 import { BUDDY_LINE, CALL_PREFACE, callBlockReason } from './call';
 import { useDomId } from './hooks';
 
@@ -17,8 +17,9 @@ interface CallLauncherProps {
 }
 
 /**
- * The phone. "打电话" needs no manual on the page, so how a call works is the button's own
- * description rather than a paragraph under it. When a call can't happen the button stays in place,
+ * The phone. The red rotary phone is the button: hover or focus lifts the handset a little and 面包
+ * turns to look; one click starts the real call. How a call works is the button's own description,
+ * not a paragraph under it. When a call can't happen the phone stays put with its colour drained,
  * says why, and points back to typing — it never fakes a connection.
  */
 export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLauncherProps) {
@@ -53,8 +54,9 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           onClick={press}
           aria-disabled={!!block || undefined}
           aria-describedby={`${id}-pre`}
+          data-phone
         >
-          <Phone aria-hidden="true" />
+          <PhoneGlyph className="call-pill__phone" />
           打电话
         </button>
         <span id={`${id}-pre`} className="sr-only">
@@ -68,20 +70,19 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
   }
 
   return (
-    <div className={`call-launch call-launch--${variant} ${block ? 'is-blocked' : ''}`}>
+    <div className={`phone-door phone-door--${variant} ${block ? 'is-blocked' : ''}`}>
       <button
         type="button"
-        className="call-launch__btn"
+        className="phone-door__btn"
         onClick={press}
         aria-disabled={!!block || undefined}
         aria-describedby={`${id}-pre`}
+        data-phone
       >
-        <span className="call-launch__ring" aria-hidden="true">
-          <Phone aria-hidden="true" />
-        </span>
-        <span className="call-launch__text">
-          <span className="call-launch__title">给面包打个电话</span>
-          <span className="call-launch__sub">{block || '用说的，不用打字'}</span>
+        <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
+        <span className="phone-door__text">
+          <span className="phone-door__title">给面包打个电话</span>
+          <span className="phone-door__sub">{block || '用说的，不用打字'}</span>
         </span>
       </button>
       <span id={`${id}-pre`} className="sr-only">
@@ -105,7 +106,7 @@ interface CompanionProps {
   callBlocked: string;
 }
 
-/** Desktop: 面包's corner. The figure under the lamp follows the real state; the phone sits right below it. */
+/** Desktop: 面包's corner. The plush in its pool of light follows the real state; the phone sits right below it. */
 export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
   return (
     <aside className="companion" aria-label="面包">
@@ -113,7 +114,7 @@ export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, 
         <p key={line} className="companion__bubble" data-state={buddy}>
           {line}
         </p>
-        <LampScene state={buddy} idPrefix="companion-lamp" className="companion__scene" />
+        <LampScene state={buddy} className="companion__scene" pokeable />
       </div>
       <p className="companion__status">
         <span className="companion__name">面包</span>
@@ -126,7 +127,7 @@ export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, 
   );
 }
 
-/** Phones: a slim perch under the top bar — the loaf, one line from it, and the phone. */
+/** Phones: a slim perch under the top bar — 面包, one line from it, and the phone. */
 export function CompanionPerch({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
   return (
     <div className="perch" data-state={buddy}>
