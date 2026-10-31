@@ -130,6 +130,8 @@ test('a slow model cannot block a call, repeated taps or hangup; a late response
 });
 
 test('rest, reduced motion and a hidden call stop drawing; hangup releases all graphics and audio', async ({ page }) => {
+  // Two real renderer initializations plus animation and cleanup checks on the software CI GPU.
+  test.setTimeout(45_000);
   await instrument(page);
   await home(page);
   await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
@@ -158,9 +160,15 @@ test('rest, reduced motion and a hidden call stop drawing; hangup releases all g
   await page.evaluate(() => { delete (document as any).hidden; document.dispatchEvent(new Event('visibilitychange')); });
   await expect.poll(async () => (await audit(page)).draws).toBeGreaterThan(hidden);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.waitForTimeout(200);
+  // Applying a media-query change includes one final frame for the settled pose. Wait for that
+  // asynchronous transition to finish instead of assuming React + the GPU settle within 200 ms.
+  await expect.poll(async () => {
+    const before = (await audit(page)).draws;
+    await page.waitForTimeout(350);
+    return (await audit(page)).draws - before;
+  }, { timeout: 5000, intervals: [100] }).toBe(0);
   const still = (await audit(page)).draws;
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(1000);
   expect((await audit(page)).draws).toBe(still);
   await hangup(page);
   await page.evaluate(() => (window as any).__releaseMic());
