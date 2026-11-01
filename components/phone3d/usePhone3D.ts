@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 
 /**
  * Whether to try the 3D phone at all. False on the server and on the first client render, so the drawn
- * phone is what hydrates; true after mount unless:
+ * phone is what hydrates (a matching model still on the home page); true after mount unless:
  *
- *   ?phone=svg     the drawn phone, for comparing against the fallback
+ *   ?phone=svg     the static phone, for comparing against the fallback
  *   no WebGL 2     three.js 0.187 needs it
  *   Save-Data      the browser asked for less to download
  *

@@ -27,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-CN" data-text-size="m">
       <head>
         <link rel="preload" href="/design/fonts/bread-voice-core-835e939dbc07.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/companion/3d/bread-phone-rest.webp" as="image" type="image/webp" />
       </head>
       <body>{children}</body>
     </html>

@@ -9,7 +9,7 @@ import { Phone3D } from './Phone3D';
 import { PhoneGlyph, RedPhone } from './RedPhone';
 import { BUDDY_LINE, CALL_PREFACE, callBlockDetail, callBlockReason } from './call';
 import { useDomId } from './hooks';
-import { HERO_PHONE } from './phone3d/layouts';
+import { HERO_PHONE, overlayBox } from './phone3d/layouts';
 import { usePhone3D } from './phone3d/usePhone3D';
 
 interface CallLauncherProps {
@@ -26,18 +26,30 @@ interface CallLauncherProps {
  * not a paragraph under it. When a call can't happen the phone stays put with its colour drained,
  * says why, and points back to typing — it never fakes a connection.
  *
- * On the home page the phone is the Blender model, drawn over the SVG one once it has loaded. The
+ * On the home page a still from the Blender model is present before hydration; the live model takes
+ * over only after its first painted frame, with the same camera and bounds. The
  * <button>, its name and its static hit outline are the SVG phone's and never change: the canvas takes
  * no pointer, so pressing works the same before, during and after the model loads — or if it never does.
  */
 export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLauncherProps) {
   const id = useDomId('call');
   const block = blocked || callBlockReason(caps);
+  // A pending capability check disables dialing, but is not a service failure.
+  // Keep the same red phone and plate while the check runs.
+  const unavailable = !!block && (!!blocked || caps !== null);
   const detail = callBlockDetail(caps);
   const [hint, setHint] = useState('');
   // Readiness is more urgent than decoration: do not compile shaders while capabilities are pending.
   const spatial = usePhone3D() && variant === 'hero' && caps !== null;
   const [solid, setSolid] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const posterRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    // A preloaded image can fail before hydration attaches onError.
+    // Recover from that already-completed failure as well as later errors.
+    const poster = posterRef.current;
+    if (poster?.complete && poster.naturalWidth === 0) setPosterFailed(true);
+  }, []);
   // Hover and keyboard focus raise the handset once; leaving lowers it after a beat. Driven by enter/leave
   // on a hit area that never moves, so a hand resting on an edge can't make it bob.
   const [near, setNearNow] = useState(false);
@@ -93,7 +105,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
   }
 
   return (
-    <div className={`phone-door phone-door--${variant} ${block ? 'is-blocked' : ''}`}>
+    <div className={`phone-door phone-door--${variant} ${unavailable ? 'is-blocked' : block ? 'is-pending' : ''}`}>
       <button
         type="button"
         className="phone-door__btn"
@@ -111,21 +123,34 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
             }
           : {})}
       >
-        {spatial ? (
-          <span className={`phone-door__art ${solid ? 'is-3d' : ''}`}>
-            <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
-            <Phone3D
+        {variant === 'hero' ? (
+          <span className={`phone-door__art ${posterFailed ? '' : 'has-poster'} ${solid ? 'is-3d' : ''}`}>
+            <RedPhone pose={unavailable ? 'down' : 'rest'} className="phone-door__phone" />
+            {!posterFailed && <img
+              ref={posterRef}
+              className="phone-door__poster"
+              src="/companion/3d/bread-phone-rest.webp"
+              width={632}
+              height={484}
+              style={overlayBox(HERO_PHONE)}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              fetchPriority="high"
+              onError={() => setPosterFailed(true)}
+            />}
+            {spatial && <Phone3D
               layout={HERO_PHONE}
-              pose={block ? 'down' : 'rest'}
+              pose={unavailable ? 'down' : 'rest'}
               lift={near && !block}
               // No greeting hop: on a first screen meant to let a tired person settle, the phone waits to
               // be reached for. It answers the hand (the handset rises on hover/focus), never calls out.
               greet={false}
               onReady={setSolid}
-            />
+            />}
           </span>
         ) : (
-          <RedPhone pose={block ? 'down' : 'rest'} className="phone-door__phone" />
+          <RedPhone pose={unavailable ? 'down' : 'rest'} className="phone-door__phone" />
         )}
         <span className="phone-door__text">
           <span className="phone-door__title">

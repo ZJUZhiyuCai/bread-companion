@@ -71,6 +71,7 @@ export function Phone3D({ layout, pose, lift = false, greet = false, className =
       stop();
       if (why && process.env.NODE_ENV !== 'production') console.warn('[phone3d] keeping the drawn phone:', why);
       setStage('failed');
+      readyRef.current?.(false);
     };
 
     const start = async () => {
@@ -81,12 +82,17 @@ export function Phone3D({ layout, pose, lift = false, greet = false, className =
         if (cancelled) return;
         if (graphicsFailed) { fail(); return; }
         graphicsStarted = true;
-        engine = new mod.PhoneEngine(canvas, layout, () => fail('WebGL context lost'));
+        engine = new mod.PhoneEngine(canvas, layout, () => fail('WebGL context lost'), () => {
+          if (cancelled || !engine) return;
+          // Parsing is not painting. Publish both states in the same frame so
+          // the still cannot disappear while the canvas is still transparent.
+          setStage('ready');
+          readyRef.current?.(true);
+        });
         await engine.load(bytes);
         if (cancelled || !engine) return;
         engine.setInput(inputRef.current);
         engineRef.current = engine;
-        setStage('ready');
       } catch (err) {
         fail(err);
       }
@@ -104,10 +110,6 @@ export function Phone3D({ layout, pose, lift = false, greet = false, className =
   useEffect(() => {
     engineRef.current?.setInput({ pose, lift, reducedMotion, greet });
   }, [pose, lift, reducedMotion, greet, stage]);
-
-  useEffect(() => {
-    readyRef.current?.(stage === 'ready');
-  }, [stage]);
 
   useEffect(() => () => readyRef.current?.(false), []);
 
