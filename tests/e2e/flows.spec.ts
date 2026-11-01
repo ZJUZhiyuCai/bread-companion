@@ -177,7 +177,7 @@ test('edit from preview removes unselected evidence; exported JSON imports and s
   expect(json.cards[0].revision).toBe(2);expect(json.selectedEvidence).toEqual([]);expect(json).not.toHaveProperty('messages');
   await page.reload();await page.getByRole('button',{name:/以前留下的/}).click();await expect(page.getByRole('dialog')).toContainText('抽屉是空的');
   await page.locator('input[type=file]').setInputFiles({name:'面包备份.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(json))});
-  await page.getByRole('dialog').getByRole('button',{name:/只留下未知，明天再看/}).click();await page.getByRole('button',{name:'继续看这道题',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:/只留下未知，明天再看/}).click();await expect(page.getByRole('dialog')).toContainText('你改写的标题');await page.getByRole('button',{name:'继续看这道题',exact:true}).click();
   await expect(page.getByRole('log')).toContainText('之前留下的');await page.getByRole('button',{name:'结束',exact:true}).click();
   await page.getByRole('button',{name:'以前留下的',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:/只留下未知，明天再看/}).click();await page.getByRole('button',{name:'今天聊别的',exact:true}).click();
   await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeVisible();await expect(page.getByRole('log')).not.toContainText(opening);
