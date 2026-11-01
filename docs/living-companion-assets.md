@@ -5,10 +5,14 @@
 ## 角色身体
 
 - 文件：[bread-plush.webp](../public/companion/bread-plush.webp)，1254 × 1254，透明 alpha；保留原生尺寸，仅将生成 PNG 编码为 WebP，未手工重画或编辑内容。
-- 方式：内置 `image_gen`，不是外部 CLI。眼窝有意不含虹膜与瞳孔，由运行中的组件绘制目光、高光和眨眼。
+- 方式：内置 `image_gen`，不是外部 CLI。眼窝有意不含虹膜与瞳孔，由运行中的组件绘制目光与高光；当前版本保持完整睁眼，不使用眨眼或眼皮遮挡。
 - [完整生成提示词](companion-image-prompt.txt)，摘要：
 
 > Production transparent character body for an interactive Chinese emotional companion app named Bread. ONE original, tactile, soft plush companion: a squat gently pear-shaped oatmeal-cream fluffy creature with caramel fur near its base, two tiny rounded feet, a tiny asymmetric tuft and understated stitched smile. Not a loaf or familiar branded toy. Front-facing, symmetrical face, complete body centered with transparent padding. Two large smooth dark espresso-black glass eye wells, no iris or pupil, for the app to overlay animated eyes. Real high-end plush photographed in warm studio light, individually visible fibers, believable rounded volume and self-shadow. Calm and huggable. No scenery, accessories, UI, text, logo or watermark. Genuine alpha transparency. Full subject around 80% of a square canvas; camera straight-on at eye height.
+
+## 柔和表情与配饰
+
+2026-11-01：官方 Claude Code 为原照片体型增加原创毛毡花 SVG、外眼角短睫毛和豆沙色腮红。照片文件未重画，旧椭圆嘴和舌头已移除，开合沿原缝线对齐。源文件与哈希见 [本轮溯源](soft-expression-provenance.json)，设计与验证见 [表情验收](soft-expression-validation.md)。
 
 ## 固定开场
 

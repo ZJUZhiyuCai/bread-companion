@@ -11,13 +11,13 @@ After an interview rejection, stay for a moment without having to explain. When 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/bread-home-v040.jpg)
+![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/bread-home-soft-expression.jpg)
 
 ## What works
 
 - A lamp-lit desk with self-hosted WenKai typography, ruled notepaper, a brass player, enamel telephone plaques and bakelite call controls. Static textures, responsive spacing and light/dark modes share one material system.
 
-- An original plush character with steady, fully open glass eyes, gently shifting highlights and touch response. Rest, pause and error keep the eyes open; reduced-motion preferences are respected.
+- An original plush character with steady, fully open glass eyes, a muted felt flower, fine embroidered lashes and soft blush. Speech gently parts the original stitched smile; highlights and touch responses remain subtle. Rest, pause and error keep the eyes open; reduced-motion preferences are respected.
 - A Blender-built, Three.js-rendered rotary phone with lacquer-red surfaces, an ivory dial and brass details. It dials and lifts its handset with the real connection state; a bundled opening uses the configured default voice.
 - A quiet entry: listen/read first, enter with an empty note, and review only when ready. No greeting hop or forced microphone access.
 - Chinese text conversations and continuous browser voice calls, with speech interruption, mute, pause and hangup.
@@ -49,7 +49,7 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 ## Evidence, not an EQ badge
 
-175 unit/integration checks and 43 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+179 unit/integration checks and 44 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening needs no synthesis round trip; subsequent replies still do. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 

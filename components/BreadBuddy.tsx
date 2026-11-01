@@ -15,6 +15,15 @@ import { useDomId } from './hooks';
  * and comes back, slowly, the way light moves on something wet. Rest, pause, trouble and goodnight are
  * carried by pose, light and small props.
  *
+ * There is one mouth, and it is the one sewn into the plush: the stitched smile in the photo. Nothing
+ * is drawn beside it. When 面包 speaks the seam itself parts — its upper edge is the stitch, only the
+ * lower edge opens — and closes back into the photo's own smile between phrases. We don't have the
+ * voice's loudness, so the mouth doesn't pretend to lip-sync: it speaks in loose phrases of small,
+ * uneven syllables, never on a fixed beat. A hello or a pat parts the same seam into a held smile.
+ *
+ * She wears a little: three embroidered lashes at the outer corner of each eye (on the fur, never over
+ * the bead), a rose blush, and a felt flower clipped at the root of her tuft.
+ *
  * Nothing here reads the user. The eyes rest on the person; they only turn toward the phone when it
  * is hovered, toward a field being typed in, or toward what 面包 itself is busy with. The microphone
  * level only ever drives a small nod.
@@ -46,6 +55,66 @@ const EYES = [
 ] as const;
 /** Between the eyes, as a fraction of the figure — where gaze is measured from. */
 const EYE_MID: [number, number] = [628 / S, 585 / S];
+
+/**
+ * The stitched smile in the asset: corners at (cx ± half, y), lowest point `dip` below them, centred on
+ * x = 628 exactly. Every mouth shape below is built on this one seam.
+ */
+const SEAM = { cx: 628, y: 633, half: 37, dip: 15 } as const;
+
+/**
+ * The seam parted by `o` (0 closed … 1 as wide as 面包 ever opens). The upper edge rides a hair above
+ * the stitch so it covers the thread; the corners draw in a little as it opens, still sewn at the ends;
+ * only the lower edge travels.
+ */
+function mouthShape(o: number) {
+  const pinch = 3 + o * 4;
+  const l = (SEAM.cx - SEAM.half + pinch).toFixed(1);
+  const r = (SEAM.cx + SEAM.half - pinch).toFixed(1);
+  const top = SEAM.y - 2;
+  const upper = SEAM.y + SEAM.dip * 2 - 3;
+  const lower = (SEAM.y + SEAM.dip * 2 + 2 + o * 46).toFixed(1);
+  return {
+    lip: `M${l} ${top} Q${SEAM.cx} ${upper} ${r} ${top}`,
+    open: `M${l} ${top} Q${SEAM.cx} ${upper} ${r} ${top} Q${SEAM.cx} ${lower} ${l} ${top}Z`,
+  };
+}
+const SHUT = mouthShape(0);
+
+/**
+ * Embroidered lashes at the outer upper corner of the left eye (the right one is its mirror), rooted in
+ * the fur just outside the bead's seat so they never cross the glass. `a` is where on the rim (degrees:
+ * 0 toward the nose, 90 straight up, 180 the outer edge), `len` how long, `curl` how far the tip turns
+ * up — a flick, never a droop. Each is a tapered quill: `w` wide at the root, a point at the tip.
+ */
+const LASHES = [
+  { a: 128, len: 28, curl: 14, w: 6.5 },
+  { a: 146, len: 33, curl: 19, w: 7.5 },
+  { a: 163, len: 27, curl: 24, w: 6.5 },
+].map(({ a, len, curl, w }) => {
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const f = (x: number) => x.toFixed(1);
+  // outward from the bead, and across it
+  const nx = Math.cos(rad(a));
+  const ny = -Math.sin(rad(a));
+  const px = -ny * (w / 2);
+  const py = nx * (w / 2);
+  // the root: on the rim of the bead's seat, where the fur starts
+  const bx = 97 * 1.04 * nx;
+  const by = 91 * 1.04 * ny;
+  const cx = bx + nx * len * 0.55;
+  const cy = by + ny * len * 0.55;
+  const tx = bx + Math.cos(rad(a - curl)) * len;
+  const ty = by - Math.sin(rad(a - curl)) * len;
+  return (
+    `M${f(bx + px)} ${f(by + py)} Q${f(cx + px * 0.3)} ${f(cy + py * 0.3)} ${f(tx)} ${f(ty)}` +
+    ` Q${f(cx - px * 0.3)} ${f(cy - py * 0.3)} ${f(bx - px)} ${f(by - py)}Z`
+  );
+});
+
+/** A felt flower clipped at the root of the tuft; drawn in the room's light (public/design/soft-expression). */
+const CLIP_SRC = '/design/soft-expression/felt-flower.svg';
+const CLIP = { cx: 761, cy: 235, size: 150, rotate: -10 } as const;
 
 type Extra = 'dots' | 'moon' | 'mute' | 'rec' | 'drop' | null;
 
@@ -110,9 +179,9 @@ export function PlushSvg({
   const id = useDomId('plush');
   const lvl = Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0));
   useLife(ref, state, alive, lookAt);
+  useMouth(ref, state, alive);
 
   const extra = EXTRA[state] ?? null;
-  const talking = state === 'speaking';
 
   return (
     <svg
@@ -153,9 +222,22 @@ export function PlushSvg({
           <stop offset="0.78" stopColor="#2b1608" stopOpacity="0.42" />
           <stop offset="1" stopColor="#2b1608" stopOpacity="0" />
         </radialGradient>
+        {/* a dusty rose, rubbed in rather than painted on */}
         <radialGradient id={`${id}-blush`}>
-          <stop offset="0" stopColor="#ff8a76" stopOpacity="0.9" />
-          <stop offset="1" stopColor="#ff8a76" stopOpacity="0" />
+          <stop offset="0" stopColor="#ef8c97" stopOpacity="0.9" />
+          <stop offset="0.55" stopColor="#f29da3" stopOpacity="0.38" />
+          <stop offset="1" stopColor="#f29da3" stopOpacity="0" />
+        </radialGradient>
+        {/* inside the parted seam: dark at the stitch, a little warmth deep down when it opens wide */}
+        <linearGradient id={`${id}-mouth`} gradientUnits="userSpaceOnUse" x1="0" y1={SEAM.y} x2="0" y2={SEAM.y + 44}>
+          <stop offset="0" stopColor="#2a1209" />
+          <stop offset="0.55" stopColor="#4a1f14" />
+          <stop offset="1" stopColor="#94464a" />
+        </linearGradient>
+        {/* the fur gives a little around an open mouth */}
+        <radialGradient id={`${id}-part`}>
+          <stop offset="0" stopColor="#5a2c14" stopOpacity="0.32" />
+          <stop offset="1" stopColor="#5a2c14" stopOpacity="0" />
         </radialGradient>
 
         {/* contact with the table: a tight dark seam and a long soft shade toward the lower right */}
@@ -210,22 +292,27 @@ export function PlushSvg({
               </>
             )}
             <g className="p-blush">
-              <ellipse cx="368" cy="716" rx="82" ry="42" fill={`url(#${id}-blush)`} />
-              <ellipse cx="886" cy="716" rx="82" ry="42" fill={`url(#${id}-blush)`} />
+              <ellipse cx="374" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
+              <ellipse cx="880" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
             </g>
+            <image
+              className="p-clip"
+              href={CLIP_SRC}
+              x={CLIP.cx - CLIP.size / 2}
+              y={CLIP.cy - CLIP.size / 2}
+              width={CLIP.size}
+              height={CLIP.size}
+              transform={`rotate(${CLIP.rotate} ${CLIP.cx} ${CLIP.cy})`}
+            />
             {EYES.map((e) => (
               <Eye key={e.side} id={id} side={e.side} cx={e.cx} cy={e.cy} phone={lit && phoneLight} />
             ))}
-            <g className="p-smile">
-              <path d="M588 627 Q615 670 642 627 Q615 637 588 627 Z" />
-              <ellipse className="p-smile__tongue" cx="615" cy="650" rx="11" ry="6" />
+            {/* The photo's own stitched smile, parted. Closed, nothing here is visible. */}
+            <g className="p-mouth">
+              <ellipse className="p-mouth__part" cx={SEAM.cx} cy={SEAM.y + 20} rx="50" ry="24" fill={`url(#${id}-part)`} />
+              <path className="p-mouth__open" d={SHUT.open} fill={`url(#${id}-mouth)`} />
+              <path className="p-mouth__lip" d={SHUT.lip} />
             </g>
-            {talking && (
-              <g className="p-mouth">
-                <ellipse cx="615" cy="642" rx="19" ry="13" />
-                <ellipse className="p-mouth__tongue" cx="615" cy="649" rx="10" ry="5" />
-              </g>
-            )}
           </g>
         </g>
       </g>
@@ -239,6 +326,12 @@ function Eye({ id, side, cx, cy, phone }: { id: string; side: 'l' | 'r'; cx: num
   return (
     <g className={`p-eye p-eye--${side}`} transform={`translate(${cx} ${cy})`}>
       <g className="p-size">
+        {/* lashes in the fur at the outer corner; they stay put while the bead looks around */}
+        <g className="p-lashes" transform={side === 'r' ? 'scale(-1 1)' : undefined}>
+          {LASHES.map((d) => (
+            <path key={d} d={d} />
+          ))}
+        </g>
         <g className="p-ball">
           <ellipse cx="5" cy="9" rx="104" ry="98" fill={`url(#${id}-seat)`} />
           <ellipse rx="97" ry="91" fill={`url(#${id}-glass)`} />
@@ -547,6 +640,139 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
       document.removeEventListener('focusout', onFocusOut);
       svg.removeAttribute('data-glint');
       svg.removeAttribute('data-curious');
+    };
+  }, [ref, alive]);
+}
+
+/* -------------------------------------------------------------------------- */
+/* The mouth: the stitched seam, parting. Writes the path and --open directly;   */
+/* runs a frame loop only while the seam is moving, and sleeps otherwise until  */
+/* the state or a pat changes.                                                  */
+/*                                                                            */
+/* `speaking` means the call's audio has really started. We can't hear that    */
+/* audio here, and the microphone level is the user's, so the mouth doesn't     */
+/* pretend to follow words: it speaks in loose phrases — small, uneven          */
+/* syllables, then a closed pause — and never on a fixed beat. Between phrases  */
+/* she lifts a little and settles (data-phrase, --tilt); the CSS does that.     */
+/* -------------------------------------------------------------------------- */
+
+/** How far the seam parts for a held smile (hello, a pat) and for a surprised pat. */
+const SMILE_OPEN = 0.46;
+const OH_OPEN = 0.2;
+/** With reduced motion, speech is a still, slightly parted mouth. */
+const STILL_OPEN = 0.4;
+
+function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive: boolean) {
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  useEffect(() => {
+    const svg = ref.current;
+    if (!svg || !alive) return;
+    const fill = svg.querySelector<SVGPathElement>('.p-mouth__open');
+    const lip = svg.querySelector<SVGPathElement>('.p-mouth__lip');
+    if (!fill || !lip) return;
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let still = mq.matches;
+
+    let open = 0;
+    let shown = -1;
+    const draw = (o: number) => {
+      // Always paint the closed endpoint before the frame loop sleeps. Otherwise the small-update
+      // threshold can leave a faint mouth behind after pause/stop (e.g. --open: 0.002).
+      if (o === shown || (o !== 0 && Math.abs(o - shown) < 0.003)) return;
+      shown = o;
+      const m = mouthShape(o);
+      fill.setAttribute('d', m.open);
+      lip.setAttribute('d', m.lip);
+      svg.style.setProperty('--open', o.toFixed(3));
+    };
+
+    // Speech cadence: phrases of 1.4–3.4 s, syllables of 150–270 ms, closed pauses of 0.4–0.9 s.
+    let inPhrase = false;
+    let phraseEnd = 0;
+    let nextBeat = 0;
+    let syllable = 0;
+    const setPhrase = (on: boolean) => {
+      if (on === inPhrase) return;
+      inPhrase = on;
+      if (on) {
+        svg.style.setProperty('--tilt', rand(-1, 1).toFixed(2));
+        svg.setAttribute('data-phrase', '');
+      } else {
+        svg.removeAttribute('data-phrase');
+      }
+    };
+    const speak = (now: number) => {
+      if (now < nextBeat) return syllable;
+      if (inPhrase && now >= phraseEnd) {
+        setPhrase(false);
+        syllable = 0;
+        nextBeat = now + rand(380, 900);
+      } else {
+        if (!inPhrase) {
+          setPhrase(true);
+          phraseEnd = now + rand(1400, 3400);
+        }
+        // mostly middling, now and then barely parted; each one its own height and length
+        syllable = Math.random() < 0.2 ? rand(0.1, 0.28) : rand(0.38, 0.9);
+        nextBeat = now + rand(150, 270);
+      }
+      return syllable;
+    };
+
+    const goal = (now: number) => {
+      const s = stateRef.current;
+      if (s === 'speaking' && !still) return speak(now);
+      setPhrase(false);
+      nextBeat = 0;
+      if (s === 'speaking') return STILL_OPEN;
+      const pat = svg.getAttribute('data-poke');
+      if (s === 'wave' || pat === 'smile') return SMILE_OPEN;
+      if (pat === 'wiggle') return OH_OPEN;
+      return 0;
+    };
+
+    let raf = 0;
+    let last = 0;
+    const frame = (now: number) => {
+      raf = 0;
+      const dt = last ? Math.min(64, now - last) : 16;
+      last = now;
+      const g = goal(now);
+      const talking = stateRef.current === 'speaking';
+      // syllables open quickly and close a touch slower; smiles arrive and leave unhurried
+      const tau = g > open ? (talking ? 55 : 150) : talking ? 85 : 200;
+      open = still ? g : open + (g - open) * (1 - Math.exp(-dt / tau));
+      if (Math.abs(g - open) < 0.002) open = g;
+      draw(open);
+      if ((talking && !still) || open !== g) raf = window.requestAnimationFrame(frame);
+      else last = 0;
+    };
+    const wake = () => {
+      if (!raf) raf = window.requestAnimationFrame(frame);
+    };
+
+    const onMq = () => {
+      still = mq.matches;
+      wake();
+    };
+    mq.addEventListener('change', onMq);
+    // React sets data-state; BreadBuddy sets data-poke. Either one wakes the seam.
+    const watch = new MutationObserver(wake);
+    watch.observe(svg, { attributes: true, attributeFilter: ['data-state', 'data-poke'] });
+    wake();
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      watch.disconnect();
+      mq.removeEventListener('change', onMq);
+      fill.setAttribute('d', SHUT.open);
+      lip.setAttribute('d', SHUT.lip);
+      svg.style.removeProperty('--open');
+      svg.style.removeProperty('--tilt');
+      svg.removeAttribute('data-phrase');
     };
   }, [ref, alive]);
 }

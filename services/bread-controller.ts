@@ -93,7 +93,7 @@ export class BreadController {
   };
   private stopWork = () => { this.dispatch({ type: 'STOP' }); this.cancelResources(); this.publish(); };
   stop = () => { if (this.call.active) this.callController.pause(); else this.stopWork(); };
-  pauseForBackground = () => { if (this.call.active) this.callController.pause('页面已切到后台，麦克风与播放都暂停了。回来后可以继续。'); else if (['requesting_mic', 'recording', 'speaking'].includes(this.state.activity)) this.stop(); };
+  pauseForBackground = () => { if (this.call.active) this.callController.pause('页面已切到后台，麦克风与播放都暂停了。回来后可以继续。'); else if (['requesting_mic', 'recording', 'preparing_speech', 'speaking'].includes(this.state.activity)) this.stop(); };
   end = () => { this.callController.hangup(); this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
   reset = () => { this.callController.hangup(); this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
   startCall = async () => {
@@ -307,12 +307,14 @@ export class BreadController {
     if (this.state.lifecycle !== 'active' || !this.capabilities?.tts.available) return;
     if (!this.state.messages.some(m => m.role === 'assistant' && m.text === text)) { this.fail(new Error('只能播放当前会话中已展示的回复。')); return; }
     this.hangupCall(); this.stop(); this.error = '';
-    const { token, signal } = this.run.begin(this.state); this.dispatch({ type: 'RUN', runId: token.runId, activity: 'speaking' });
+    const { token, signal } = this.run.begin(this.state); this.dispatch({ type: 'RUN', runId: token.runId, activity: 'preparing_speech' });
     try {
       const res = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
       if (!res.ok) { const json = await res.json(); throw new Error(json.error?.userMessage || '语音暂时不可用，文字仍在。'); }
       const blob = await res.blob(); if (!isCurrent(this.state, token) || signal.aborted) return;
-      await this.media.play(blob, () => isCurrent(this.state, token) && !signal.aborted);
+      await this.media.play(blob, () => isCurrent(this.state, token) && !signal.aborted, () => {
+        if (isCurrent(this.state, token) && !signal.aborted) this.dispatch({ type: 'ACTIVITY', token, activity: 'speaking' });
+      });
       if (isCurrent(this.state, token)) this.dispatch({ type: 'FINISH', token });
     } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) { this.dispatch({ type: 'FINISH', token, activity: 'error' }); this.fail(e); } }
   };
