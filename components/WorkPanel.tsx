@@ -26,7 +26,7 @@ interface WorkPanelProps {
   onClose: () => void;
   onOpenSource: (id: string) => void;
   onRequestSave: () => void;
-  onRedo: (card: Card) => void;
+  onRedo: (card: Card, direction?: string) => void;
   onPractice: (question: string) => void;
   onAssist: (mode: AssistMode) => void;
   onAddMaterial: () => void;
@@ -80,7 +80,7 @@ export function WorkPanel(props: WorkPanelProps) {
             onEdit={vm.editCard}
             onRequestSave={onRequestSave}
             onExport={vm.exportCard}
-            onRedo={() => onRedo(currentCard)}
+            onRedo={(direction) => onRedo(currentCard, direction)}
             onOpenSource={onOpenSource}
           />
         ) : (

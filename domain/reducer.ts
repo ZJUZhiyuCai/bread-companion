@@ -64,10 +64,10 @@ export function reducer(state: SessionState, event: Event): SessionState {
       const c = event.candidate;
       const nextRevision = Math.max(0, ...state.cards.map(v => v.revision)) + 1;
       const card = c.cardDraft ? { ...c.cardDraft, caseId: state.caseId, revision: nextRevision, parentRevision: currentCard(state)?.revision ?? null } : undefined;
-      return { ...state, ...(c.practiceSetup ? { selectedQuestion: c.practiceSetup.question, practiceCriteria: c.practiceSetup.criteria, contextRevision: state.contextRevision + 1 } : {}), mode: c.supportGuidance ? 'listen' : state.mode, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
+      return { ...state, rejectedFindings: state.mode !== 'listen' && !c.supportGuidance ? state.rejectedFindings?.map(f => ({...f, needsAcknowledgement: false})) : state.rejectedFindings, ...(c.practiceSetup ? { selectedQuestion: c.practiceSetup.question, practiceCriteria: c.practiceSetup.criteria, contextRevision: state.contextRevision + 1 } : {}), mode: c.supportGuidance ? 'listen' : state.mode, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
     }
     case 'STOP': return { ...state, epoch: state.epoch + 1, activeRunId: null, activity: 'paused' };
-    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state, true), messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [] };
+    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state, true), rejectedFindings: [], messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [] };
     case 'ADD_SOURCE': return { ...state, sources: [...state.sources, event.source], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     case 'CORRECT_SOURCE': {
       if (!state.sources.some(s => s.id === event.id)) return state;
@@ -76,8 +76,11 @@ export function reducer(state: SessionState, event: Event): SessionState {
     }
     case 'CONFIRM_SOURCE': return { ...state, sources: state.sources.map(s => s.id === event.id ? { ...s, confirmed: true } : s), epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
     case 'REJECT': {
+      const rejected = state.findings.find(f => f.id === event.id);
+      if (!rejected) return state;
+      const rejectedFindings = [...(state.rejectedFindings ?? []).filter(f => f.text !== rejected.text), { needsAcknowledgement: true, text: rejected.text, mode: state.mode, sources: rejected.evidenceRefs.map(({ sourceId, sourceRevision }) => ({ sourceId, sourceRevision })) }].slice(-4);
       const findings = state.findings.map(f => f.id === event.id ? { ...f, validity: 'disputed' as const } : f);
-      return { ...state, findings, cards: state.cards.map(c => c.sections.some(s => s.findingIds.includes(event.id)) ? { ...c, validity: 'disputed' as const } : c), epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
+      return { ...state, rejectedFindings, findings, cards: state.cards.map(c => c.sections.some(s => s.findingIds.includes(event.id)) ? { ...c, validity: 'disputed' as const } : c), epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
     }
     case 'EDIT_CARD': {
       const card = currentCard(state);
@@ -85,9 +88,9 @@ export function reducer(state: SessionState, event: Event): SessionState {
       // Only text edits; evidence links remain immutable through this action.
       const sections = event.sections.flatMap(s => {
         const original = card.sections.find(v => v.key === s.key && JSON.stringify(v.findingIds) === JSON.stringify(s.findingIds));
-        return original ? [{ ...original, text: s.text, findingIds: s.text.trim() ? original.findingIds : [] }] : [];
+        return original ? [{ ...original, text: s.text, userEdited: original.userEdited || s.text !== original.text, findingIds: s.text.trim() ? original.findingIds : [] }] : [];
       });
-      const updated = { ...card, revision: card.revision + 1, parentRevision: card.revision, title: event.title, sections, validity: 'draft' as const };
+      const updated = { ...card, revision: card.revision + 1, parentRevision: card.revision, title: event.title, titleUserEdited: card.titleUserEdited || event.title !== card.title, sections, validity: 'draft' as const };
       return { ...state, cards: state.cards.map(c => c.id === card.id ? updated : c) };
     }
     case 'CONFIRM_CARD': {

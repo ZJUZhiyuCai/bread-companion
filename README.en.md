@@ -6,6 +6,10 @@
 
 After an interview rejection, stay for a moment without having to explain. When you feel ready, turn your own material into an editable note or practice one question.
 
+The core flow is low-effort expression → voluntary review → one grounded next step. Natural-language review, rejection-aware regeneration, optional redo directions and persistent edit labels keep control with the user. Contested analysis receives a bounded consistency check and can fall back to quotations and unknowns; ordinary chat has no extra call.
+
+[Task acceptance and actual synthetic outputs](evaluations/task-control/README.md) include failed iterations and quality limits. Formative observation with 3–5 real participants is still pending.
+
 [Try online](https://bread-companion-czy.rosscai.chatgpt.site) · [中文](README.md) · [Product & harness](docs/product-harness.md) · [Competitive comparison](docs/competitive-benchmark.md) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
@@ -49,7 +53,7 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 ## Evidence, not an EQ badge
 
-179 unit/integration checks and 44 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+194 unit/integration checks and 44 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening needs no synthesis round trip; subsequent replies still do. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 

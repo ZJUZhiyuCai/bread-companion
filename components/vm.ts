@@ -8,7 +8,7 @@ export type AssistMode = 'organize' | 'review' | 'practice';
  */
 export type BreadVM = BreadViewModel & {
   /** One tap: organize = leave a note from what was said, review = look at an answer, practice = agent picks a question. */
-  assist: (mode: AssistMode) => Promise<void>;
+  assist: (mode: AssistMode, direction?: string) => Promise<void>;
   /** One box: recorded as user-provided material (not externally verified). */
   addMaterial: (text: string) => boolean;
   /** The last text turn failed and can be sent again as-is; false once anything has changed since. */

@@ -185,9 +185,9 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
     void vm.send(t);
   };
 
-  const assist = (mode: AssistMode) => {
+  const assist = (mode: AssistMode, direction?: string) => {
     if (!canAct || busy) return;
-    void vm.assist(mode);
+    void vm.assist(mode, direction);
   };
 
   // The retry key disappears as soon as the reply is underway; keep focus on the page, not on <body>,
@@ -256,9 +256,9 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
     setSaveOpen(true);
   };
 
-  const redo = (card: Card) => {
+  const redo = (card: Card, direction?: string) => {
     if (!isDesktop) setTrayOpen(false);
-    assist(card.type === 'note' ? 'organize' : 'review');
+    assist(card.type === 'note' ? 'organize' : 'review', direction);
   };
 
   const practiceThis = (question: string) => {

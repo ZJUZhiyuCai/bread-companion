@@ -8,6 +8,7 @@ import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
 import type { AgentProvider } from './agent';
 import { readProviderJson } from './response';
+import { REJECTION_REVIEW_PROMPT, correctionFallback } from './rejection-review';
 import { responseStyleErrors } from '@/domain/response-style';
 
 export class RealProvider implements AgentProvider {
@@ -36,7 +37,7 @@ export class RealProvider implements AgentProvider {
     // Listening already has the recent utterances: don't send the same text a third time as evidence.
     const sourceSegments = input.mode === 'listen' ? segments.filter(s => !history.some(m => m.role === 'user' && m.text.includes(s.text)) && !input.userMessage.includes(s.text)) : segments;
     const recentMessages = history.at(-1)?.role === 'user' && history.at(-1)?.text === input.userMessage ? history.slice(0, -1) : history;
-    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages, sourceSegments, preferences: input.context.preferences, selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
+    const data = JSON.stringify({ mode: input.mode, channel: input.channel ?? 'text', userMessage: input.userMessage, recentMessages, sourceSegments, preferences: input.context.preferences, rejectedFindings: input.context.rejectedFindings, selectedQuestion: input.context.selectedQuestion, practiceCriteria: input.context.practiceCriteria });
     // Conservative UTF-8 byte ceiling for variable-tokenizer providers; never called an exact token count.
     // Actual generated tokens are independently limited by max_tokens; no unbounded history or audio is sent.
     if (Buffer.byteLength(data, 'utf8') > 36000) throw new AppError('INVALID_INPUT', 413);
@@ -70,9 +71,26 @@ export class RealProvider implements AgentProvider {
       const candidate = candidateSchema.parse({ ...meta, assistantText: p.assistantText, findings: p.findings.map(f => ({ ...f, id: ids.get(f.id), validity: 'draft' })), warnings: p.warnings, supportGuidance: p.supportGuidance, ...(p.practiceSetup ? { practiceSetup: p.practiceSetup } : {}),
         ...(p.card ? { cardDraft: { ...p.card, sections: p.card.sections.map(s => ({ ...s, findingIds: s.findingIds.map(id => ids.get(id) ?? id) })), id: `${input.runId}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'real' } } : {}) });
       const errors = [...validateCandidate(candidate, input), ...responseStyleErrors(candidate.assistantText, input, candidate.supportGuidance)];
+      if (!errors.length && input.mode !== 'listen' && !candidate.supportGuidance && input.context.rejectedFindings?.length) {
+        // Only contested analysis pays for this bounded audit; normal chat/calls retain their latency.
+        const auditData = JSON.stringify({rejectedFindings: input.context.rejectedFindings, userMessage: input.userMessage, candidate});
+        let consistent = false;
+        if (Buffer.byteLength(auditData, 'utf8') <= 64000) {
+          const auditBody = anthropic
+            ? {model, max_tokens:128, temperature:0, system:REJECTION_REVIEW_PROMPT, thinking:{type:'disabled'}, messages:[{role:'user',content:auditData}]}
+            : {model, max_tokens:128, temperature:0, response_format:{type:'json_object'}, thinking:{type:'disabled'}, messages:[{role:'system',content:REJECTION_REVIEW_PROMPT},{role:'user',content:auditData}]};
+          const auditResponse = await fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${cfg.agentKey}`,...(anthropic?{'anthropic-version':'2023-06-01'}:{})},body:JSON.stringify(auditBody),signal,redirect:'manual',cache:'no-store'});
+          if (!auditResponse.ok) throw new AppError(auditResponse.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', auditResponse.status === 429 ? 429 : 502);
+          const auditPayload = await readProviderJson(auditResponse,16000,signal) as {content?:{type:string;text?:string}[];choices?:{message?:{content?:string}}[]};
+          const auditText = anthropic ? auditPayload.content?.filter(b=>b.type==='text').map(b=>b.text??'').join('') : auditPayload.choices?.[0]?.message?.content;
+          try { const verdict = JSON.parse(auditText ?? ''); consistent = verdict.consistent === true && Object.keys(verdict).length === 1; } catch { /* Invalid audit cannot approve a candidate. */ }
+        }
+        if (!consistent) errors.push('REJECTED_INTERPRETATION_REPEATED');
+      }
       if (!errors.length) return candidate;
+      if (attempt && errors.every(e=>e === 'REJECTED_INTERPRETATION_REPEATED' || e === 'REJECTED_FINDING_REPEATED')) return correctionFallback(input);
       console.warn(JSON.stringify({ stage: 'agent_validation', code: 'CANDIDATE', errors }));
-      repair = `\n上次候选被程序拒绝：${errors.join(',')}。重新核对模式、长度、引用和卡片关联，生成合法 JSON。不允许捏造原文。`;
+      repair = `\n上次候选被程序拒绝：${errors.join(',')}。重新核对模式、长度、引用和卡片关联，生成合法 JSON。不允许捏造原文。若错误是 REJECTED_INTERPRETATION_REPEATED，表示仍在推荐用户否认过的评价角度；彻底撤下这个角度，必要时只输出原话与未知，练习也要换题。`;
       if (attempt) throw new AppError(errors.some(e => e.includes('EVIDENCE')) ? 'EVIDENCE_MISMATCH' : 'INVALID_MODEL_OUTPUT', 502, true);
     }
     throw new AppError('INVALID_MODEL_OUTPUT', 502, true);

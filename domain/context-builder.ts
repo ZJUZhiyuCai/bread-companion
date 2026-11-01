@@ -2,7 +2,7 @@ import type { SessionState, Source, SourceSegment, TurnRequest } from './types';
 import { segments } from './evidence';
 import { conversationPreferences } from './preferences';
 
-export const CONTEXT_LIMITS = { historyBytes: 8000, wireBytes: 36000, segments: 6 } as const;
+export const CONTEXT_LIMITS = { historyBytes: 8000, wireBytes: 36000, rejectionBytes: 10000, segments: 6 } as const;
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
 export function materialSources(state: SessionState): Source[] {
   const utterances = new Set(state.messages.map(m => m.sourceId).filter(Boolean));
@@ -13,6 +13,9 @@ export function requestSegments(input: TurnRequest): SourceSegment[] {
 }
 
 export function buildTurn(state: SessionState, userMessage: string, runId: string, requestId: string): TurnRequest {
+  const rejectedFindings = (state.rejectedFindings ?? []).slice(-4);
+  while (bytes(rejectedFindings) > CONTEXT_LIMITS.rejectionBytes && rejectedFindings.length > 1) rejectedFindings.shift();
+  const omitAnalysis = rejectedFindings.length > 0 || state.findings.some(f => f.validity === 'stale');
   const materials = materialSources(state);
   const recentIds = new Set(state.messages.filter(m => m.role === 'user').slice(-12).map(m => m.sourceId));
   const recentSources = state.sources.filter(s => recentIds.has(s.id) && s.label !== '本次请求');
@@ -35,11 +38,12 @@ export function buildTurn(state: SessionState, userMessage: string, runId: strin
   let size = 0;
   for (const m of state.messages.slice(-16).reverse()) {
     if (!recentMessages.length && m.role === 'user' && m.text === userMessage) continue;
+    if (omitAnalysis && m.role === 'assistant') continue;
     const entry = { role: m.role, text: m.text };
     if (size + bytes(entry) > CONTEXT_LIMITS.historyBytes) break;
     recentMessages.unshift(entry); size += bytes(entry);
   }
-  const turn: TurnRequest = { sessionId: state.sessionId, runId, epoch: state.epoch, contextRevision: state.contextRevision, requestId, mode: state.mode, userMessage, context: { summary: '', recentMessages, sources: [], sourceSegments, preferences: conversationPreferences(state.messages), ...(state.selectedQuestion ? { selectedQuestion: state.selectedQuestion, practiceCriteria: state.practiceCriteria } : {}) } };
+  const turn: TurnRequest = { sessionId: state.sessionId, runId, epoch: state.epoch, contextRevision: state.contextRevision, requestId, mode: state.mode, userMessage, context: { rejectedFindings, summary: '', recentMessages, sources: [], sourceSegments, preferences: conversationPreferences(state.messages), ...(state.selectedQuestion ? { selectedQuestion: state.selectedQuestion, practiceCriteria: state.practiceCriteria } : {}) } };
   while (bytes(turn) > CONTEXT_LIMITS.wireBytes && recentMessages.length) recentMessages.shift();
   while (bytes(turn) > CONTEXT_LIMITS.wireBytes && sourceSegments.length) sourceSegments.pop();
   return turn;

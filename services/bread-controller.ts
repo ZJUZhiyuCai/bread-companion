@@ -112,7 +112,7 @@ export class BreadController {
     else this.publish();
   };
   send = async (text: string) => { if (!text.trim()) return; this.hangupCall(); await this.sendMessage(text, 'text'); };
-  private sendMessage = async (text: string, channel: 'text' | 'call') => {
+  private sendMessage = async (text: string, channel: 'text' | 'call', actionRequest = false) => {
     text = text.trim(); if (!text || this.state.lifecycle !== 'active') return;
     if (channel === 'call' && /^(?:好[的吧]?[，,\s]*)?(?:先)?(?:挂了|挂断(?:电话)?|挂电话|不聊了|再见|晚安)[。！!，,\s]*$/.test(text)) { this.hangupCall(); return; }
     const intent = explicitIntent(text);
@@ -122,13 +122,14 @@ export class BreadController {
     if (intent) { this.dispatch(intent === 'practice' ? { type: 'PREPARE_PRACTICE' } : { type: 'MODE', mode: intent }); this.cancelResources(); }
     else if (this.view.busy || this.state.activity === 'recorded') { this.fail(new Error('请先停止当前操作，或处理已录好的片段。')); return; }
     this.error = '';
-    const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
+    const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: actionRequest || isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
     this.dispatch({ type: 'USER', text, source });
     await this.requestTurn(text, channel);
   };
-  assist = async (mode: Exclude<Mode, 'listen'>) => {
+  assist = async (mode: Exclude<Mode, 'listen'>, direction = '') => {
     const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。' };
-    await this.send(requests[mode]);
+    this.hangupCall();
+    await this.sendMessage(requests[mode] + (direction.trim() ? `\n本次修改方向（用户说明）：${direction.trim().slice(0, 300)}` : ''), 'text', true);
   };
   private canRetry() {
     const failed = this.failedTurn;

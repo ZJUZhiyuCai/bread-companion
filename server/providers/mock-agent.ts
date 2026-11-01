@@ -38,8 +38,13 @@ export function mockCandidate(input: TurnRequest): TurnCandidate {
     const f: Finding = { id: `${prefix}_practice`, kind: 'practice_suggestion', text: input.mode === 'practice' ? `材料有限，以下是通用练习建议：围绕“${input.context.selectedQuestion}”，用你确实做过的事，检查${(input.context.practiceCriteria ?? []).join('、')}。没有提供的数据先留空，不编造。` : '材料有限，可以选一个通用练习方向：把“我做了什么—如何判断做得好—哪里仍不确定”讲清楚。这是训练建议，不是拒因判断。', evidenceRefs: [reference], validity: 'draft' };
     findings.push(f); sections.push({ key: input.mode === 'practice' ? '这次练习' : '可选的一个练习', text: f.text, findingIds: [f.id] });
   } else sections.push({ key: '以后想看的问题', text: '', findingIds: [] }, { key: '我选择的下一步', text: '', findingIds: [] });
-  const card: Card = { id: `${prefix}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, type: input.mode === 'organize' ? 'note' : 'review', title: input.mode === 'organize' ? '今晚，先留一个记号' : input.mode === 'practice' ? '这一题，慢慢来' : '从一段真实回答开始', sections, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'mock' };
-  return { ...base, assistantText: input.mode === 'organize' ? '把你提供的原话留成了一个草稿。可以改字、删去不想留的内容，再决定是否确认和保存。' : '这段回答里有值得留下的部分。先只看一个可以说得更清楚的地方，卡片放在下面，你可以改，也可以先不留。', findings, cardDraft: card };
+  // Mock demonstrates withdrawal, not semantic understanding or a replacement diagnosis.
+  const rejected = new Set(input.context.rejectedFindings?.map(f => f.text) ?? []);
+  const accepted = findings.filter(f => !rejected.has(f.text));
+  const removedIds = new Set(findings.filter(f => rejected.has(f.text)).map(f => f.id));
+  const retainedSections = sections.filter(s => !s.findingIds.some(id => removedIds.has(id)));
+  const card: Card = { id: `${prefix}_card`, caseId: input.sessionId, revision: 1, parentRevision: null, type: input.mode === 'organize' ? 'note' : 'review', title: input.mode === 'organize' ? '今晚，先留一个记号' : input.mode === 'practice' ? '这一题，慢慢来' : '从一段真实回答开始', sections: retainedSections, validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'mock' };
+  return { ...base, assistantText: input.context.rejectedFindings?.some(f => f.needsAcknowledgement) ? '你不认同的判断已经撤下。先保留剩下的材料；规则演示不能独立找到新的解释，你可以补充或改写。' : input.mode === 'organize' ? '把你提供的原话留成了一个草稿。可以改字、删去不想留的内容，再决定是否确认和保存。' : '这段回答里有值得留下的部分。先只看一个可以说得更清楚的地方，卡片放在下面，你可以改，也可以先不留。', findings: accepted, cardDraft: card };
 }
 export class MockProvider implements AgentProvider {
   constructor(private delay = 400) {}

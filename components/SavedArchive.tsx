@@ -211,7 +211,7 @@ function ArchiveDetail(props: ArchiveDetailProps) {
               {card.serviceMode === 'mock' && ' · 演示生成'}
             </p>
             <h3 id="arch-title" className="paper__title">
-              {card.title}
+              {card.title}{card.titleUserEdited && <span className="tag">你改写的标题</span>}
             </h3>
             {card.validity !== 'confirmed' && (
               <p className="callout callout--faded">{VALIDITY_META[card.validity].desc}。这里只是历史记录，不当作现在有效的结论。</p>
@@ -224,10 +224,11 @@ function ArchiveDetail(props: ArchiveDetailProps) {
                 <div className="paper__section" key={`${s.key}-${i}`}>
                   <dt className="paper__label">{sectionLabel(s.key)}</dt>
                   <dd className="paper__text">
+                    {s.userEdited && <span className="tag" style={{ whiteSpace: 'normal' }}>你改写的内容 · 原版依据不自动支持补写</span>}
                     {s.text ? <span className="prewrap">{s.text}</span> : <span className="muted">（留空）</span>}
                     {refs.length > 0 && (
                       <details className="basis">
-                        <summary>原话 {refs.length} 处</summary>
+                        <summary>{s.userEdited ? '原版依据' : '原话'} {refs.length} 处</summary>
                         <div className="basis__body">
                           {refs.map((r) => {
                             const ev = viewEvidence(r, ctx);
