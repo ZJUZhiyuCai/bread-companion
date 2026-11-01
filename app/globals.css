@@ -906,8 +906,9 @@ kbd {
 
 /* ==========================================================================
    面包 · the plush
-   Body = the plush asset. Eyes, lids, blush and mouth are drawn on top, and
-   every length below is in the asset's own 1254-unit space.
+   Body = the plush asset. Eyes, lashes, blush, the felt clip and the parted
+   seam of her stitched smile are drawn on top, and every length below is in
+   the asset's own 1254-unit space. (docs/design-soft-expression.md)
    ========================================================================== */
 
 .avatar {
@@ -954,14 +955,14 @@ kbd {
 }
 
 /*
- * State tunes these; the life loop adds --gx/--gy (gaze), data-glint and data-curious.
- * There are no lids: --pupil, --eye (how wide the beads read), --cheek, --smile and pose do the acting.
+ * State tunes these; the life loop adds --gx/--gy (gaze), data-glint and data-curious, and the mouth
+ * adds --open (how far the seam is parted), data-phrase and --tilt while 面包 speaks.
+ * There are no lids: --pupil, --eye (how wide the beads read), --cheek, the seam and pose do the acting.
  */
 .plush {
   --pupil: 1;
   --eye: 1;
-  --cheek: 0.22;
-  --smile: 0;
+  --cheek: 0.3;
   --bounce: 0.34;
 }
 .p-turn,
@@ -1068,41 +1069,47 @@ kbd {
   opacity: 0.42;
 }
 
+/* Embroidered lashes, the same dark as the glass; they sit in the fur, so they never move on their own. */
+.p-lashes path {
+  fill: #2e170c;
+  opacity: 0.84;
+}
+
 .p-blush {
   opacity: var(--cheek);
   transition: opacity 0.5s;
 }
-/* An open smile drawn over the stitched one; shown for hellos and pats. */
-.p-smile {
-  fill: #4a2312;
-  opacity: var(--smile);
-  transform-box: view-box;
-  transform-origin: 615px 628px;
-  transform: scale(calc(0.6 + var(--smile) * 0.4));
-  transition: opacity 0.25s, transform 0.35s var(--ease);
+.p-clip {
+  pointer-events: none;
 }
-.p-smile .p-smile__tongue {
-  fill: #c45a4c;
-}
-.p-mouth ellipse {
-  fill: #4a2312;
-}
-.p-mouth .p-mouth__tongue {
-  fill: #c45a4c;
-}
+
+/*
+ * The mouth is the photo's stitched smile. Closed (--open 0) nothing here shows and the photo's own
+ * thread is the mouth; parted, the upper edge is redrawn in the same thread over the stitch and only
+ * the lower edge opens. The shape itself is written by useMouth; CSS only fades it in at the very start
+ * of a parting, so the seam never draws as a second line beside the photo's.
+ */
 .p-mouth {
-  transform-box: view-box;
-  transform-origin: 615px 632px;
-  animation: p-talk 0.78s ease-in-out infinite;
+  opacity: clamp(0, calc(var(--open, 0) * 5), 1);
+  pointer-events: none;
+}
+.p-mouth__part {
+  opacity: calc(var(--open, 0) * 1.4);
+}
+.p-mouth__lip {
+  fill: none;
+  stroke: #7a3a1d;
+  stroke-width: 4.5;
+  stroke-linecap: round;
 }
 
 /*
  * What 面包 is doing — never what the user feels. Eyes stay open and friendly in every state:
  * attention widens them a touch, rest is a posture, trouble is a tilt and a small prop.
  */
+/* hello: the seam parts into a held smile (useMouth) */
 .plush[data-state='wave'] {
   --cheek: 0.55;
-  --smile: 1;
 }
 .plush[data-state='wave'] .p-pose {
   animation: hop 0.9s ease-in-out 2;
@@ -1143,11 +1150,20 @@ kbd {
 .plush[data-state='thinking'] .p-pose {
   animation: ponder 3.6s ease-in-out infinite;
 }
+/*
+ * Speaking: no bounce. She keeps breathing; each phrase she lifts a little — a slightly different lean
+ * each time (--tilt) — and settles back in the pause, the way a person's head rises with a sentence.
+ */
 .plush[data-state='speaking'] {
   --cheek: 0.42;
 }
-.plush[data-state='speaking'] .p-breathe {
-  animation: p-bob 0.9s ease-in-out infinite;
+.plush[data-state='speaking'] .p-pose {
+  transform: rotate(calc(var(--tilt, 0) * 0.6deg));
+  transition-duration: 1.2s;
+}
+.plush[data-state='speaking'][data-phrase] .p-pose {
+  transform: translateY(-7px) rotate(calc(var(--tilt, 0) * 0.8deg)) scale(1.004, 1.01);
+  transition-duration: 0.6s;
 }
 /* turned toward the phone that is ringing beside it */
 .plush[data-state='connecting'] {
@@ -1199,10 +1215,9 @@ kbd {
 .plush[data-curious] .p-pose {
   transform: rotate(2.5deg) translateY(-14px) scale(1.01, 1.02);
 }
-/* A pat: either a squishy smile or a surprised wiggle. */
+/* A pat: either a squishy smile or a surprised wiggle; the seam smiles or makes a small "oh" (useMouth). */
 .plush[data-poke='smile'] {
   --cheek: 0.65;
-  --smile: 1;
 }
 .plush[data-poke='wiggle'] {
   --pupil: 1.24;
@@ -6095,7 +6110,7 @@ body:has(.session.is-calling) .toasts {
     transform: rotate(1deg) scale(1.01, 1.02);
   }
 }
-/* hop and p-bob move the plush, so their lengths are in its 1254-unit space */
+/* hop moves the plush, so its lengths are in its 1254-unit space */
 @keyframes hop {
   0%,
   100% {
@@ -6112,15 +6127,6 @@ body:has(.session.is-calling) .toasts {
   }
   80% {
     transform: scale(0.99, 1.01);
-  }
-}
-@keyframes p-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px) scale(1.004, 1.008);
   }
 }
 /* 面包 — all in the plush's 1254-unit space */
@@ -6145,24 +6151,6 @@ body:has(.session.is-calling) .toasts {
   }
   55% {
     transform: translateY(0);
-  }
-}
-@keyframes p-talk {
-  0%,
-  100% {
-    transform: scaleY(0.2);
-  }
-  18% {
-    transform: scale(1.05, 1);
-  }
-  36% {
-    transform: scaleY(0.5);
-  }
-  58% {
-    transform: scale(0.95, 0.9);
-  }
-  78% {
-    transform: scaleY(0.35);
   }
 }
 @keyframes squish {

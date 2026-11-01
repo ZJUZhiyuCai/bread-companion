@@ -138,7 +138,7 @@ export function buddyLine(state: BuddyState, canRetry = false): string {
 }
 
 /** Text-mode activities that hold the microphone or speaker; a call has to take over from them. */
-export const AUDIO_ACTIVITIES: Activity[] = ['requesting_mic', 'recording', 'recorded', 'transcribing', 'speaking'];
+export const AUDIO_ACTIVITIES: Activity[] = ['requesting_mic', 'recording', 'recorded', 'transcribing', 'preparing_speech', 'speaking'];
 
 /**
  * Why a call can't start right now, or '' if it can. Never pretends to connect. Kept to one short line:

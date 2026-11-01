@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replace the offset ellipse-and-tongue mouth with a gently parting stitched seam; add a muted felt flower, fine lashes and soft blush. Stop speech motion only after closing the seam completely.
+- Keep read-aloud expressions quiet while synthesis and browser playback are pending; begin speech on actual playback and cancel preparation when the page goes into the background.
+
 - Keep one red telephone throughout home loading, using a matching rendered still while capabilities, model bytes and the first GPU frame are pending. Graphics failure retains the same callable image; pending service checks no longer briefly gray the phone out.
 
 ## 0.4.0 — 2026-11-01

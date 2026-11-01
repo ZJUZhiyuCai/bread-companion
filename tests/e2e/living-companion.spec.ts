@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { encodeWav } from '../../services/media-controller';
 import { CALL_GREETING } from '../../domain/call-greeting';
@@ -59,6 +59,7 @@ test('a tap connects to the actual local welcome audio without a synthesis round
   await page.evaluate(() => { (window as any).__openingTap = performance.now(); });
   await page.getByRole('button', { name: /给面包打(?:个)?电话/ }).click();
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  await expect.poll(() => page.locator('.cstage .p-mouth').evaluate(el => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0);
   await expect(page.locator('.cstage')).toHaveAttribute('data-pose', 'lifted');
   await expect.poll(() => page.locator('.cstage .rp-hs-r').evaluate(el => new DOMMatrix(getComputedStyle(el).transform).b)).toBeGreaterThan(0.9);
   // During a desktop-to-portrait resize, the stage width transition must fit its new container.
@@ -74,6 +75,7 @@ test('a tap connects to the actual local welcome audio without a synthesis round
   expect(timing.clickToActualAudioMs).toBeLessThan(5000);
   await expect(page.locator('.callroom')).toContainText(CALL_GREETING.text);
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'listening');
+  await expect.poll(() => page.locator('.cstage .p-mouth').evaluate(el => Number(getComputedStyle(el).opacity))).toBe(0);
   expect(stats).toEqual({ syntheses: 0, transcripts: 0 });
   await page.getByRole('button', { name: '挂断', exact: true }).click();
   await expect.poll(() => page.evaluate(() => (window as any).__openingTracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
@@ -109,6 +111,27 @@ test('hangup during dialling releases late microphone permission without playing
   await expect.poll(() => page.evaluate(() => (window as any).__openingContexts.every((c: AudioContext) => c.state === 'closed'))).toBe(true);
   expect(await page.evaluate(() => (window as any).__openingStarts.length)).toBe(0);
   expect(stats).toEqual({ syntheses: 0, transcripts: 0 });
+});
+
+test('text speech waits for actual playback, and stopping fully closes the seam', async ({ page }) => {
+  await setup(page);
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/speech/synthesize', async route => {
+    await gate;
+    await route.fulfill({ contentType: 'audio/mpeg', body: readFileSync('public/companion/hello-warm-bestie.mp3') });
+  });
+  await page.getByRole('button', { name: /先听面包说一小段/ }).click();
+  const play = page.getByRole('button', { name: '播放这段话', exact: true });
+  await play.click();
+  await expect(play).toContainText('准备声音');
+  await expect(page.locator('.plush')).toHaveAttribute('data-state', 'idle');
+  release();
+  await expect(page.locator('.plush')).toHaveAttribute('data-state', 'speaking');
+  await expect.poll(() => page.locator('.p-mouth').evaluate(el => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0);
+  await page.getByRole('button', { name: '停止播放', exact: true }).click();
+  await expect(page.locator('.plush')).toHaveAttribute('data-state', 'paused');
+  await expect.poll(() => page.locator('.p-mouth').evaluate(el => Number(getComputedStyle(el).opacity))).toBe(0);
 });
 
 test('the entry greeting, phone and title stay separate across widths and patting preserves a typed draft', async ({ page }) => {

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200" width="200" height="200">
+  <!--
+    面包's hair clip: a small felt flower, blanket-stitched, with a honey button for a centre and one
+    sage leaf. Lit like the room (warm key from the upper left); it presses into the fur, so its shadow
+    falls down and to the right and a few strands of fur lie over its lower edge.
+  -->
+  <defs>
+    <path id="petal" d="M100 98 C84 92 72 70 78 53 C83 39 117 39 122 53 C128 70 116 92 100 98 Z" />
+    <path id="leaf" d="M100 106 C84 110 58 128 40 160 C74 156 98 138 106 112 Z" />
+
+    <g id="silhouette">
+      <use xlink:href="#leaf" />
+      <use xlink:href="#petal" />
+      <use xlink:href="#petal" transform="rotate(70 100 100)" />
+      <use xlink:href="#petal" transform="rotate(145 100 100)" />
+      <use xlink:href="#petal" transform="rotate(218 100 100)" />
+      <use xlink:href="#petal" transform="rotate(290 100 100)" />
+    </g>
+
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" />
+    </filter>
+    <filter id="tight" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1.6" />
+    </filter>
+    <!-- the nap of the felt -->
+    <filter id="felt" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" />
+      <feColorMatrix values="0 0 0 0 1  0 0 0 0 0.96  0 0 0 0 0.94  0 0 0 0.9 -0.3" />
+    </filter>
+
+    <mask id="shape" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+      <use xlink:href="#silhouette" fill="#fff" />
+    </mask>
+
+    <!-- cupping: each petal is a little darker where it gathers into the button -->
+    <radialGradient id="cup" cx="0.5" cy="1" r="0.95">
+      <stop offset="0" stop-color="#a95f62" stop-opacity="0.6" />
+      <stop offset="0.62" stop-color="#a95f62" stop-opacity="0" />
+    </radialGradient>
+    <!-- the room's lamp over the whole flower, upper left to lower right -->
+    <linearGradient id="lamp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff6ef" stop-opacity="0.42" />
+      <stop offset="0.46" stop-color="#fff6ef" stop-opacity="0" />
+      <stop offset="0.7" stop-color="#5e2f26" stop-opacity="0" />
+      <stop offset="1" stop-color="#5e2f26" stop-opacity="0.28" />
+    </linearGradient>
+    <linearGradient id="sage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b3c09b" />
+      <stop offset="1" stop-color="#7c8b66" />
+    </linearGradient>
+    <radialGradient id="honey" cx="0.38" cy="0.34" r="0.75">
+      <stop offset="0" stop-color="#f8dfa8" />
+      <stop offset="0.55" stop-color="#deac5c" />
+      <stop offset="1" stop-color="#a8712f" />
+    </radialGradient>
+  </defs>
+
+  <!-- pressed into the fur: a soft shade and a tight contact line, both down and to the right -->
+  <g transform="translate(6 9)" fill="#4a2510" opacity="0.32" filter="url(#soft)">
+    <use xlink:href="#silhouette" />
+  </g>
+  <g transform="translate(2 3)" fill="#4a2510" opacity="0.28" filter="url(#tight)">
+    <use xlink:href="#silhouette" />
+  </g>
+
+  <!-- the leaf, tucked behind -->
+  <use xlink:href="#leaf" fill="url(#sage)" />
+  <path d="M101 110 Q76 130 47 154" fill="none" stroke="#6e7c59" stroke-width="1.6" stroke-linecap="round" opacity="0.7" />
+  <path d="M96 116 C80 124 64 138 52 150" fill="none" stroke="#f4f1e2" stroke-width="1.4" stroke-dasharray="3 5" stroke-linecap="round" opacity="0.55" />
+
+  <!-- petals: felt, cupped toward the middle, each with its own blanket stitch -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <g>
+      <use xlink:href="#petal" fill="#e6a7a2" />
+      <use xlink:href="#petal" fill="url(#cup)" stroke="#b06f6e" stroke-width="1.6" stroke-opacity="0.5" />
+      <use xlink:href="#petal" transform="translate(100 68) scale(0.76) translate(-100 -68)" fill="none" stroke="#fff3ec" stroke-width="1.7" stroke-dasharray="3 5" opacity="0.7" />
+    </g>
+    <g transform="rotate(70 100 100)">
+      <use xlink:href="#petal" fill="#e6a7a2" />
+      <use xlink:href="#petal" fill="url(#cup)" stroke="#b06f6e" stroke-width="1.6" stroke-opacity="0.5" />
+      <use xlink:href="#petal" transform="translate(100 68) scale(0.76) translate(-100 -68)" fill="none" stroke="#fff3ec" stroke-width="1.7" stroke-dasharray="3 5" opacity="0.7" />
+    </g>
+    <g transform="rotate(145 100 100)">
+      <use xlink:href="#petal" fill="#e6a7a2" />
+      <use xlink:href="#petal" fill="url(#cup)" stroke="#b06f6e" stroke-width="1.6" stroke-opacity="0.5" />
+      <use xlink:href="#petal" transform="translate(100 68) scale(0.76) translate(-100 -68)" fill="none" stroke="#fff3ec" stroke-width="1.7" stroke-dasharray="3 5" opacity="0.7" />
+    </g>
+    <g transform="rotate(218 100 100)">
+      <use xlink:href="#petal" fill="#e6a7a2" />
+      <use xlink:href="#petal" fill="url(#cup)" stroke="#b06f6e" stroke-width="1.6" stroke-opacity="0.5" />
+      <use xlink:href="#petal" transform="translate(100 68) scale(0.76) translate(-100 -68)" fill="none" stroke="#fff3ec" stroke-width="1.7" stroke-dasharray="3 5" opacity="0.7" />
+    </g>
+    <g transform="rotate(290 100 100)">
+      <use xlink:href="#petal" fill="#e6a7a2" />
+      <use xlink:href="#petal" fill="url(#cup)" stroke="#b06f6e" stroke-width="1.6" stroke-opacity="0.5" />
+      <use xlink:href="#petal" transform="translate(100 68) scale(0.76) translate(-100 -68)" fill="none" stroke="#fff3ec" stroke-width="1.7" stroke-dasharray="3 5" opacity="0.7" />
+    </g>
+  </g>
+
+  <!-- one light for the whole clip, and the felt's nap -->
+  <rect width="200" height="200" fill="url(#lamp)" mask="url(#shape)" />
+  <rect width="200" height="200" filter="url(#felt)" mask="url(#shape)" opacity="0.16" />
+
+  <!-- the button: honey, two threads crossed through four holes -->
+  <circle cx="102" cy="103" r="19" fill="#5a3418" opacity="0.28" filter="url(#tight)" />
+  <circle cx="100" cy="100" r="17" fill="url(#honey)" />
+  <circle cx="100" cy="100" r="13.5" fill="none" stroke="#9a6428" stroke-width="1.2" opacity="0.45" />
+  <g fill="#6d4317">
+    <circle cx="95" cy="95" r="2.3" />
+    <circle cx="105" cy="95" r="2.3" />
+    <circle cx="95" cy="105" r="2.3" />
+    <circle cx="105" cy="105" r="2.3" />
+  </g>
+  <path d="M95 95 L105 105 M105 95 L95 105" stroke="#fbf3e6" stroke-width="2.2" stroke-linecap="round" />
+  <ellipse cx="93" cy="92" rx="5.5" ry="3" transform="rotate(-32 93 92)" fill="#fff" opacity="0.55" />
+
+  <!-- a few strands of fur lying over its lower edge, so it sits in the plush rather than on it -->
+  <g fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M70 168 C72 158 70 150 64 142" stroke="#f1dcbc" stroke-width="2.2" />
+    <path d="M84 170 C84 160 86 152 82 144" stroke="#ead2ad" stroke-width="1.8" />
+    <path d="M118 168 C116 160 118 152 124 146" stroke="#f1dcbc" stroke-width="2" />
+    <path d="M132 166 C130 158 134 150 140 145" stroke="#e6cca4" stroke-width="1.8" />
+    <path d="M150 140 C146 134 150 126 158 122" stroke="#efd8b6" stroke-width="1.6" />
+  </g>
+</svg>

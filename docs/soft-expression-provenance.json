@@ -1,0 +1,25 @@
+{
+  "task": "20261101-bread-soft-expression",
+  "date": "2026-11-01",
+  "model": "official Claude Code, claude-opus-5-5, high",
+  "base_commit": "18600806cfc3f4a6bf106698e47fa2a2cdaf8e4f",
+  "raw_source_sha256": {
+    "components/BreadBuddy.tsx": "44ad25900d99a662933103727fa10f007cebd60ee043bacba461cd9ea549017a",
+    "app/globals.css": "07e7089ed45bc52a69352fe6a8e933ae8d2a41b6bbb9a8a662deffe1c93c95f7",
+    "docs/design-soft-expression.md": "be82cb0839cd6c3104cffce2efa9dc293d4120f246f06b0afb2bc8d7a25bdae0",
+    "public/design/soft-expression/felt-flower.svg": "695d5660e1057ee606b8388eac8d77a472ca9934e863a068a65a118ac44fc00c"
+  },
+  "integrated_sha256": {
+    "components/BreadBuddy.tsx": "1497ec5a29f2e9cae838a23943d1f9997b8195620d6d7e22c63494a944d10d51",
+    "app/globals.css": "07e7089ed45bc52a69352fe6a8e933ae8d2a41b6bbb9a8a662deffe1c93c95f7",
+    "docs/design-soft-expression.md": "be82cb0839cd6c3104cffce2efa9dc293d4120f246f06b0afb2bc8d7a25bdae0",
+    "public/design/soft-expression/felt-flower.svg": "695d5660e1057ee606b8388eac8d77a472ca9934e863a068a65a118ac44fc00c"
+  },
+  "codex_changes": [
+    "Always paint the fully closed mouth endpoint before animation stops; an update threshold otherwise retained 1% opacity.",
+    "Add preparing_speech and enter speaking only after browser playback begins; cancel pending playback on background/stop.",
+    "Browser and unit regression tests, actual rendered inspection, documentation and deployment."
+  ],
+  "unchanged_photo_sha256": "895d01393166f5c2bac0345082d62d17a7d097b59f670b2e4fe3a9d541bcc732",
+  "asset_license": "Original felt-flower SVG contributed under repository MIT license."
+}

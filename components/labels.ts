@@ -22,6 +22,7 @@ export const ACTIVITY_META: Record<AvatarState, { label: string; detail: string 
   transcribing: { label: '在把录音转成字', detail: '转好先给你改，不会自动发出' },
   generating: { label: '在想', detail: '想好、核对过才会一起给你' },
   validating: { label: '在核对', detail: '检查引用和格式' },
+  preparing_speech: { label: '在准备声音', detail: '准备好后念给你听，随时可以停止' },
   speaking: { label: '在念给你听', detail: '点“停止”随时打断' },
   paused: { label: '停下了', detail: '想继续就接着说' },
   error: { label: '出了点小问题', detail: '文字还可以照常用' },
@@ -35,6 +36,7 @@ export const WORKING_STATES: AvatarState[] = [
   'transcribing',
   'generating',
   'validating',
+  'preparing_speech',
   'speaking',
 ];
 

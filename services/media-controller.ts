@@ -80,7 +80,7 @@ export class MediaController {
   }
   private clearTimer() { if (this.timer) clearInterval(this.timer); this.timer = null; }
   private stopTracks() { this.stream?.getTracks().forEach(t => t.stop()); this.stream = null; }
-  async play(blob: Blob, isValid: () => boolean): Promise<void> {
+  async play(blob: Blob, isValid: () => boolean, onStart?: () => void): Promise<void> {
     this.stopPlayback(); if (!isValid()) return;
     const url = URL.createObjectURL(blob); const audio = new Audio(url);
     this.audio = audio; this.audioUrl = url;
@@ -94,6 +94,7 @@ export class MediaController {
       if (!isValid()) return;
       await audio.play();
       if (!isValid() || this.audio !== audio) { audio.pause(); return; }
+      onStart?.();
       await ended;
     } finally { if (this.audio === audio) this.stopPlayback(); }
   }

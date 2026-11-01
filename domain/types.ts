@@ -1,5 +1,5 @@
 export type Mode = 'listen' | 'organize' | 'review' | 'practice';
-export type Activity = 'idle' | 'requesting_mic' | 'recording' | 'recorded' | 'transcribing' | 'generating' | 'validating' | 'speaking' | 'paused' | 'error';
+export type Activity = 'idle' | 'requesting_mic' | 'recording' | 'recorded' | 'transcribing' | 'generating' | 'validating' | 'preparing_speech' | 'speaking' | 'paused' | 'error';
 export type Origin = 'source_quote' | 'user_recollection' | 'explicit_feedback';
 export type Validity = 'draft' | 'confirmed' | 'stale' | 'disputed';
 export interface Source { id: string; revision: number; origin: Origin; label: string; text: string; confirmed: boolean; }

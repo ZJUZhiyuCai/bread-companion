@@ -58,7 +58,7 @@ export function Composer(props: ComposerProps) {
     ? '还在检查语音能力'
     : !caps.asr.available
       ? `现在不能用语音${caps.asr.reason ? `（${caps.asr.reason}）` : ''}，打字照样可以`
-      : busy && a !== 'speaking' // during playback the hook stops audio before recording
+      : busy && a !== 'speaking' && a !== 'preparing_speech' // recording cancels pending or playing speech first
         ? '等面包这次说完，或先点“停止”'
         : transcriptOpen
           ? '先处理上一段转写'

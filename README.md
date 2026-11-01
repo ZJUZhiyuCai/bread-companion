@@ -11,7 +11,7 @@
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-v040.jpg)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-soft-expression.jpg)
 
 *实际运行界面。在线版由维护者配置服务；本地无密钥启动仍清楚标为规则演示。*
 
@@ -19,7 +19,7 @@
 
 - **灯下的一张小桌子。** 自托管文楷、便笺横格、黄铜播放器、珐琅电话铭牌与胶木通话键；纸纹和光影保持静态，手机与夜间模式沿用同一套材质。
 
-- **一个会回应的小伙伴。** 照片版毛绒身体、始终完整睁开的玻璃眼睛，能回应摸头；高光轻缓变化，减少动态时保持安静。
+- **一个会回应的小伙伴。** 照片版毛绒身体、始终完整睁开的玻璃眼睛，豆沙色毛毡花发夹、细睫毛和柔和腮红；说话沿原缝线轻轻开合，能回应摸头。高光轻缓变化，减少动态时保持安静。
 - **拿起红色 3D 电话。** Blender 建模、Three.js 渲染；漆红机身、象牙转盘与黄铜细节；点座机即可拨号，接通后听筒抬起，传来温暖闺蜜的声音，默认开场从本地播放。
 - **可以先安静地待着。** 首页不催促表达；先读一小段话、选择播放，或空着便笺进入聊天，复盘放到后面。
 - **直接开口或打字。** 不填情绪标签，不先选模式；面包用简短中文回应。
@@ -75,13 +75,13 @@ macOS 也可以双击 `启动面包.command`。它只在本机启动应用。在
 
 | 检查 | 已有证据 |
 | --- | --- |
-| 工程回归 | 175 项单元/集成、43 条浏览器流程；CI 跑类型、模型资产检查、测试、构建与 Chromium |
+| 工程回归 | 179 项单元/集成、44 条浏览器流程；CI 跑类型、模型资产检查、测试、构建与 Chromium |
 | 本轮公网语音链路 | 两次合成回合：ASR **3.597–3.626 s**、模型 **2.415–2.751 s**、TTS **1.873–2.742 s**；三段合计 **7.89 / 9.12 s**，是完整 HTTP 请求，尚未测公网浏览器首响 |
 | 中文对话复测 | v14：8 个情境、16 轮接口调用，含一条控制层道别；完整响应中位 **1.165 s**、p90 **1.477 s**；未测首 token |
 | 语音链路 | v0.2 虚拟麦克风实测：固定开场 **0.240 s**；两轮说完至回复出声 **4.202 / 3.275 s**；开口至停止旧声 **362 ms** |
 | 仍然会失败的体验 | 明确道别已有窄范围规则；仍有套话、补写细节和未请求的建议。调参前后原始合成样本全部保留 |
 
-样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。本轮公共运行时与并发证据见 [0.4.0 对抗验收](docs/craft-online-validation.md)。此前体验详见 [开场、3D 电话与功能验收](docs/phone3d-audit.md)、[此前语音验收](docs/living-companion-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
+样本量小、环境特定，以上不是 SLA 或跨产品排名。物理麦克风、外放、蓝牙和手机真机仍待测。本轮公共运行时与并发证据见 [0.4.0 对抗验收](docs/craft-online-validation.md)。嘴部、形象与播放状态的本轮检查见 [表情验收](docs/soft-expression-validation.md)。此前体验详见 [开场、3D 电话与功能验收](docs/phone3d-audit.md)、[此前语音验收](docs/living-companion-validation.md)、[对话评估](evaluations/README.md) 和 [竞品对标](docs/competitive-benchmark.md)。
 
 ```sh
 npm run typecheck
