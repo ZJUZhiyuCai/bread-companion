@@ -1,10 +1,22 @@
 import {DatabaseSync} from 'node:sqlite';
-import {chmodSync} from 'node:fs';
+import {chmodSync,existsSync,lstatSync,realpathSync} from 'node:fs';
+import {dirname,resolve,sep} from 'node:path';
 
 /** Same metadata-only admission contract as D1. Transactions are synchronous across SQLite connections. */
-export function openAdmissionDatabase(filename) {
-  const db = new DatabaseSync(filename);
-  if (filename !== ':memory:') chmodSync(filename, 0o600);
+export function openAdmissionDatabase(filename, trustedDirectory = '/srv/bread-companion/private') {
+  let databasePath = ':memory:';
+  if (filename !== ':memory:') {
+    const root = resolve(trustedDirectory);
+    const canonicalRoot = realpathSync(root);
+    const candidate = resolve(filename);
+    if (!candidate.startsWith(root + sep)) throw new Error('Admission database must stay inside its private directory');
+    const parent = realpathSync(dirname(candidate));
+    if (parent !== canonicalRoot && !parent.startsWith(canonicalRoot + sep)) throw new Error('Admission database parent must stay inside its private directory');
+    if (existsSync(candidate) && lstatSync(candidate).isSymbolicLink()) throw new Error('Admission database cannot be a symlink');
+    databasePath = candidate;
+  }
+  const db = new DatabaseSync(databasePath);
+  if (databasePath !== ':memory:') chmodSync(databasePath, 0o600);
   db.exec(`PRAGMA busy_timeout=2000; PRAGMA journal_mode=WAL;
     CREATE TABLE IF NOT EXISTS bread_requests (
       id TEXT PRIMARY KEY NOT NULL, principal TEXT NOT NULL, lane TEXT NOT NULL,

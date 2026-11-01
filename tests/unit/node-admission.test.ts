@@ -1,6 +1,6 @@
 import {NextRequest} from 'next/server';
 import {afterEach,expect,it} from 'vitest';
-import {mkdtempSync,rmSync} from 'node:fs';
+import {mkdtempSync,rmSync,writeFileSync,symlinkSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {openAdmissionDatabase} from '../../deployment/node/sqlite.mjs';
@@ -9,7 +9,7 @@ import {assertAppRequest} from '@/server/http';
 import {acquireShared} from '@/server/admission';
 const dirs:string[]=[];const databases:ReturnType<typeof openAdmissionDatabase>[]=[];
 afterEach(()=>{databases.splice(0).forEach(db=>db.close());dirs.splice(0).forEach(d=>rmSync(d,{recursive:true,force:true}));});
-function pair(){const dir=mkdtempSync(join(tmpdir(),'bread-admission-'));dirs.push(dir);const file=join(dir,'admission.sqlite');const a=openAdmissionDatabase(file),b=openAdmissionDatabase(file);databases.push(a,b);return {a,b};}
+function pair(){const dir=mkdtempSync(join(tmpdir(),'bread-admission-'));dirs.push(dir);const file=join(dir,'admission.sqlite');const a=openAdmissionDatabase(file,dir),b=openAdmissionDatabase(file,dir);databases.push(a,b);return {a,b};}
 it('enforces duplicate IDs and shared concurrency across independent Node SQLite connections',async()=>{
  const {a,b}=pair();const now=100000000;
  const release=await acquireShared(a,'visitor','call','same',now);
@@ -32,4 +32,11 @@ it('accepts only the configured Node loopback URL while requiring the exact publ
  expect(()=>withServerRuntime({env},()=>assertAppRequest(req))).toThrow();
  expect(()=>withServerRuntime({env,nodeInternalOrigin:'https://127.0.0.1:3220'},()=>assertAppRequest(req))).not.toThrow();
  for(const bad of [new Request('https://127.0.0.1:3221/api/capabilities',{headers:{Host:'bread.example'}}),new Request(req.url,{headers:{Host:'evil.example'}}),new Request(req.url,{headers:{Host:'bread.example',Origin:'https://evil.example'}})])expect(()=>withServerRuntime({env,nodeInternalOrigin:'https://127.0.0.1:3220'},()=>assertAppRequest(bad))).toThrow();
+});
+
+it('rejects paths outside the private directory and symlinks without changing the target',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'bread-db-path-'));dirs.push(dir);
+ expect(()=>openAdmissionDatabase(join(dir,'..','outside.sqlite'),dir)).toThrow('private directory');
+ const target=join(dir,'target');writeFileSync(target,'untouched',{mode:0o640});const link=join(dir,'link.sqlite');symlinkSync(target,link);
+ expect(()=>openAdmissionDatabase(link,dir)).toThrow('symlink');expect(statSync(target).mode & 0o777).toBe(0o640);
 });

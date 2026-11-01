@@ -41,7 +41,7 @@
 
 ## 已执行验证
 
-- 208 项单元/集成测试，包括真实 SQLite 双连接去重、并发和回滚。
+- 209 项单元/集成测试，包括真实 SQLite 双连接去重、并发和回滚。
 - 47 条浏览器流程：首轮 45 条成功、2 条因新测试的 alert 定位不唯一失败；定位到通话区域后，相关 6 条重测全部成功。包含手机尺寸下静默、采集停滞、重连、挂断、文字回退及既有自然打断流程。
 - 本机 Next 生产构建与 Sites Worker 构建通过；5 个真实 API 模式成功，分析模型保持原路由。
 - 手机尺寸下，以合成中文音频输入实际浏览器 AudioWorklet，真实 MiniMax ASR → Seed → MiniMax TTS 两轮均成功。用户音频末尾到回复开始播放约 5.155 / 4.651 秒；打断约 362 毫秒。记录见 [浏览器实测](evaluation/mobile-browser-call.json)。未使用物理麦克风或实测外放回声。
@@ -64,3 +64,5 @@
 10 个独立短回复样本全部返回合法 JSON，完整文本响应中位数 **1.372 秒**，范围 **1.117–1.473 秒**。截图原句实际回复：“面试不太顺啊。愿意说说出了什么状况吗？”17 个 Harness 场景（含两个实际三轮历史链）也全部成功。计时仍包含本机网络与网关，不能当作整段电话等待。仍出现“心里肯定不好受”“先不急着给自己下结论”等泛化或建议倾向；改善并非消除所有套话。证据：[DeepSeek 单轮](evaluation/deepseek-empathy-holdout.json)、[多轮 Harness](evaluation/deepseek-harness.json)。
 
 另一次主入口桌面浏览器合成音频测试在 ASR fetch 约 41.7 秒后失败，已保留[失败记录](evaluation/jakarta-browser-call.json)，不算通过；它与先前本机成功、真实 HTTP 冒烟通过、用户手机确认分别记录。页面及 API、AudioWorklet 静态脚本的三个国内探针均为 200，仍不代表所有线路或永久可达。
+
+DeepSeek 发布后，主入口第一次 HTTP 冒烟转写耗时约 32.5 秒、模型返回 502；独立上游探测恢复可用后再次完整检查通过。首轮浏览器 ASR 返回 502，用户麦克风轨道已正确关闭。保留[首轮失败](evaluation/jakarta-deepseek-first-smoke.json)与[成功复检](evaluation/jakarta-deepseek-smoke.json)，不掩盖跨境上游波动。备用 Sites v12 / 环境 revision 3 的[完整链路](evaluation/sites-deepseek-smoke.json)通过。
