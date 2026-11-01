@@ -1,5 +1,5 @@
 import {DatabaseSync} from 'node:sqlite';
-import {chmodSync,existsSync,lstatSync,realpathSync} from 'node:fs';
+import {chmodSync,lstatSync,realpathSync} from 'node:fs';
 import {dirname,resolve,sep} from 'node:path';
 
 /** Same metadata-only admission contract as D1. Transactions are synchronous across SQLite connections. */
@@ -12,7 +12,7 @@ export function openAdmissionDatabase(filename, trustedDirectory = '/srv/bread-c
     if (!candidate.startsWith(root + sep)) throw new Error('Admission database must stay inside its private directory');
     const parent = realpathSync(dirname(candidate));
     if (parent !== canonicalRoot && !parent.startsWith(canonicalRoot + sep)) throw new Error('Admission database parent must stay inside its private directory');
-    if (existsSync(candidate) && lstatSync(candidate).isSymbolicLink()) throw new Error('Admission database cannot be a symlink');
+    if (lstatSync(candidate,{throwIfNoEntry:false})?.isSymbolicLink()) throw new Error('Admission database cannot be a symlink');
     databasePath = candidate;
   }
   const db = new DatabaseSync(databasePath);

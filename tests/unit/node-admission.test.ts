@@ -39,4 +39,6 @@ it('rejects paths outside the private directory and symlinks without changing th
  expect(()=>openAdmissionDatabase(join(dir,'..','outside.sqlite'),dir)).toThrow('private directory');
  const target=join(dir,'target');writeFileSync(target,'untouched',{mode:0o640});const link=join(dir,'link.sqlite');symlinkSync(target,link);
  expect(()=>openAdmissionDatabase(link,dir)).toThrow('symlink');expect(statSync(target).mode & 0o777).toBe(0o640);
+ const dangling=join(dir,'dangling.sqlite');symlinkSync(join(dir,'missing-target'),dangling);
+ expect(()=>openAdmissionDatabase(dangling,dir)).toThrow('symlink');
 });
