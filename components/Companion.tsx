@@ -43,6 +43,13 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
   const spatial = usePhone3D() && variant === 'hero' && caps !== null;
   const [solid, setSolid] = useState(false);
   const [posterFailed, setPosterFailed] = useState(false);
+  const posterRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    // A preloaded image can fail before hydration attaches onError.
+    // Recover from that already-completed failure as well as later errors.
+    const poster = posterRef.current;
+    if (poster?.complete && poster.naturalWidth === 0) setPosterFailed(true);
+  }, []);
   // Hover and keyboard focus raise the handset once; leaving lowers it after a beat. Driven by enter/leave
   // on a hit area that never moves, so a hand resting on an edge can't make it bob.
   const [near, setNearNow] = useState(false);
@@ -120,6 +127,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           <span className={`phone-door__art ${posterFailed ? '' : 'has-poster'} ${solid ? 'is-3d' : ''}`}>
             <RedPhone pose={unavailable ? 'down' : 'rest'} className="phone-door__phone" />
             {!posterFailed && <img
+              ref={posterRef}
               className="phone-door__poster"
               src="/companion/3d/bread-phone-rest.webp"
               width={632}

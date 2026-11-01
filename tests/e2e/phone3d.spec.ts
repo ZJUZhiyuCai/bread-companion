@@ -307,15 +307,33 @@ test('readiness and model loading keep one red phone, stable bounds and no prema
   expect(await page.locator('.phone-door__art').boundingBox()).toEqual(before);
 });
 
-test('a corrupt model releases its renderer and retains the static phone', async ({ page }) => {
-  await instrument(page);
-  await page.route('**/bread-phone.glb', route => route.fulfill({ body: 'corrupt model', contentType: 'model/gltf-binary' }));
-  await home(page);
-  await expect.poll(async () => (await audit(page)).contexts, { timeout: 15_000 }).toBe(1);
-  await expect.poll(async () => (await audit(page)).liveContexts).toBe(0);
-  await expectStaticPhone(page);
-  await phone(page).click();
-  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
-  expect((await audit(page)).contexts).toBe(1);
-  await hangup(page);
-});
+for (const posterFails of [false, true]) {
+  test(`a corrupt model releases its renderer and retains ${posterFails ? 'SVG when the poster fails before hydration' : 'the static phone'}`, async ({ page }) => {
+    await instrument(page);
+    await page.route('**/bread-phone.glb', route => route.fulfill({ body: 'corrupt model', contentType: 'model/gltf-binary' }));
+    if (posterFails) {
+      await page.route('**/bread-phone-rest.webp', route => route.fulfill({ status: 404, body: '' }));
+      let release!: () => void;
+      const scripts = new Promise<void>(resolve => { release = resolve; });
+      await page.route('**/*.js', async route => { await scripts; await route.continue(); });
+      await page.goto('/', { waitUntil: 'commit' });
+      await expect.poll(() => poster(page).evaluate(el => {
+        const img = el as HTMLImageElement;
+        return img.complete && img.naturalWidth === 0;
+      })).toBe(true);
+      release();
+      await expect(phone(page)).not.toHaveAttribute('aria-disabled', 'true', { timeout: 12_000 });
+      await page.unroute('**/*.js');
+    } else await home(page);
+    await expect.poll(async () => (await audit(page)).contexts, { timeout: 15_000 }).toBe(1);
+    await expect.poll(async () => (await audit(page)).liveContexts).toBe(0);
+    if (posterFails) {
+      await expect(poster(page)).toHaveCount(0);
+      await expect(page.locator('.phone-door__phone .rp-shake')).toHaveCSS('opacity', '1');
+    } else await expectStaticPhone(page);
+    await phone(page).click();
+    await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+    expect((await audit(page)).contexts).toBe(1);
+    await hangup(page);
+  });
+}

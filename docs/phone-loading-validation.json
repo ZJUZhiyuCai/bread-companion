@@ -12,14 +12,27 @@
   },
   "checks": {
     "phoneBrowserRegression": {
-      "passed": 10,
-      "duration": "1.8m"
+      "passed": 11,
+      "duration": "1.2m"
     },
     "typecheck": "pass",
     "nextProductionBuild": "pass",
     "workerBuild": "pass",
     "boundsAndColorUnchanged": true,
-    "firstFrameGate": "Still visible after model parse while animation frames are held; live model visible only after first successful draw"
+    "firstFrameGate": "Still visible after model parse while animation frames are held; live model visible only after first successful draw",
+    "posterAndModelFailureBeforeHydration": {
+      "beforeFix": {
+        "posterExists": true,
+        "svgOpacity": "0",
+        "readyCanvas": false
+      },
+      "afterFix": {
+        "posterExists": false,
+        "svgOpacity": "1",
+        "readyCanvas": false
+      },
+      "keyboardDialingAndHangup": "pass in browser regression"
+    }
   },
   "visualStages": [
     {
