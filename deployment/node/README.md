@@ -38,3 +38,5 @@ BREAD_NODE_INTERNAL_ORIGIN=https://127.0.0.1:3220
 五个国内 Globalping 探针均为 HTTPS 200：深圳、武汉、广州、成都、上海，首个 HTML 完整下载约 1.48–3.92 秒。包含联通及云服务网络，仍不能代表所有手机线路或长期可用性。原 Sites 入口继续保留。
 
 用户确认手机功能正常、但认为 Seed 等待过长后，发布 `20261101-deepseek-empathy`，切回关闭思考的 DeepSeek Flash 和 v18 同理心提示词。候选在独立目录构建，切换时只重启面包服务。
+
+最终版本 `20261101-deepseek-final` 同时加入数据库路径边界，MiniMax 连接入口改为官方 `https://api.minimaxi.com/v1`，完整语音链路及准入检查通过。Sites v12 继续使用其已验证的原 MiniMax 入口。

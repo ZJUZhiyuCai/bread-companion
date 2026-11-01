@@ -66,3 +66,9 @@
 另一次主入口桌面浏览器合成音频测试在 ASR fetch 约 41.7 秒后失败，已保留[失败记录](evaluation/jakarta-browser-call.json)，不算通过；它与先前本机成功、真实 HTTP 冒烟通过、用户手机确认分别记录。页面及 API、AudioWorklet 静态脚本的三个国内探针均为 200，仍不代表所有线路或永久可达。
 
 DeepSeek 发布后，主入口第一次 HTTP 冒烟转写耗时约 32.5 秒、模型返回 502；独立上游探测恢复可用后再次完整检查通过。首轮浏览器 ASR 返回 502，用户麦克风轨道已正确关闭。保留[首轮失败](evaluation/jakarta-deepseek-first-smoke.json)与[成功复检](evaluation/jakarta-deepseek-smoke.json)，不掩盖跨境上游波动。备用 Sites v12 / 环境 revision 3 的[完整链路](evaluation/sites-deepseek-smoke.json)通过。
+
+主入口浏览器复检两轮及自然打断均成功，但当时整段等待仍为 **17.741 / 23.061 秒**，打断约 **366 毫秒**；第二轮模型请求也出现 9.9 秒波动，不能只报平均文本速度。见[浏览器原始记录](evaluation/jakarta-deepseek-browser.json)。
+
+进一步从雅加达交错对比两个 MiniMax 官方入口：原 `api.minimax.cn` 的两次 ASR 为 11.766 / 15.805 秒；[官方控制台](https://solutions.minimaxi.com/debug/asr)使用的 `api.minimaxi.com` 为 **1.338 / 1.067 秒**，全部返回同一转写。主入口因此改用后者，模型、声音与数据处理方不变；Sites 原链路已通过，保留其配置。这是小样本线路测量，不保证后续每次如此。[原始对比](evaluation/minimax-jakarta-endpoints.json)。
+
+最终官方入口调整后，[HTTP 冒烟](evaluation/jakarta-optimized-smoke.json)全部通过；[两轮浏览器通话](evaluation/jakarta-optimized-browser.json)也通过，ASR 降至 2.94 / 2.29 秒，开口打断约 365 毫秒。整段等待仍为 10.910 / 14.649 秒：模型与 TTS 的跨境波动仍在，因此不能宣称电话已稳定达到几秒。服务器上另对比 Wanjie 与 Tokendance 的同一 DeepSeek，各两次均成功、约 1.7–3.8 秒，未证明换接入方更优，保留 Wanjie 路由。[接入方对比](evaluation/deepseek-jakarta-providers.json)。
