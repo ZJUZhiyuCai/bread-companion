@@ -10,6 +10,8 @@ function deferred<T>() {
   void promise.catch(() => {});
   return { promise, resolve, reject };
 }
+/** Only an absent route permits using the older, unbilled transport. */
+export class VoiceTransportUnavailable extends Error {}
 
 /** The reply may render while the same request is still preparing speech. */
 export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, parent: AbortSignal, timeoutMs = 60000) {
@@ -23,15 +25,20 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
     try {
       signal.throwIfAborted();
       const res = await withAbort(fetcher('/api/agent/voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input), signal }), signal);
+      if (res.status === 404 || res.status === 405) { void res.body?.cancel().catch(() => {}); throw new VoiceTransportUnavailable(); }
       if (!res.body) throw invalid();
       reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8', { fatal: true });
       let buffer = '', bytes = 0, gotCandidate = false, clip: Blob | undefined, complete = false;
       const handle = (line: string) => {
-        const event = JSON.parse(line);
+        let event;
+        try { event = JSON.parse(line); } catch { throw invalid(); }
+        if (!event || typeof event !== 'object') throw invalid();
         if (event.type === 'error' && event.error?.requestId === input.requestId) throw new Error(typeof event.error.userMessage === 'string' ? event.error.userMessage.slice(0, 400) : '声音暂时没接上，文字回复还在。');
         if (event.type === 'candidate' && !gotCandidate && !clip) {
-          const parsed = candidateSchema.parse(event.candidate);
+          const parsedResult = candidateSchema.safeParse(event.candidate);
+          if (!parsedResult.success) throw invalid();
+          const parsed = parsedResult.data;
           if (validateCandidate(parsed, input).length) throw invalid();
           gotCandidate = true; candidate.resolve(parsed);
         } else if (event.type === 'audio' && gotCandidate && !clip && event.requestId === input.requestId && event.mime === 'audio/mpeg') {
@@ -49,7 +56,7 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
         if (chunk.done) break;
         bytes += chunk.value.byteLength;
         if (bytes > (res.ok ? 8 * 1024 * 1024 : 16384)) throw invalid();
-        buffer += decoder.decode(chunk.value, { stream: true });
+        try { buffer += decoder.decode(chunk.value, { stream: true }); } catch { throw invalid(); }
         if (!res.ok) continue;
         if (!res.headers.get('content-type')?.startsWith('application/x-ndjson')) throw invalid();
         let newline: number;
@@ -60,7 +67,8 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
         }
       }
       if (!res.ok) {
-        const error = JSON.parse(buffer + decoder.decode()).error;
+        let error;
+        try { error = JSON.parse(buffer + decoder.decode())?.error; } catch { throw invalid(); }
         throw new Error(typeof error?.userMessage === 'string' ? error.userMessage.slice(0, 400) : '回复没有接上，再试一次？');
       }
       // EOF without an explicit done event is a broken response, never success.

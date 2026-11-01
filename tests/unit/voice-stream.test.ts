@@ -9,7 +9,7 @@ import { resetCircuitsForTest } from '@/server/resilience';
 import { AppError } from '@/server/errors';
 import { requestFixture } from '@/fixtures/scenarios';
 import { mockCandidate } from '@/server/providers/mock-agent';
-import { requestVoiceTurn } from '@/services/voice-turn';
+import { requestVoiceTurn, VoiceTransportUnavailable } from '@/services/voice-turn';
 import { getCapabilities } from '@/server/config';
 import { BreadController } from '@/services/bread-controller';
 import type { CallAudioEvents, CallAudioPort } from '@/services/call-audio';
@@ -156,6 +156,15 @@ describe('bounded browser voice transport', () => {
     await expect(turn.candidate).rejects.toMatchObject({ name: 'AbortError' }); await expect(turn.audio).rejects.toMatchObject({ name: 'AbortError' });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('only marks an absent endpoint as a safe transport fallback, and sanitizes broken payloads', async () => {
+    for (const status of [404, 405, 502]) {
+      const turn = requestVoiceTurn(vi.fn(async () => new Response(status === 405 ? null : 'upstream HTML', { status })), input(), new AbortController().signal);
+      if (status !== 502) await expect(turn.candidate).rejects.toBeInstanceOf(VoiceTransportUnavailable);
+      else await expect(turn.candidate).rejects.toThrow('声音连接中断');
+    }
+    const turn = requestVoiceTurn(vi.fn(async () => response([{ type: 'candidate', candidate: { privateError: 'details' } }])), input(), new AbortController().signal);
+    await expect(turn.candidate).rejects.toThrow('声音连接中断');
+  });
 
   it('supports an explicit server rollout switch while old clients keep using the original API', () => {
     vi.stubEnv('AGENT_PROVIDER', 'real'); expect(getCapabilities().tts.turnStream).toBe(true);
@@ -164,6 +173,26 @@ describe('bounded browser voice transport', () => {
 });
 
 describe('call controller owns the combined response', () => {
+  it('survives a server rollback with one fallback only when the new route is explicitly absent', async () => {
+    let events!: CallAudioEvents;
+    const audio: CallAudioPort = { open: vi.fn(async e => { events = e; return true; }), close: vi.fn(), listen: vi.fn(), finish: vi.fn(), stopPlayback: vi.fn(), play: vi.fn(async (_b, _s, start) => start()) };
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/capabilities')) { const caps = getCapabilities(); caps.agent.configured = true; caps.asr.available = true; caps.tts.turnStream = true; return Response.json(caps); }
+      if (String(url).endsWith('/transcribe')) return Response.json({ requestId: (init!.body as FormData).get('requestId'), text: '这句也要接住。' });
+      if (String(url).endsWith('/voice')) return new Response('Previous deployment', { status: 404 });
+      if (String(url).endsWith('/turn')) return Response.json(mockCandidate(JSON.parse(init!.body as string)));
+      if (String(url).endsWith('/synthesize')) return new Response(new Blob(['audio']));
+      throw new Error('Unexpected request');
+    });
+    const c = new BreadController(fetcher, undefined, audio);
+    try {
+      await c.initialize(); await c.startCall(); vi.mocked(audio.play).mockClear();
+      events.utterance(new File(['fixture'], 'speech.wav', { type: 'audio/wav' }));
+      await vi.waitFor(() => expect(audio.play).toHaveBeenCalledTimes(1));
+      expect(c.getSnapshot().capabilities?.tts.turnStream).toBe(false);
+      for (const suffix of ['/voice', '/turn', '/synthesize']) expect(fetcher.mock.calls.filter(([url]) => String(url).endsWith(suffix))).toHaveLength(1);
+    } finally { c.dispose(); }
+  });
   async function callHarness() {
     let events!: CallAudioEvents, writer!: ReadableStreamDefaultController<Uint8Array>, sent!: TurnRequest;
     const audio: CallAudioPort = { open: vi.fn(async e => { events = e; return true; }), close: vi.fn(), listen: vi.fn(), finish: vi.fn(), stopPlayback: vi.fn(), play: vi.fn(async (_b, _s, start) => { start(); }) };

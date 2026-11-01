@@ -12,7 +12,7 @@ import { RunController } from './run-controller';
 import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
-import { requestVoiceTurn } from './voice-turn';
+import { requestVoiceTurn, VoiceTransportUnavailable } from './voice-turn';
 import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
@@ -181,14 +181,25 @@ export class BreadController {
       const validated = turnRequestSchema.safeParse(request); if (!validated.success) { retryable = false; throw new Error('这段内容有点长，可以分几段发送。'); }
       let json: unknown;
       let speech: Promise<Blob> | undefined;
+      const legacy = async () => {
+        signal.throwIfAborted();
+        const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
+        const body = await res.json();
+        if (!res.ok) { retryable = body.error?.retryable !== false; throw new Error(body.error?.userMessage || '回复没有接上，再试一次？'); }
+        return body;
+      };
       if (channel === 'call' && request.mode === 'listen' && this.capabilities?.tts.turnStream) {
         const stream = requestVoiceTurn(this.voiceFetcher, validated.data, signal);
-        speech = stream.audio; json = await stream.candidate;
+        try { json = await stream.candidate; speech = stream.audio; }
+        catch (error) {
+          if (!(error instanceof VoiceTransportUnavailable) || signal.aborted) throw error;
+          // A previous server release may not have the route. Never retry a timeout/5xx,
+          // a truncated stream, or any response that might already have invoked a provider.
+          this.capabilities = { ...this.capabilities, tts: { ...this.capabilities.tts, turnStream: false } };
+          json = await legacy();
+        }
       } else {
-        const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
-        const body = await res.json(); json = body;
-        if (!isCurrent(this.state, token) || signal.aborted) return;
-        if (!res.ok) { retryable = body.error?.retryable !== false; throw new Error(body.error?.userMessage || '回复没有接上，再试一次？'); }
+        json = await legacy();
       }
       if (!isCurrent(this.state, token) || signal.aborted) return;
       this.dispatch({ type: 'ACTIVITY', token, activity: 'validating' });
