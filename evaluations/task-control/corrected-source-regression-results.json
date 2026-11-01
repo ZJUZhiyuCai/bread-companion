@@ -1,0 +1,1240 @@
+{
+  "synthetic": true,
+  "testedAt": "2026-11-01T04:18:51.204Z",
+  "promptVersion": "bread-2026-11-01-v15-user-control",
+  "promptSha256": "b743f171ee4e495ac699e73eb62b26139d8a44ca679f6ac574153fddec16d987",
+  "service": "DeepSeek · Magpie",
+  "method": "Actual BreadController → local production API → configured real model, one sample per step. No physical microphone or real participants. Human reading required for semantic quality.",
+  "rows": [
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_25aba043-b74d-4d05-a3b5-40cfe106a7cf",
+        "epoch": 0,
+        "contextRevision": 1,
+        "requestId": "request_46d31260-1107-495f-919c-9f8427ad5976",
+        "mode": "listen",
+        "userMessage": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。",
+        "context": {
+          "rejectedFindings": [],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "assistant",
+              "text": "想从哪里说起都可以。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 1188,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_25aba043-b74d-4d05-a3b5-40cfe106a7cf",
+        "epoch": 0,
+        "contextRevision": 1,
+        "requestId": "request_46d31260-1107-495f-919c-9f8427ad5976",
+        "assistantText": "准备了三天，就换来一句“不合适”，确实挺堵的。今晚不聊建议，你想说就说。",
+        "findings": [],
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d",
+        "epoch": 2,
+        "contextRevision": 3,
+        "requestId": "request_a28651fb-fbc6-4242-b232-19dec5293c3d",
+        "mode": "review",
+        "userMessage": "现在我想复盘了",
+        "context": {
+          "rejectedFindings": [],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "assistant",
+              "text": "想从哪里说起都可以。"
+            },
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "assistant",
+              "text": "准备了三天，就换来一句“不合适”，确实挺堵的。今晚不聊建议，你想说就说。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 3903,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d",
+        "epoch": 2,
+        "contextRevision": 3,
+        "requestId": "request_a28651fb-fbc6-4242-b232-19dec5293c3d",
+        "assistantText": "你回忆的那段回答里，收集录音、逐条核对决定事项，这个做法本身挺具体。能看出的一处是：当时没说明“怎样算通过”。拒因还是不知道，先不往那儿推。",
+        "findings": [
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f1",
+            "kind": "reported_fact",
+            "text": "用户回忆自己的回答是：收集二十段会议录音，让模型生成纪要，再逐条核对是否漏掉决定事项。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f2",
+            "kind": "reported_fact",
+            "text": "用户回忆当时没有解释通过标准。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "当时没有解释通过标准"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f3",
+            "kind": "inference",
+            "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "当时没有解释通过标准"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f4",
+            "kind": "unknown",
+            "text": "拒信只说了“不合适”，拒绝的具体原因未知，材料里也没有其他面试环节的信息。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+                "sourceRevision": 1,
+                "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+                "quote": "最后只收到一句不合适"
+              }
+            ],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_card",
+          "caseId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "这段回答的复盘",
+          "sections": [
+            {
+              "key": "你回忆的回答",
+              "text": "收集二十段会议录音，生成纪要，再逐条核对是否漏掉决定事项。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f1"
+              ]
+            },
+            {
+              "key": "可改进的一点",
+              "text": "回答里没说明“怎样算通过”。下次可以补一句判定标准，比如漏掉决定事项的比例到多少算合格。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f2",
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f3"
+              ]
+            },
+            {
+              "key": "未知",
+              "text": "拒因未知，这段回忆不足以推出被拒的原因。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f4"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:18:56.299Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "event": "adversarial-valid-quote-overstated-conclusion",
+      "syntheticMutation": true,
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d",
+        "epoch": 2,
+        "contextRevision": 3,
+        "requestId": "request_a28651fb-fbc6-4242-b232-19dec5293c3d",
+        "mode": "review",
+        "userMessage": "现在我想复盘了",
+        "context": {
+          "rejectedFindings": [],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "assistant",
+              "text": "想从哪里说起都可以。"
+            },
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "assistant",
+              "text": "准备了三天，就换来一句“不合适”，确实挺堵的。今晚不聊建议，你想说就说。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "candidate": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d",
+        "epoch": 2,
+        "contextRevision": 3,
+        "requestId": "request_a28651fb-fbc6-4242-b232-19dec5293c3d",
+        "assistantText": "你回忆的那段回答里，收集录音、逐条核对决定事项，这个做法本身挺具体。能看出的一处是：当时没说明“怎样算通过”。拒因还是不知道，先不往那儿推。",
+        "findings": [
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f1",
+            "kind": "inference",
+            "text": "这段回答证明你整体能力不足。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f2",
+            "kind": "reported_fact",
+            "text": "用户回忆当时没有解释通过标准。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "当时没有解释通过标准"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f3",
+            "kind": "inference",
+            "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "当时没有解释通过标准"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f4",
+            "kind": "unknown",
+            "text": "拒信只说了“不合适”，拒绝的具体原因未知，材料里也没有其他面试环节的信息。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+                "sourceRevision": 1,
+                "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+                "quote": "最后只收到一句不合适"
+              }
+            ],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_card",
+          "caseId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "这段回答的复盘",
+          "sections": [
+            {
+              "key": "你回忆的回答",
+              "text": "收集二十段会议录音，生成纪要，再逐条核对是否漏掉决定事项。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f1"
+              ]
+            },
+            {
+              "key": "可改进的一点",
+              "text": "回答里没说明“怎样算通过”。下次可以补一句判定标准，比如漏掉决定事项的比例到多少算合格。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f2",
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f3"
+              ]
+            },
+            {
+              "key": "未知",
+              "text": "拒因未知，这段回忆不足以推出被拒的原因。",
+              "findingIds": [
+                "run_2f578c0f-4714-4c7e-8f5a-4dfe5b881d9d_f4"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:18:56.299Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      },
+      "structuralErrors": [],
+      "interpretation": "An existing exact quote does not prove the inference. This is a structural-validator boundary probe, not a model-generated response."
+    },
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_45170fdc-3fee-46f9-8e72-8305f53898f2",
+        "epoch": 4,
+        "contextRevision": 5,
+        "requestId": "request_c987ae4d-36fd-4462-9ae3-f78ff7f95dae",
+        "mode": "review",
+        "userMessage": "帮我复盘一下刚才的面试片段。\n本次修改方向（用户说明）：不要把这一段当成我的整体能力；换个具体切口。",
+        "context": {
+          "rejectedFindings": [
+            {
+              "needsAcknowledgement": true,
+              "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+              "mode": "review",
+              "sources": [
+                {
+                  "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                  "sourceRevision": 1
+                }
+              ]
+            }
+          ],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "user",
+              "text": "现在我想复盘了"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 2435,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_45170fdc-3fee-46f9-8e72-8305f53898f2",
+        "epoch": 4,
+        "contextRevision": 5,
+        "requestId": "request_c987ae4d-36fd-4462-9ae3-f78ff7f95dae",
+        "assistantText": "先收回之前那句“怎样算通过没展开”——那是我从一段回忆里推出来的，不该当成你的问题。换个切口：你这段里其实有个挺具体的动作，二十段录音、逐条核对决定事项。想聊的话，我可以只从“核对”这一步往下问一句。",
+        "findings": [
+          {
+            "id": "run_45170fdc-3fee-46f9-8e72-8305f53898f2_f1",
+            "kind": "reported_fact",
+            "text": "用户回忆：被问如何评测会议纪要 Agent，答用二十段会议录音生成纪要，再由本人逐条核对是否漏掉决定事项。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 1,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r1:s0",
+                "quote": "收集二十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_45170fdc-3fee-46f9-8e72-8305f53898f2_f2",
+            "kind": "unknown",
+            "text": "拒因未知，一般拒信与这段回答的关系无法确认。",
+            "evidenceRefs": [],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_45170fdc-3fee-46f9-8e72-8305f53898f2_card",
+          "caseId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "这段回答里可看的一处",
+          "sections": [
+            {
+              "key": "已确认",
+              "text": "你回忆的做法是：二十段会议录音生成纪要，本人逐条核对是否漏掉决定事项。",
+              "findingIds": [
+                "run_45170fdc-3fee-46f9-8e72-8305f53898f2_f1"
+              ]
+            },
+            {
+              "key": "未知",
+              "text": "拒信只说“不合适”，拒因无法从材料推出。",
+              "findingIds": [
+                "run_45170fdc-3fee-46f9-8e72-8305f53898f2_f2"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:18:58.745Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_92a16502-be4c-487d-a105-063f1b392b59",
+        "epoch": 6,
+        "contextRevision": 7,
+        "requestId": "request_6b5232a5-2462-4466-a6d6-e81bbf67393b",
+        "mode": "review",
+        "userMessage": "帮我复盘一下刚才的面试片段。",
+        "context": {
+          "rejectedFindings": [
+            {
+              "needsAcknowledgement": false,
+              "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+              "mode": "review",
+              "sources": [
+                {
+                  "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                  "sourceRevision": 1
+                }
+              ]
+            }
+          ],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "user",
+              "text": "现在我想复盘了"
+            },
+            {
+              "role": "user",
+              "text": "帮我复盘一下刚才的面试片段。\n本次修改方向（用户说明）：不要把这一段当成我的整体能力；换个具体切口。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 2,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 5163,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_92a16502-be4c-487d-a105-063f1b392b59",
+        "epoch": 6,
+        "contextRevision": 7,
+        "requestId": "request_6b5232a5-2462-4466-a6d6-e81bbf67393b",
+        "assistantText": "这段回答里，你给出了具体做法：用十段录音生成纪要，再逐条核对决定事项有没有漏。但“通过标准”当时没讲，比如漏掉几条算不合格。拒因不知道，也不从这一句推整体能力。",
+        "findings": [
+          {
+            "id": "run_92a16502-be4c-487d-a105-063f1b392b59_f1",
+            "kind": "reported_fact",
+            "text": "你回忆的回答包含具体评测做法：十段会议录音、模型生成纪要、你逐条核对决定事项是否遗漏。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 2,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+                "quote": "收集十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_92a16502-be4c-487d-a105-063f1b392b59_f2",
+            "kind": "reported_fact",
+            "text": "你明确说当时没有解释通过标准，并说明这是回忆、不知道拒绝原因。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 2,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+                "quote": "当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_92a16502-be4c-487d-a105-063f1b392b59_f3",
+            "kind": "inference",
+            "text": "就这一段回答看，可改进的切口是补上“怎样算通过”，例如漏项到什么程度算不合格；这只是对这段回答的观察，不涉及拒因或整体能力。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                "sourceRevision": 2,
+                "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+                "quote": "当时没有解释通过标准"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_92a16502-be4c-487d-a105-063f1b392b59_f4",
+            "kind": "unknown",
+            "text": "拒信只写“不合适”，无法据此判断拒绝原因，也不清楚面试官当时如何评价这段回答。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+                "sourceRevision": 1,
+                "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+                "quote": "最后只收到一句不合适"
+              }
+            ],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_92a16502-be4c-487d-a105-063f1b392b59_card",
+          "caseId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "会议纪要 Agent 评测回答：一个切口",
+          "sections": [
+            {
+              "key": "你当时说的",
+              "text": "十段会议录音、模型生成纪要、你逐条核对决定事项是否遗漏。",
+              "findingIds": [
+                "run_92a16502-be4c-487d-a105-063f1b392b59_f1"
+              ]
+            },
+            {
+              "key": "可改进的一点",
+              "text": "补一句通过标准，比如漏掉几条决定事项算不合格、核对结果怎么记录。只针对这段回答，不推整体能力。",
+              "findingIds": [
+                "run_92a16502-be4c-487d-a105-063f1b392b59_f2",
+                "run_92a16502-be4c-487d-a105-063f1b392b59_f3"
+              ]
+            },
+            {
+              "key": "仍未知",
+              "text": "拒因未知，面试官对这段回答的具体看法也没有材料。",
+              "findingIds": [
+                "run_92a16502-be4c-487d-a105-063f1b392b59_f4"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:19:03.900Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_41c0ef20-7b84-450a-a2d1-31f72755e91b",
+        "epoch": 7,
+        "contextRevision": 9,
+        "requestId": "request_f5749520-373c-497e-9d44-71805dc91b21",
+        "mode": "practice",
+        "userMessage": "陪我练一题，请根据我们聊过的内容选一个问题。",
+        "context": {
+          "rejectedFindings": [
+            {
+              "needsAcknowledgement": false,
+              "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+              "mode": "review",
+              "sources": [
+                {
+                  "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                  "sourceRevision": 1
+                }
+              ]
+            }
+          ],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "user",
+              "text": "现在我想复盘了"
+            },
+            {
+              "role": "user",
+              "text": "帮我复盘一下刚才的面试片段。\n本次修改方向（用户说明）：不要把这一段当成我的整体能力；换个具体切口。"
+            },
+            {
+              "role": "user",
+              "text": "帮我复盘一下刚才的面试片段。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 2,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 1876,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_41c0ef20-7b84-450a-a2d1-31f72755e91b",
+        "epoch": 7,
+        "contextRevision": 9,
+        "requestId": "request_f5749520-373c-497e-9d44-71805dc91b21",
+        "assistantText": "那就接着会议纪要 Agent 这段来。面试官问“怎样评测”，你说了收集十段录音、逐条核对漏没漏决定事项。现在不用重讲全部，只补一句：你当时会怎么判断一份纪要算通过、一份算不通过？直接说就行，想换题也可以。",
+        "findings": [],
+        "practiceSetup": {
+          "question": "接着你回忆里的回答：怎样判断一份会议纪要算“通过”、一份算“不通过”？",
+          "criteria": [
+            "通过标准是否具体可操作"
+          ]
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "input": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_8496a296-622c-4079-b8db-d82643aff912",
+        "epoch": 7,
+        "contextRevision": 11,
+        "requestId": "request_ef7d17d7-cca2-4651-8455-4ef45200628c",
+        "mode": "practice",
+        "userMessage": "我会让两个人独立标出会议里的决定事项，比较纪要是否遗漏。现在还没做过这个实验，所以我没有通过率可报告。",
+        "context": {
+          "rejectedFindings": [
+            {
+              "needsAcknowledgement": false,
+              "text": "从这段回忆看，回答里已有具体做法，但“怎样算通过”没有展开；这只是对这段回答的观察，不能说明拒因。",
+              "mode": "review",
+              "sources": [
+                {
+                  "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+                  "sourceRevision": 1
+                }
+              ]
+            }
+          ],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "user",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            },
+            {
+              "role": "user",
+              "text": "现在我想复盘了"
+            },
+            {
+              "role": "user",
+              "text": "帮我复盘一下刚才的面试片段。\n本次修改方向（用户说明）：不要把这一段当成我的整体能力；换个具体切口。"
+            },
+            {
+              "role": "user",
+              "text": "帮我复盘一下刚才的面试片段。"
+            },
+            {
+              "role": "user",
+              "text": "陪我练一题，请根据我们聊过的内容选一个问题。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "本次练习回答",
+              "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+              "text": "我会让两个人独立标出会议里的决定事项，比较纪要是否遗漏。现在还没做过这个实验，所以我没有通过率可报告。"
+            },
+            {
+              "sourceId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde",
+              "sourceRevision": 2,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_ff8044e7-fe2f-44f4-8b89-e88696be5fde:r2:s0",
+              "text": "面试官问：怎样评测会议纪要 Agent？我回答：收集十段会议录音，让模型生成纪要，再由我逐条核对是否漏掉决定事项。当时没有解释通过标准。这是我的回忆，不知道拒绝的原因。"
+            },
+            {
+              "sourceId": "source_354bd361-7906-4e37-beb3-9144176977f0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_354bd361-7906-4e37-beb3-9144176977f0:r1:s0",
+              "text": "刚收到产品实习的拒信。我准备了三天，最后只收到一句不合适。今晚不想听建议。"
+            }
+          ],
+          "preferences": {},
+          "selectedQuestion": "接着你回忆里的回答：怎样判断一份会议纪要算“通过”、一份算“不通过”？",
+          "practiceCriteria": [
+            "通过标准是否具体可操作"
+          ]
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 7501,
+      "output": {
+        "sessionId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+        "runId": "run_8496a296-622c-4079-b8db-d82643aff912",
+        "epoch": 7,
+        "contextRevision": 11,
+        "requestId": "request_ef7d17d7-cca2-4651-8455-4ef45200628c",
+        "assistantText": "这次你把“通过”落到了可比较的动作上：两人独立标决定事项，再看纪要漏没漏。还没跑过实验、不报通过率，这个边界说得很清楚。下一步可以把“怎样算遗漏”定成一句可执行的判定，比如两人标注不一致时怎么处理。",
+        "findings": [
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f1",
+            "kind": "reported_fact",
+            "text": "回答提出两人独立标注决定事项、比较纪要是否遗漏，属于可操作的评测设计。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "我会让两个人独立标出会议里的决定事项，比较纪要是否遗漏。"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f2",
+            "kind": "reported_fact",
+            "text": "用户明确说明实验尚未进行，没有通过率数据；回答如实保留了这个未知。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "现在还没做过这个实验，所以我没有通过率可报告。"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f3",
+            "kind": "inference",
+            "text": "回答尚未说明两人标注不一致时如何裁定，也未给出“遗漏”的判定阈值；这只是对当前回答的观察。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "比较纪要是否遗漏"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f4",
+            "kind": "practice_suggestion",
+            "text": "材料有限的通用建议：用一句话补上判定规则，例如两人标注不一致时由第三人裁定，或漏掉任一决定事项即记为不通过。",
+            "evidenceRefs": [],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_8496a296-622c-4079-b8db-d82643aff912_card",
+          "caseId": "session_e7093ee3-b3ac-45b7-aab8-21ec9991e927",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "练习复盘：通过标准",
+          "sections": [
+            {
+              "key": "已展示",
+              "text": "两人独立标注决定事项，再比较纪要是否遗漏；实验未做，不报通过率。",
+              "findingIds": [
+                "run_8496a296-622c-4079-b8db-d82643aff912_f1",
+                "run_8496a296-622c-4079-b8db-d82643aff912_f2"
+              ]
+            },
+            {
+              "key": "可改进",
+              "text": "“遗漏”的判定和标注分歧的处理还没说清。",
+              "findingIds": [
+                "run_8496a296-622c-4079-b8db-d82643aff912_f3"
+              ]
+            },
+            {
+              "key": "练习提纲",
+              "text": "补一句判定规则：分歧如何裁定、漏几项算不通过。",
+              "findingIds": [
+                "run_8496a296-622c-4079-b8db-d82643aff912_f4"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:19:13.294Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "event": "user-edit-and-explicit-save",
+      "archive": {
+        "schemaVersion": 1,
+        "caseId": "case_a5695743-e149-43fe-b20e-2e60538ef5dd",
+        "savedAt": "2026-11-01T04:19:13.301Z",
+        "cards": [
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_card",
+            "caseId": "case_a5695743-e149-43fe-b20e-2e60538ef5dd",
+            "revision": 5,
+            "parentRevision": 4,
+            "titleUserEdited": false,
+            "type": "review",
+            "title": "练习复盘：通过标准",
+            "sections": [
+              {
+                "key": "已展示",
+                "text": "两人独立标注决定事项，再比较纪要是否遗漏；实验未做，不报通过率。 我补写的计划：明天先试两段。",
+                "findingIds": [
+                  "run_8496a296-622c-4079-b8db-d82643aff912_f1",
+                  "run_8496a296-622c-4079-b8db-d82643aff912_f2"
+                ],
+                "userEdited": true
+              },
+              {
+                "key": "可改进",
+                "text": "“遗漏”的判定和标注分歧的处理还没说清。",
+                "findingIds": [
+                  "run_8496a296-622c-4079-b8db-d82643aff912_f3"
+                ],
+                "userEdited": false
+              },
+              {
+                "key": "练习提纲",
+                "text": "补一句判定规则：分歧如何裁定、漏几项算不通过。",
+                "findingIds": [
+                  "run_8496a296-622c-4079-b8db-d82643aff912_f4"
+                ],
+                "userEdited": false
+              }
+            ],
+            "validity": "confirmed",
+            "createdAt": "2026-11-01T04:19:13.294Z",
+            "serviceMode": "real"
+          }
+        ],
+        "findings": [
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f1",
+            "kind": "reported_fact",
+            "text": "回答提出两人独立标注决定事项、比较纪要是否遗漏，属于可操作的评测设计。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "我会让两个人独立标出会议里的决定事项，比较纪要是否遗漏。"
+              }
+            ],
+            "validity": "confirmed"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f2",
+            "kind": "reported_fact",
+            "text": "用户明确说明实验尚未进行，没有通过率数据；回答如实保留了这个未知。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "现在还没做过这个实验，所以我没有通过率可报告。"
+              }
+            ],
+            "validity": "confirmed"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f3",
+            "kind": "inference",
+            "text": "回答尚未说明两人标注不一致时如何裁定，也未给出“遗漏”的判定阈值；这只是对当前回答的观察。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+                "sourceRevision": 1,
+                "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+                "quote": "比较纪要是否遗漏"
+              }
+            ],
+            "validity": "confirmed"
+          },
+          {
+            "id": "run_8496a296-622c-4079-b8db-d82643aff912_f4",
+            "kind": "practice_suggestion",
+            "text": "材料有限的通用建议：用一句话补上判定规则，例如两人标注不一致时由第三人裁定，或漏掉任一决定事项即记为不通过。",
+            "evidenceRefs": [],
+            "validity": "confirmed"
+          }
+        ],
+        "selectedEvidence": [
+          {
+            "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+            "sourceRevision": 1,
+            "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+            "quote": "我会让两个人独立标出会议里的决定事项，比较纪要是否遗漏。",
+            "origin": "user_recollection",
+            "confirmed": true
+          },
+          {
+            "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+            "sourceRevision": 1,
+            "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+            "quote": "现在还没做过这个实验，所以我没有通过率可报告。",
+            "origin": "user_recollection",
+            "confirmed": true
+          },
+          {
+            "sourceId": "source_613b3e00-75a4-4060-b5df-3439adcd716e",
+            "sourceRevision": 1,
+            "segmentId": "source_613b3e00-75a4-4060-b5df-3439adcd716e:r1:s0",
+            "quote": "比较纪要是否遗漏",
+            "origin": "user_recollection",
+            "confirmed": true
+          }
+        ],
+        "confirmedPractice": []
+      }
+    },
+    {
+      "event": "end",
+      "lifecycle": "ended",
+      "rawSources": 0,
+      "corrections": 0
+    },
+    {
+      "input": {
+        "sessionId": "session_df22ff08-48d2-49a3-b79a-a396b4abd83e",
+        "runId": "run_3f12c117-d544-4ef4-9adc-08f021b6f69b",
+        "epoch": 2,
+        "contextRevision": 2,
+        "requestId": "request_349b7c44-308d-482d-9305-f761d2b4da51",
+        "mode": "review",
+        "userMessage": "可以帮我看看刚才那段回答吗？",
+        "context": {
+          "rejectedFindings": [],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "assistant",
+              "text": "可以直接说说面试里让你挂心的片段，或贴一段当时的回答。我来帮你理一理。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381:r1:s0",
+              "text": "感谢应聘。综合考虑，本次暂不合适，祝求职顺利。"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 2936,
+      "output": {
+        "sessionId": "session_df22ff08-48d2-49a3-b79a-a396b4abd83e",
+        "runId": "run_3f12c117-d544-4ef4-9adc-08f021b6f69b",
+        "epoch": 2,
+        "contextRevision": 2,
+        "requestId": "request_349b7c44-308d-482d-9305-f761d2b4da51",
+        "assistantText": "这段是拒信原文，不是你的回答内容，所以暂时没法看表达或结构。方便贴一下你当时那段回答吗？有岗位描述也可以一起发。",
+        "findings": [
+          {
+            "id": "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_f1",
+            "kind": "reported_fact",
+            "text": "现有材料只有一封通用拒信，没有本人回答原文，无法据此分析表达或内容。",
+            "evidenceRefs": [
+              {
+                "sourceId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381",
+                "sourceRevision": 1,
+                "segmentId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381:r1:s0",
+                "quote": "感谢应聘。综合考虑，本次暂不合适，祝求职顺利。"
+              }
+            ],
+            "validity": "draft"
+          },
+          {
+            "id": "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_f2",
+            "kind": "unknown",
+            "text": "拒信未说明具体原因，无法推断是哪一环节或哪句话导致未通过。",
+            "evidenceRefs": [],
+            "validity": "draft"
+          }
+        ],
+        "cardDraft": {
+          "id": "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_card",
+          "caseId": "session_df22ff08-48d2-49a3-b79a-a396b4abd83e",
+          "revision": 1,
+          "parentRevision": null,
+          "type": "review",
+          "title": "当前可看的内容",
+          "sections": [
+            {
+              "key": "已有材料",
+              "text": "一封通用拒信，措辞未指向具体环节或原因。",
+              "findingIds": [
+                "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_f1",
+                "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_f2"
+              ]
+            },
+            {
+              "key": "还缺什么",
+              "text": "需要你当时的回答原文；若有岗位描述，可一并提供。",
+              "findingIds": [
+                "run_3f12c117-d544-4ef4-9adc-08f021b6f69b_f1"
+              ]
+            }
+          ],
+          "validity": "draft",
+          "createdAt": "2026-11-01T04:19:16.240Z",
+          "serviceMode": "real"
+        },
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    },
+    {
+      "input": {
+        "sessionId": "session_df22ff08-48d2-49a3-b79a-a396b4abd83e",
+        "runId": "run_7b5e69ab-bc36-4314-93ca-d4ee31b23fe8",
+        "epoch": 3,
+        "contextRevision": 3,
+        "requestId": "request_a61bbdf8-b884-446c-8e74-065f392becb6",
+        "mode": "listen",
+        "userMessage": "我现在不想复盘了",
+        "context": {
+          "rejectedFindings": [],
+          "summary": "",
+          "recentMessages": [
+            {
+              "role": "assistant",
+              "text": "可以直接说说面试里让你挂心的片段，或贴一段当时的回答。我来帮你理一理。"
+            },
+            {
+              "role": "user",
+              "text": "可以帮我看看刚才那段回答吗？"
+            },
+            {
+              "role": "assistant",
+              "text": "这段是拒信原文，不是你的回答内容，所以暂时没法看表达或结构。方便贴一下你当时那段回答吗？有岗位描述也可以一起发。"
+            }
+          ],
+          "sources": [],
+          "sourceSegments": [
+            {
+              "sourceId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "粘贴的材料 1",
+              "segmentId": "source_f15fde9f-4043-4aa1-ab60-8097bac6c381:r1:s0",
+              "text": "感谢应聘。综合考虑，本次暂不合适，祝求职顺利。"
+            },
+            {
+              "sourceId": "source_562c923b-dbb4-4e61-a7be-f4e1af839fa0",
+              "sourceRevision": 1,
+              "origin": "user_recollection",
+              "confirmed": true,
+              "label": "我说的话",
+              "segmentId": "source_562c923b-dbb4-4e61-a7be-f4e1af839fa0:r1:s0",
+              "text": "我现在不想复盘了"
+            }
+          ],
+          "preferences": {}
+        },
+        "channel": "text"
+      },
+      "status": 200,
+      "elapsedMs": 1974,
+      "output": {
+        "sessionId": "session_df22ff08-48d2-49a3-b79a-a396b4abd83e",
+        "runId": "run_7b5e69ab-bc36-4314-93ca-d4ee31b23fe8",
+        "epoch": 3,
+        "contextRevision": 3,
+        "requestId": "request_a61bbdf8-b884-446c-8e74-065f392becb6",
+        "assistantText": "好，那就不复盘了，先放着。",
+        "findings": [],
+        "supportGuidance": false,
+        "warnings": [],
+        "serviceMode": "real"
+      }
+    }
+  ]
+}

@@ -37,7 +37,7 @@ interface ConversationProps {
   cardSaved: boolean;
   onOpenCard: () => void;
   onSaveCard: () => void;
-  onRedoCard: (card: Card) => void;
+  onRedoCard: (card: Card, direction?: string) => void;
   busy: boolean;
   canAct: boolean;
   callMarks: CallMark[];
@@ -272,7 +272,7 @@ export function Conversation(props: ConversationProps) {
             canAct={canAct}
             onOpen={onOpenCard}
             onSave={onSaveCard}
-            onRedo={() => onRedoCard(card)}
+            onRedo={(direction) => onRedoCard(card, direction)}
           />
         )}
         <div ref={endRef} className="conversation__end" />

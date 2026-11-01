@@ -2,6 +2,9 @@
 
 ## 当前产品
 
+- [三分钟核心任务](demo.md)：在线进入、主动复盘、依据、纠正、练习与保存。
+- [核心任务验收与原始输出](../evaluations/task-control/README.md)：v15 用户控制修复、实际合成任务、未执行的观察计划。
+
 - [0.4.0 细节设计、并发与上线验收](craft-online-validation.md)：测试证据、实际发布与尚未验证的范围。
 - [在线部署与限额](deployment.md)：Worker、共享 D1、secrets、发布与回退。
 

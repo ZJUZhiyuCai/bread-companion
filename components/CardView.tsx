@@ -30,6 +30,21 @@ function SavedTag() {
   );
 }
 
+function RedoControl({ onRedo, busy, locked = false }: { onRedo: (direction?: string) => void; busy: boolean; locked?: boolean }) {
+  const [direction, setDirection] = useState('');
+  const id = useDomId('redo');
+  return <div>
+    <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={() => onRedo(direction)}>
+      <RotateCcw aria-hidden="true" /> {locked ? '让面包重新整理' : '重新整理'}
+    </button>
+    <details className="basis">
+      <summary>换个方向（可选）</summary>
+      <label className="field__label" htmlFor={id}>希望怎么改</label>
+      <input id={id} className="field-input" maxLength={300} placeholder="例如：更具体一点、换个切口" value={direction} onChange={e => setDirection(e.target.value)} disabled={busy} />
+    </details>
+  </div>;
+}
+
 interface CardViewProps {
   card: Card;
   findings: Finding[];
@@ -40,7 +55,7 @@ interface CardViewProps {
   onEdit?: (title: string, sections: Card['sections']) => void;
   onRequestSave?: () => void;
   onExport?: (format: 'md' | 'json') => void;
-  onRedo?: () => void;
+  onRedo?: (direction?: string) => void;
   onOpenSource?: (id: string) => void;
   /** Bump to open the editor from outside (e.g. “再改改” in the save preview). */
   editToken?: number;
@@ -117,7 +132,7 @@ export function CardView(props: CardViewProps) {
           </div>
         ) : (
           <h3 id={`${id}-title`} className="paper__title">
-            {card.title}
+            {card.title}{card.titleUserEdited && <span className="tag">你改写的标题</span>}
           </h3>
         )}
         <div className="paper__badges">
@@ -187,12 +202,13 @@ export function CardView(props: CardViewProps) {
               <div className="paper__section" key={`${s.key}-${i}`}>
                 <dt className="paper__label">{sectionLabel(s.key)}</dt>
                 <dd className="paper__text">
+                  {s.userEdited && <span className="tag" style={{ whiteSpace: 'normal' }}>你改写的内容 · 原版依据不自动支持补写</span>}
                   {s.text ? <span className="prewrap">{s.text}</span> : <span className="muted">（留空）</span>}
                   {linked.length > 0 && (
                     <details className="basis">
                       <summary>
                         <ChevronDown aria-hidden="true" className="basis__chev" />
-                        依据 {linked.length} 条
+                        {s.userEdited ? '查看原版依据' : '依据'} {linked.length} 条
                         {linked.some((f) => isLocked(f.validity)) && <span className="flag">其中有失效的</span>}
                       </summary>
                       <ul className="basis__body">
@@ -225,9 +241,7 @@ export function CardView(props: CardViewProps) {
             <div className="callout callout--faded" role="note">
               <p>{VALIDITY_META[card.validity].desc}，这一版不再当作有效，也不能留下。</p>
               {onRedo && (
-                <button type="button" className="btn btn--quiet btn--sm" onClick={onRedo} disabled={busy}>
-                  <RotateCcw aria-hidden="true" /> 让面包重新整理
-                </button>
+                <RedoControl onRedo={onRedo} busy={busy} locked />
               )}
             </div>
           )}
@@ -241,6 +255,7 @@ export function CardView(props: CardViewProps) {
           {readOnly && <p className="paper__note">这是结束时的那一版，不能再修改。要不要留下、导出，由你决定。</p>}
 
           <div className="paper__actions">
+            {!readOnly && !locked && onRedo && <RedoControl onRedo={onRedo} busy={busy} />}
             {!locked && !saved && onRequestSave && (
               <button type="button" className="btn btn--primary" onClick={onRequestSave} disabled={busy && !readOnly}>
                 <HardDrive aria-hidden="true" /> 留下这张…
@@ -276,7 +291,7 @@ interface CardSlipProps {
   canAct: boolean;
   onOpen: () => void;
   onSave: () => void;
-  onRedo: () => void;
+  onRedo: (direction?: string) => void;
 }
 
 /** The card as it lands on the table, inside the conversation. The full card lives in the tray. */
@@ -295,25 +310,24 @@ export function CardSlip({ card, saved, busy, canAct, onOpen, onSave, onRedo }: 
         {card.serviceMode === 'mock' && <span className="muted"> · 演示生成</span>}
       </p>
       <h2 id={`${id}-t`} className="paper__title">
-        {card.title}
+        {card.title}{card.titleUserEdited && <span className="tag">你改写的标题</span>}
       </h2>
       {preview.length > 0 && (
         <dl className="slip-preview">
           {preview.map((s, i) => (
             <div key={`${s.key}-${i}`}>
               <dt>{sectionLabel(s.key)}</dt>
-              <dd>{s.text}</dd>
+              <dd>{s.userEdited && <span className="tag">你改写的内容</span>}{s.text}</dd>
             </div>
           ))}
         </dl>
       )}
       {locked && <p className="slip-faded">{VALIDITY_META[card.validity].desc}，这一版先不算数了。</p>}
       <div className="paper__actions">
+        {!locked && canAct && <RedoControl onRedo={onRedo} busy={busy} />}
         {locked
           ? canAct && (
-              <button type="button" className="btn btn--quiet btn--sm" onClick={onRedo} disabled={busy}>
-                <RotateCcw aria-hidden="true" /> 让面包重新整理
-              </button>
+              <RedoControl onRedo={onRedo} busy={busy} locked />
             )
           : !saved &&
             canAct && (

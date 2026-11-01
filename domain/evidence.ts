@@ -31,6 +31,10 @@ export function evidenceSnapshots(card: Card, findings: Finding[], sources: Sour
 export function validateCandidate(candidate: TurnCandidate, input: TurnRequest): string[] {
   const errors: string[] = [];
   for (const key of ['requestId', 'sessionId', 'runId', 'epoch', 'contextRevision'] as const) if (candidate[key] !== input[key]) errors.push('STALE_RESULT');
+  const normalize = (s: string) => s.replace(/[\s\p{P}]/gu, '');
+  const rejected = new Set((input.context.rejectedFindings ?? []).map(f => normalize(f.text)));
+  if (candidate.findings.some(f => rejected.has(normalize(f.text)))) errors.push('REJECTED_FINDING_REPEATED');
+  if (candidate.cardDraft?.titleUserEdited || candidate.cardDraft?.sections.some(s => s.userEdited)) errors.push('MODEL_CANNOT_MARK_USER_EDIT');
   const preparingPractice = input.mode === 'practice' && !input.context.selectedQuestion;
   if (candidate.practiceSetup && (!preparingPractice || candidate.supportGuidance)) errors.push('PRACTICE_SETUP_NOT_REQUESTED');
   if (preparingPractice && !candidate.supportGuidance && !candidate.practiceSetup) errors.push('PRACTICE_SETUP_REQUIRED');

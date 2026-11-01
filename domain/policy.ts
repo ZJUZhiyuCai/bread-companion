@@ -18,6 +18,10 @@ export function explicitIntent(text: string): Mode | 'stop' | 'end' | null {
   if (/^(停止|停一下|暂停|先停一下|别说了)$/.test(t)) return 'stop';
   if (/^(结束|结束会话|今天到这里|今晚到这里|今晚先到这里)$/.test(t)) return 'end';
   if (/^[“”「」『』"']|^(他说|她说|面试官说|原文|引用|假如|如果)/.test(t)) return null;
+  // Normalize only an explicit conversational prefix; quoted/reported content was excluded above.
+  const direct = t.replace(/^(?:现在|今天|今晚)[，,\s]*(?=我)/, '').replace(/^我(?:现在|今天|今晚)/, '我');
+  if (/^我(?:不想|不要|先不)(?:再)?(?:复盘|分析|评价|练习)/.test(direct)) return 'listen';
+  if (/^(?:我(?:想|想要)|(?:可以|能不能)(?:请)?帮我)(?:再|重新)?(?:复盘|分析一下|看看(?:刚才|那段|这段|我的|的){0,3}(?:回答|面试))(?=$|吗|了|一下|[。！!，,？?：:\s])/.test(direct)) return 'review';
   if (/^(我们)?(一起)?练习(过|了|的时候|之后)/.test(t)) return null;
   if (/^(我)?(现在|今天|今晚|暂时|还是)?(真的)?(不想|不要|先不|不|先别|别)(再)?(复盘|分析|评价|练习|练题|练了)/.test(t)) return 'listen';
   if (/^(我)?(现在|今天|今晚|暂时|还是)?(只想|想先|就想)(聊聊|说说|说话|被听见|倾诉|吐槽)/.test(t)) return 'listen';
@@ -36,6 +40,7 @@ export function explicitIntent(text: string): Mode | 'stop' | 'end' | null {
 // an interview excerpt remains ordinary user material; its content must not disappear.
 export function isActionOnly(text: string): boolean {
   const t = text.trim().replace(/[。！!，,？?\s]+$/g, '');
+  if (/^(?:现在[，,\s]*)?我(?:现在)?想(?:再|重新)?复盘(?:一下)?(?:了)?$/.test(t) || /^(?:可以|能不能)帮我看看(?:刚才|那段|这段|我的|的){0,3}回答(?:吗)?$/.test(t)) return true;
   return /^(请)?(帮我)?(直接复盘|复盘|整理一下|留个记号|留一个记号)$/.test(t)
     || /^(请根据我提供的材料做一次复盘|请按修正后的材料重新复盘|请根据已确认的原话复盘|请按修正后的内容重新整理记号|帮我把刚才说的留个记号|帮我复盘一下刚才的面试片段|陪我练一题，请根据我们聊过的内容选一个问题)$/.test(t);
 }

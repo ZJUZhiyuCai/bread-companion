@@ -165,13 +165,13 @@ export function SavePreview(props: SavePreviewProps) {
               <p className="paper__kicker">
                 {CARD_TYPE_LABEL[card.type]} · 只这一版{card.serviceMode === 'mock' ? ' · 演示生成' : ''}
               </p>
-              <p className="paper__title">{card.title}</p>
+              <p className="paper__title">{card.title}{card.titleUserEdited && <span className="tag">你改写的标题</span>}</p>
               {card.sections.length > 0 ? (
                 <dl className="slip-preview slip-preview--full">
                   {card.sections.map((s, i) => (
                     <div key={`${s.key}-${i}`}>
                       <dt>{sectionLabel(s.key)}</dt>
-                      <dd className="prewrap">{s.text || '（留空）'}</dd>
+                      <dd className="prewrap">{s.userEdited && <span className="tag" style={{ display: 'table', marginBottom: 4 }}>你改写的内容</span>}{s.text || '（留空）'}</dd>
                     </div>
                   ))}
                 </dl>
@@ -180,6 +180,7 @@ export function SavePreview(props: SavePreviewProps) {
               )}
             </div>
 
+            {card.sections.some(s => s.userEdited) && <p className="small muted">以下摘录是原版依据，不自动支持你的补写。</p>}
             {evidence.length > 0 ? (
               <details className="basis basis--block">
                 <summary>

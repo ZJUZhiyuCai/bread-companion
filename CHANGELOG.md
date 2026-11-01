@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Route common direct Chinese review requests through the same controller flow as buttons; keep negation and quoted material distinct.
+- Carry bounded rejected-judgment records into regeneration, remove stale assistant analysis and reject exact repeated judgments. Audit contested analysis with at most one repair; fall back to quotations and unknowns after repeated rejection. Ordinary chat incurs no extra call.
+- Add redo on valid cards with an optional direction; retain user-edit provenance through preview, storage and export.
+- Reframe the submission around the core task, with real-service synthetic workflows and a clearly unexecuted formative-observation plan.
+
 - Replace the offset ellipse-and-tongue mouth with a gently parting stitched seam; add a muted felt flower, fine lashes and soft blush. Stop speech motion only after closing the seam completely.
 - Keep read-aloud expressions quiet while synthesis and browser playback are pending; begin speech on actual playback and cancel preparation when the page goes into the background.
 
