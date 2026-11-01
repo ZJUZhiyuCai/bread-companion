@@ -1,0 +1,53 @@
+{
+  "synthetic": true,
+  "physicalMicrophone": false,
+  "steps": [
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "durationMs": 2525,
+      "serverTiming": "provider;dur=1056.4, total;dur=1669.8"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 200,
+      "durationMs": 2366,
+      "serverTiming": "provider;dur=2174.8, total;dur=2177.5"
+    },
+    {
+      "path": "/api/speech/synthesize",
+      "status": 200,
+      "durationMs": 1176,
+      "serverTiming": "provider;dur=890.5, total;dur=893.3"
+    },
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "durationMs": 1568,
+      "serverTiming": "provider;dur=991.0, total;dur=1278.9"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 200,
+      "durationMs": 2503,
+      "serverTiming": "provider;dur=2309.9, total;dur=2313.1"
+    },
+    {
+      "path": "/api/speech/synthesize",
+      "status": 200,
+      "durationMs": 1049,
+      "serverTiming": "provider;dur=849.4, total;dur=852.1"
+    }
+  ],
+  "errors": [],
+  "phase": "speaking",
+  "playbackStarts": [
+    3165.2000007629395,
+    16590.70000076294,
+    29626.400000572205
+  ],
+  "twoCompleteTurns": true,
+  "microphoneReleased": true,
+  "textFallback": true,
+  "completed": true
+}
