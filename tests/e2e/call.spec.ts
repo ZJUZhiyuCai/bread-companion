@@ -15,7 +15,7 @@ test.describe('continuous calls with a real browser audio graph',()=>{
     for(const offset of [3,17])for(let i=0;i<samples.byteLength/2;i++)wave[offset*16000+i]=samples.getInt16(i*2,true)/32768;
     writeFileSync(callInput,Buffer.from(encodeWav(wave)));
   });
-  async function setup(page:Page, options:{holdASR?:boolean;failTTS?:boolean}={}){
+  async function setup(page:Page, options:{holdASR?:boolean;failTTS?:boolean;emptyFirst?:boolean}={}){
     const stats={asr:0,tts:0,turns:[] as any[],bytes:0,release:()=>{}};
     let held:Promise<void>|undefined;if(options.holdASR)held=new Promise<void>(r=>{stats.release=r;});
     await page.addInitScript(()=>{
@@ -32,7 +32,7 @@ test.describe('continuous calls with a real browser audio graph',()=>{
       const bytes=await file.arrayBuffer();const view=new DataView(bytes);stats.bytes=bytes.byteLength;
       expect(view.getUint32(24,true)).toBe(16000);expect(view.getUint16(22,true)).toBe(1);expect(bytes.byteLength).toBeGreaterThan(32000);
       if(held)await held;
-      await route.fulfill({json:{requestId:form.get('requestId'),text:stats.asr===1?'我今天有点累，先不想复盘。':'我刚才给自己煮了一碗面。',confirmed:false}}).catch(()=>{});
+      await route.fulfill({json:{requestId:form.get('requestId'),text:stats.asr===1?(options.emptyFirst?'':'我今天有点累，先不想复盘。'):'我刚才给自己煮了一碗面。',confirmed:false}}).catch(()=>{});
     });
     await page.route('**/api/speech/synthesize',async route=>{
       stats.tts++;
@@ -59,6 +59,18 @@ test.describe('continuous calls with a real browser audio graph',()=>{
     await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeFocused();await expect(page.getByRole('log')).toContainText('我刚才给自己煮了一碗面。');
     expect(stats.turns).toHaveLength(2);expect(stats.turns.every(t=>t.channel==='call')).toBe(true);
     await page.getByRole('textbox',{name:'写给面包',exact:true}).fill('现在接着打字。');await page.getByRole('button',{name:'发出',exact:true}).click();await expect.poll(()=>stats.turns.length).toBe(3);expect(stats.turns[2].channel).toBe('text');
+  });
+  test('empty transcription keeps the microphone open and the next utterance succeeds',async({page})=>{
+    test.setTimeout(45000);const stats=await setup(page,{emptyFirst:true});await dial(page);
+    await expect.poll(()=>stats.asr,{timeout:15000}).toBe(1);
+    await expect(page.locator('.callroom')).toHaveAttribute('data-phase','listening');
+    await expect(page.locator('.callroom')).toContainText('这句没听清，可以再说一次。');
+    expect(stats.turns).toHaveLength(0);
+    expect(await page.evaluate(()=>(window as any).__callTracks.some((t:MediaStreamTrack)=>t.readyState==='live'))).toBe(true);
+    await expect.poll(()=>stats.asr,{timeout:22000}).toBe(2);
+    await expect(page.getByRole('log')).toContainText('我刚才给自己煮了一碗面。');
+    await expect.poll(()=>stats.turns.length).toBe(1);
+    await page.getByRole('button',{name:'挂断',exact:true}).click();await tracksStopped(page);
   });
   test('hanging up while ASR is pending discards the late transcript and never calls the agent',async({page})=>{
     const stats=await setup(page,{holdASR:true});await dial(page);await expect.poll(()=>stats.asr,{timeout:15000}).toBe(1);

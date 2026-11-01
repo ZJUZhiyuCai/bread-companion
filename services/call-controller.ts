@@ -81,7 +81,7 @@ export class CallController {
     if (!this.state.active) return;
     this.clearIdle();
     this.audio.stopDialTone?.();
-    this.patch({ phase: this.state.muted ? 'muted' : 'listening', level: 0, heardSpeech: false, error: '' });
+    this.patch({ phase: this.state.muted ? 'muted' : 'listening', level: 0, heardSpeech: false, error: '', inputWarning: '' });
     if (this.state.muted) this.audio.listen(false);
     else if (preserveCapture) this.audio.listen(true, { preserve: true });
     else this.audio.listen(true);
@@ -98,7 +98,12 @@ export class CallController {
     try {
       const utterance = await audio; if (!valid()) return;
       const text = (await this.deps.transcribe(utterance, pending.signal)).trim(); if (!valid()) return;
-      if (!text || text.length > 4000) throw new Error('这句没听清，稍后可以再说一次，或改用文字。');
+      if (!text) {
+        this.untranscribed = null; this.listen();
+        this.patch({ inputWarning: '这句没听清，可以再说一次。' });
+        return;
+      }
+      if (text.length > 4000) throw new Error('这句话太长了，可以分两句说，或改用文字。');
       this.untranscribed = null;
       this.patch({ lastHeard: text, phase: 'thinking' });
       const reply = await this.deps.reply(text, pending.signal); if (!valid()) return;

@@ -54,7 +54,8 @@ export async function readJson<T>(req: Request, schema: z.ZodType<T>): Promise<T
 }
 export function errorResponse(error: unknown, requestId: string, stage: string): Response {
   const err = asAppError(error);
-  // Deliberately no exception body, input, headers or third-party error strings in logs/responses.
+  // Only bounded diagnostic metadata; never log content, headers, keys or upstream bodies.
+  if (err.status >= 500) console.warn(JSON.stringify({ event: 'request_failed', requestId, stage, code: err.code, status: err.status }));
   return Response.json({ error: { code: err.code, userMessage: err.message, retryable: err.retryable, requestId, stage } }, { status: err.status, headers: { ...NO_STORE, 'X-Request-Id': requestId, ...(err.status === 429 || err.retryAfterSeconds ? { 'Retry-After': String(err.retryAfterSeconds ?? 60) } : {}) } });
 }
 export function timingHeaders(start: number, requestId: string, providerMs: number) {

@@ -140,6 +140,14 @@ describe('MiniMax adapter', () => {
     const fetcher=vi.fn(async(_url:RequestInfo|URL,opts?:RequestInit)=>{expect(opts!.body).toBeInstanceOf(FormData);return Response.json({text:'待核对的原话',duration:2});});
     expect(await transcribe(new File([encodeWav(new Float32Array(16000))],'recording.wav',{type:'audio/wav'}),new AbortController().signal,fetcher)).toBe('待核对的原话');
   });
+  it('accepts an empty successful ASR result but rejects malformed and failed provider responses', async()=>{
+    vi.stubEnv('ASR_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');
+    const file=new File([encodeWav(new Float32Array(16000))],'silence.wav',{type:'audio/wav'});
+    const signal=new AbortController().signal;
+    expect(await transcribe(file,signal,vi.fn(async()=>Response.json({text:'',duration:1})))).toBe('');
+    await expect(transcribe(file,signal,vi.fn(async()=>Response.json({error:'unavailable'})))).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+    await expect(transcribe(file,signal,vi.fn(async()=>new Response('',{status:503})))).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+  });
   it('rejects ASR and TTS redirects without following the audio or text to another host', async () => {
     vi.stubEnv('ASR_PROVIDER','minimax');vi.stubEnv('TTS_PROVIDER','minimax');vi.stubEnv('MINIMAX_API_KEY','test');
     const fetcher=vi.fn(async function(this: unknown, _url: RequestInfo | URL, init?: RequestInit) {
