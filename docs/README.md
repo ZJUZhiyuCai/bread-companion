@@ -23,6 +23,7 @@
 
 ## 设计与研究
 
+- [浅色、安静、可触摸的视觉细化](design-light-refinement.md)：暖白表面、哑光按钮、浅色通话页与移动端触控修复。
 - [灯下小桌子的细节设计](design-craft-release.md)、[原稿与接入差异](design-craft-provenance.json)、[字体来源与切片](fonts.md)。
 
 - [安抚优先的开场设计](design-calm-entry.md)、[本轮来源与接入差异](calm-entry-provenance.json)。

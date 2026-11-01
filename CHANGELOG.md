@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Lightened the surface system and redrew the controls: warm-white rooms, softer fibre and shadows, matte ink primary actions, paper-secondaries, restrained clay-red hang-up. The call room now uses the same light tokens instead of a forced dark scene; mobile card actions, 320px top bar, touch targets and error-toast placement were repaired. No backend, call state machine or media behavior changed.
 - Route common direct Chinese review requests through the same controller flow as buttons; keep negation and quoted material distinct.
 - Carry bounded rejected-judgment records into regeneration, remove stale assistant analysis and reject exact repeated judgments. Audit contested analysis with at most one repair; fall back to quotations and unknowns after repeated rejection. Ordinary chat incurs no extra call.
 - Add redo on valid cards with an optional direction; retain user-edit provenance through preview, storage and export.
