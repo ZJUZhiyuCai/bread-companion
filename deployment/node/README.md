@@ -39,4 +39,6 @@ BREAD_NODE_INTERNAL_ORIGIN=https://127.0.0.1:3220
 
 用户确认手机功能正常、但认为 Seed 等待过长后，发布 `20261101-deepseek-empathy`，切回关闭思考的 DeepSeek Flash 和 v18 同理心提示词。候选在独立目录构建，切换时只重启面包服务。
 
-最终版本 `20261101-deepseek-final` 同时加入数据库路径边界，MiniMax 连接入口改为官方 `https://api.minimaxi.com/v1`，完整语音链路及准入检查通过。Sites v12 继续使用其已验证的原 MiniMax 入口。
+版本 `20261101-deepseek-final` 同时加入数据库路径边界，MiniMax 连接入口改为官方 `https://api.minimaxi.com/v1`，完整语音链路及准入检查通过。Sites v12 继续使用其已验证的原 MiniMax 入口。
+
+后续 `20261101-deepseek-private` 进一步拒绝悬空符号链接；部署时保留相同模型、声音与官方语音入口。209 项本地测试及生产构建通过。
