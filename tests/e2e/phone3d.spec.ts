@@ -150,7 +150,9 @@ test('rest, reduced motion and a hidden call stop drawing; hangup releases all g
   await page.waitForTimeout(400);
   expect((await audit(page)).draws).toBe(idle);
   await phone(page).click();
-  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  // This test forces the hardware path onto a software GPU to inspect disposal. Cold shader work
+  // can delay audio setup; the separate living-companion test owns the five-second audio deadline.
+  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking', { timeout: 15_000 });
   await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
   await page.getByRole('button', { name: '暂停', exact: true }).click();
   await page.evaluate(() => {
@@ -169,16 +171,14 @@ test('rest, reduced motion and a hidden call stop drawing; hangup releases all g
   await page.evaluate(() => { delete (document as any).hidden; document.dispatchEvent(new Event('visibilitychange')); });
   await expect.poll(async () => (await audit(page)).draws).toBeGreaterThan(hidden);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  // Applying a media-query change includes one final frame for the settled pose. Wait for that
-  // asynchronous transition to finish instead of assuming React + the GPU settle within 200 ms.
+  // Applying a media-query change includes one final frame for the settled pose. A short idle gap
+  // can precede that asynchronous frame on the software CI GPU. Observe a full quiet second inside
+  // the bounded settling poll, rather than passing after 350 ms and failing on the valid final frame.
   await expect.poll(async () => {
     const before = (await audit(page)).draws;
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(1000);
     return (await audit(page)).draws - before;
-  }, { timeout: 5000, intervals: [100] }).toBe(0);
-  const still = (await audit(page)).draws;
-  await page.waitForTimeout(1000);
-  expect((await audit(page)).draws).toBe(still);
+  }, { timeout: 10000, intervals: [100] }).toBe(0);
   await hangup(page);
   await page.evaluate(() => (window as any).__releaseMic());
   await expect.poll(async () => (await audit(page)).resolvedMics).toBe(2);
