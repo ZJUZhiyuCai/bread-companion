@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Hand, LoaderCircle, MessageSquareText, Mic, MicOff, Pause, Phone, PhoneOff, RotateCcw } from 'lucide-react';
+import { Check, Hand, LoaderCircle, MessageSquareText, Mic, MicOff, Pause, Phone, PhoneOff, RotateCcw, TriangleAlert } from 'lucide-react';
 import type { CallPhase, Message } from '@/domain/types';
 import { CallStage } from './CallStage';
 import { CALL_RUNNING, IDLE_CALL, callMeta } from './call';
@@ -155,7 +155,8 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           {cue && CUTTABLE.includes(phase) && <p className="callroom__cue">想说就直接开口，也可以点“插话”</p>}
           {phase === 'error' && call.error && (
             <p className="callroom__error" role="alert">
-              {call.error}
+              <TriangleAlert aria-hidden="true" />
+              <span>{call.error}</span>
             </p>
           )}
         </div>

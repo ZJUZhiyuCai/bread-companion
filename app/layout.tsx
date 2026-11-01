@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
   themeColor: [
     // the page's --bg in each scheme, so the browser chrome is the same paper
-    { media: '(prefers-color-scheme: light)', color: '#FAF7F0' },
+    { media: '(prefers-color-scheme: light)', color: '#F9F4EB' },
     { media: '(prefers-color-scheme: dark)', color: '#17150F' },
   ],
 };

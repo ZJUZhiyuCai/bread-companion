@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CircleCheck, TriangleAlert, X } from 'lucide-react';
+import { CircleCheck, LoaderCircle, TriangleAlert, X } from 'lucide-react';
 
 interface NoticesProps {
   notice: string;
@@ -31,13 +31,21 @@ export function Notices({ notice, error, clearNotice, canRetry, retryLastTurn, c
   const showError = !!error && error !== hiddenError;
 
   return (
-    <div className="toasts">
+    <div className={`toasts ${connectionError ? 'has-connection' : ''}`}>
       <div role="status" aria-live="polite" className="toasts__slot">
         {connectionError && (
-          <div className="toast toast--connection">
+          <div className="toast toast--connection" aria-busy={connectionChecking || undefined}>
+            <span className="toast__signal" aria-hidden="true" />
             <p className="toast__text">{connectionChecking ? '正在重新连接…' : connectionError}</p>
-            <button type="button" className="btn btn--ghost btn--sm" disabled={connectionChecking} aria-busy={connectionChecking || undefined} onClick={() => void refreshCapabilities?.()}>
-              重新连接
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              disabled={connectionChecking}
+              aria-busy={connectionChecking || undefined}
+              onClick={() => void refreshCapabilities?.()}
+            >
+              {connectionChecking && <LoaderCircle aria-hidden="true" className="spin" />}
+              {connectionChecking ? '连接中' : '重新连接'}
             </button>
           </div>
         )}

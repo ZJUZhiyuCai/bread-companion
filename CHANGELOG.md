@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Second review-period frontend pass: a warmer room with a grounded low light, a stronger editorial entry title, a quieter listen strip, a more compact phone pill that keeps 面包's first line whole on phones, a denser call-room composition with a status capsule and larger keys, a clearer call-error row and a service-status bar for in-place connection recovery. Mobile call controls fit at 320px; all primary touch targets remain 44px. No backend, call state machine or media behavior changed.
 - Recover a failed initial service check in place, with one coalesced, cancellable request on retry or network return; preserve drafts, conversation errors and retry state. Invalid capability responses no longer reach the UI.
 - Give the AI/about control a real 44px touch target; remove the ineffective clipped pseudo-element and redundant archive load.
 - Exclude runtime-only SQLite path resolution from build tracing while retaining private-directory and symlink checks.

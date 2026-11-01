@@ -26,6 +26,7 @@
 
 ## 设计与研究
 
+- [评审期第二遍打磨](design-review-relay.md)：更深的房间光、更清楚的入口层级、紧凑通话键和连接状态条。
 - [浅色、安静、可触摸的视觉细化](design-light-refinement.md)：暖白表面、哑光按钮、浅色通话页与移动端触控修复。
 - [灯下小桌子的细节设计](design-craft-release.md)、[原稿与接入差异](design-craft-provenance.json)、[字体来源与切片](fonts.md)。
 
