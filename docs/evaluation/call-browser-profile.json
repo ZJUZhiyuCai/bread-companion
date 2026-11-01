@@ -1,0 +1,122 @@
+{
+  "at": "2026-11-01T17:15:29.365Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "synthetic": true,
+  "physicalMicrophone": false,
+  "method": "Three additional diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply AudioBufferSource start; includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+  "turns": [
+    {
+      "turn": 1,
+      "requests": [
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1289,
+          "serverTiming": "provider;dur=940.4, total;dur=1158.2"
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200,
+          "ms": 3396,
+          "serverTiming": null
+        }
+      ],
+      "errors": [],
+      "phase": "speaking",
+      "timing": {
+        "plays": [
+          2932.5,
+          15497
+        ],
+        "inputStart": 6126.900000572205,
+        "inputDuration": 4005.4999999999995,
+        "providerTimings": [
+          {
+            "agentMs": 2303.5190549999825,
+            "ttsMs": 830.2181240000064,
+            "totalMs": 3140.587708999985
+          }
+        ]
+      },
+      "waitMs": 5365,
+      "microphoneReleased": true
+    },
+    {
+      "turn": 2,
+      "requests": [
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1794,
+          "serverTiming": "provider;dur=1451.5, total;dur=1592.5"
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200,
+          "ms": 3330,
+          "serverTiming": null
+        }
+      ],
+      "errors": [],
+      "phase": "speaking",
+      "timing": {
+        "plays": [
+          2525.699999809265,
+          15530.60000038147
+        ],
+        "inputStart": 5724,
+        "inputDuration": 4005.4999999999995,
+        "providerTimings": [
+          {
+            "agentMs": 2143.3675209999783,
+            "ttsMs": 951.5101889999933,
+            "totalMs": 3100.649470000004
+          }
+        ]
+      },
+      "waitMs": 5801,
+      "microphoneReleased": true
+    },
+    {
+      "turn": 3,
+      "requests": [
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1388,
+          "serverTiming": "provider;dur=1005.9, total;dur=1251.3"
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200,
+          "ms": 3004,
+          "serverTiming": null
+        }
+      ],
+      "errors": [],
+      "phase": "speaking",
+      "timing": {
+        "plays": [
+          2163.300000190735,
+          14420
+        ],
+        "inputStart": 5352.400000572205,
+        "inputDuration": 4005.4999999999995,
+        "providerTimings": [
+          {
+            "agentMs": 2024.9435530000483,
+            "ttsMs": 730.8852970000007,
+            "totalMs": 2762.9213909999817
+          }
+        ]
+      },
+      "waitMs": 5062,
+      "microphoneReleased": true
+    }
+  ],
+  "summary": {
+    "completed": 3,
+    "medianWaitMs": 5365,
+    "maxWaitMs": 5801
+  }
+}
