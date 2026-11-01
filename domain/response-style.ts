@@ -14,6 +14,6 @@ export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode
   if (!supportGuidance && /(?:我(?:还是|会|有点|真的)?(?:有点)?过意不去|你(?:不|再不).{0,8}(?:我会难过|让我伤心)|别(?:丢下|离开)我)/.test(text)) errors.push('STYLE_NO_EMOTIONAL_OBLIGATION');
   if (!supportGuidance && input.mode === 'listen' && /(?:不是|别替我|我没|你误会)/.test(input.userMessage ?? '') && /我(?:并)?没(?:有)?说(?!清楚|明白)/.test(text)) errors.push('STYLE_NO_DEFENSIVE_CORRECTION');
   // Narrowly reject a blaming opening; quotations and a negation elsewhere remain valid.
-  if (!supportGuidance && input.mode === 'listen' && /^(?:你)?(?:怎么|咋)?又(?:出岔子|搞砸|失败|不行|出问题)了[？?！!。，,]/.test(text.trim())) errors.push('STYLE_NO_BLAMING_OPENER');
+  if (!supportGuidance && input.mode === 'listen' && /^(?:你)?(?:怎么|咋)?又(?:出岔子了|搞砸了|失败了|不行了|出问题了|出了(?:点|些)?问题)[？?！!。，,]/.test(text.trim())) errors.push('STYLE_NO_BLAMING_OPENER');
   return errors;
 }

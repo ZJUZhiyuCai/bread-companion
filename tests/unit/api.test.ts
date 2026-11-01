@@ -96,6 +96,14 @@ describe('real provider candidates', () => {
     setup();const fetcher=vi.fn(async()=>upstream({assistantText:'我是真人。',findings:[],warnings:[]}));
     await expect(new RealProvider(fetcher).generate(requestFixture({mode:'listen'}),new AbortController().signal)).rejects.toMatchObject({code:'INVALID_MODEL_OUTPUT'});expect(fetcher).toHaveBeenCalledTimes(2);
   });
+  it('fills fixed empty companion arrays without allowing analysis fields or relaxing review structure', async () => {
+    setup(); const fetcher = vi.fn(async () => upstream({ assistantText: '这份等待落了空，确实不好受。', supportGuidance: false }));
+    const candidate = await new RealProvider(fetcher).generate(requestFixture({ mode: 'listen', channel: 'call' }), new AbortController().signal);
+    expect(candidate.findings).toEqual([]); expect(candidate.warnings).toEqual([]);
+    await expect(new RealProvider(fetcher).generate(requestFixture(), new AbortController().signal)).rejects.toMatchObject({ code: 'INVALID_MODEL_OUTPUT' });
+    const invalid = vi.fn(async () => upstream({ assistantText: '好了。', findings: [{ id: 'f1', kind: 'unknown', text: '不应在倾听里分析', evidenceRefs: [] }] }));
+    await expect(new RealProvider(invalid).generate(requestFixture({ mode: 'listen' }), new AbortController().signal)).rejects.toMatchObject({ code: 'INVALID_MODEL_OUTPUT' });
+  });
   it('routes companionship independently while keeping the evidence model for review',async()=>{
     setup();vi.stubEnv('AGENT_MODEL','analysis-fixture');vi.stubEnv('AGENT_COMPANION_MODEL','companion-fixture');vi.stubEnv('AGENT_COMPANION_PROTOCOL','openai');
     const fetcher=vi.fn(async(url:RequestInfo|URL,init?:RequestInit)=>{
