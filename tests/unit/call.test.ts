@@ -82,6 +82,14 @@ describe('continuous call ownership',()=>{
     const {call,audio,deps}=harness({transcribe:vi.fn(async()=>{throw new Error('转写没接好');})});await call.start();audio.say();await tick();expect(call.snapshot.phase).toBe('error');expect(audio.close).toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(120000);expect(deps.transcribe).toHaveBeenCalledTimes(1);await call.resume();expect(call.snapshot.phase).toBe('listening');expect(audio.open).toHaveBeenCalledTimes(2);
   });
+  it('keeps listening after empty ASR without billing a reply or closing the microphone', async()=>{
+    const transcribe=vi.fn().mockResolvedValueOnce('  ').mockResolvedValueOnce('我刚面试完。');
+    const {call,audio,deps}=harness({transcribe});await call.start();audio.say();await tick();
+    expect(call.snapshot.phase).toBe('listening');expect(call.snapshot.inputWarning).toContain('没听清');
+    expect(audio.close).not.toHaveBeenCalled();expect(deps.reply).not.toHaveBeenCalled();expect(deps.synthesize).not.toHaveBeenCalled();
+    audio.say();await tick();expect(deps.reply).toHaveBeenCalledWith('我刚面试完。',expect.any(AbortSignal));
+    expect(call.snapshot.phase).toBe('listening');expect(call.snapshot.inputWarning).toBe('');
+  });
   it('a minute of silence pauses and releases the microphone without billing ASR',async()=>{
     const {call,audio,deps}=harness();await call.start();await vi.advanceTimersByTimeAsync(60000);
     expect(call.snapshot.phase).toBe('paused');expect(audio.close).toHaveBeenCalledTimes(1);expect(deps.transcribe).not.toHaveBeenCalled();

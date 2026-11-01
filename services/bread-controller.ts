@@ -39,7 +39,13 @@ export class BreadController {
         const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
         const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
         const json = await response.json(); signal.throwIfAborted();
-        if (!response.ok || json.requestId !== requestId || typeof json.text !== 'string') throw new Error(json.error?.userMessage || '这句没听清，可以再说一次，或改用文字。');
+        if (!response.ok) {
+          const message = ['PROVIDER_UNAVAILABLE', 'TIMEOUT'].includes(json.error?.code)
+            ? '语音转写暂时没接通。重新连接后，请再说一次，或改用文字。'
+            : json.error?.userMessage;
+          throw new Error(message || '这句没听清，可以再说一次，或改用文字。');
+        }
+        if (json.requestId !== requestId || typeof json.text !== 'string') throw new Error('语音结果没有对应上这次说话，请再说一次。');
         return json.text;
       },
       reply: async (text, signal) => {

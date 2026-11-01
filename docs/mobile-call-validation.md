@@ -72,3 +72,11 @@ DeepSeek 发布后，主入口第一次 HTTP 冒烟转写耗时约 32.5 秒、�
 进一步从雅加达交错对比两个 MiniMax 官方入口：原 `api.minimax.cn` 的两次 ASR 为 11.766 / 15.805 秒；[官方控制台](https://solutions.minimaxi.com/debug/asr)使用的 `api.minimaxi.com` 为 **1.338 / 1.067 秒**，全部返回同一转写。主入口因此改用后者，模型、声音与数据处理方不变；Sites 原链路已通过，保留其配置。这是小样本线路测量，不保证后续每次如此。[原始对比](evaluation/minimax-jakarta-endpoints.json)。
 
 最终官方入口调整后，[HTTP 冒烟](evaluation/jakarta-optimized-smoke.json)全部通过；[两轮浏览器通话](evaluation/jakarta-optimized-browser.json)也通过，ASR 降至 2.94 / 2.29 秒，开口打断约 365 毫秒。整段等待仍为 10.910 / 14.649 秒：模型与 TTS 的跨境波动仍在，因此不能宣称电话已稳定达到几秒。服务器上另对比 Wanjie 与 Tokendance 的同一 DeepSeek，各两次均成功、约 1.7–3.8 秒，未证明换接入方更优，保留 Wanjie 路由。[接入方对比](evaluation/deepseek-jakarta-providers.json)。
+
+## 空转写误报连接失败修复 · 2026-11-01
+
+用户在免费主入口报告电话只显示开场白与“服务暂时没有连接成功”。现场真实 ASR → DeepSeek → TTS 冒烟均成功，随后用合成静音复现转写接口 502：MiniMax 实际返回 HTTP 200、`text: ""`，适配器将空文本误判为服务故障。该缺陷与截图表现一致，但缺少该次手机请求记录，不能认定是唯一原因。
+
+修复后空转写作为正常无识别结果返回；通话继续倾听并提示再说一次，不调用文本模型或 TTS、不关闭麦克风。真正的转写故障单独提示重新连接后重说。服务端仅记录失败请求的标识、阶段、错误码和状态码，不记录对话、录音、密钥或上游响应。
+
+验证：211 项单元/集成测试通过；新增真实浏览器音频图测试验证首次空转写后麦克风仍存活、下一次说话正常生成回复，挂断后音轨关闭。

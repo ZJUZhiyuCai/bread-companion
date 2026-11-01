@@ -41,7 +41,7 @@ export async function transcribe(file: File, signal: AbortSignal, fetcher: typeo
   const res = await fetcher(`${c.miniBaseUrl.replace(/\/$/, '')}/speech_to_text`, { method: 'POST', headers: { Authorization: `Bearer ${c.miniKey}`, language: 'zh' }, body: data, signal, redirect: 'manual', cache: 'no-store' });
   if (!res.ok) throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true);
   const payload = await readProviderJson(res, 64 * 1024, signal) as { text?: unknown; duration?: number };
-  if (typeof payload.text !== 'string' || !payload.text.trim() || payload.text.length > 4000) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
+  if (typeof payload.text !== 'string' || payload.text.length > 4000) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
   if (typeof payload.duration === 'number' && payload.duration > 65) throw new AppError('UNSUPPORTED_MEDIA', 415);
   signal.throwIfAborted(); return payload.text.trim();
 }
