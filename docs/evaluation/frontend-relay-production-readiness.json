@@ -1,0 +1,61 @@
+{
+  "at": "2026-11-01T18:18:11.913939+00:00",
+  "capabilities": {
+    "public": {
+      "agent": "real",
+      "configured": true,
+      "asr": true,
+      "tts": true,
+      "combinedVoice": true
+    },
+    "local": {
+      "agent": "real",
+      "configured": true,
+      "asr": true,
+      "tts": true,
+      "combinedVoice": true
+    }
+  },
+  "assets": [
+    {
+      "path": "/_next/static/chunks/0cz1d0mv5g_q7.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/0r-yur70-ku2o.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/0umf92h1sb77c.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/0y9ljwd5ettdf.css",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/16drfyzlg0yvn.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/1f8l9pblasx-k.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/2d8uu7jf8hh-7.css",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/3cfn99dbrcvvp.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/3wbm-994r45kr.js",
+      "status": 200
+    },
+    {
+      "path": "/_next/static/chunks/turbopack-3-ry682tkyiqk.js",
+      "status": 200
+    }
+  ]
+}

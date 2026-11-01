@@ -1,0 +1,43 @@
+{
+  "at": "2026-11-01T18:17:07.394Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "synthetic": true,
+  "physicalMicrophone": false,
+  "method": "One fresh 390px browser session with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply AudioBufferSource start; includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+  "turns": [
+    {
+      "turn": 1,
+      "requests": [
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1350,
+          "serverTiming": "provider;dur=949.0, total;dur=1114.6"
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200,
+          "ms": 3060,
+          "serverTiming": null
+        }
+      ],
+      "errors": [],
+      "phase": "speaking",
+      "timing": {
+        "plays": [
+          1815.7000007629395,
+          14113.800000190735
+        ],
+        "inputStart": 5021.10000038147,
+        "inputDuration": 4005.4999999999995
+      },
+      "waitMs": 5087,
+      "microphoneReleased": true
+    }
+  ],
+  "summary": {
+    "completed": 1,
+    "medianWaitMs": 5087,
+    "maxWaitMs": 5087
+  }
+}

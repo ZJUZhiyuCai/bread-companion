@@ -1,0 +1,60 @@
+{
+  "at": "2026-11-01T18:18:08.944Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "synthetic": true,
+  "physicalMicrophone": false,
+  "method": "One real public call: synthetic speech interrupts a pending combined model turn, then a second utterance completes. Actual browser AudioWorklet and provider requests; no physical microphone or hardware output latency.",
+  "turns": [
+    {
+      "turn": 1,
+      "requests": [
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1503,
+          "serverTiming": "provider;dur=1143.5, total;dur=1304.9"
+        },
+        {
+          "path": "/api/speech/transcribe",
+          "status": 200,
+          "ms": 1422,
+          "serverTiming": "provider;dur=1210.4, total;dur=1289.6"
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200,
+          "ms": 3493,
+          "serverTiming": null
+        }
+      ],
+      "failedRequests": [
+        {
+          "path": "/api/agent/voice",
+          "error": "net::ERR_ABORTED"
+        },
+        {
+          "path": "/api/agent/voice",
+          "error": "net::ERR_ABORTED"
+        }
+      ],
+      "errors": [],
+      "naturalInterruptionMs": 455,
+      "phase": "speaking",
+      "timing": {
+        "plays": [
+          2257.7000007629395,
+          21246.5
+        ],
+        "inputStart": 11674.800000190735,
+        "inputDuration": 4005.4999999999995
+      },
+      "waitMs": 5566,
+      "microphoneReleased": true
+    }
+  ],
+  "summary": {
+    "completed": 1,
+    "medianWaitMs": 5566,
+    "maxWaitMs": 5566
+  }
+}
