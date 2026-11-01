@@ -182,3 +182,34 @@ test('edit from preview removes unselected evidence; exported JSON imports and s
   await page.getByRole('button',{name:'以前留下的',exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:/只留下未知，明天再看/}).click();await page.getByRole('button',{name:'今天聊别的',exact:true}).click();
   await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeVisible();await expect(page.getByRole('log')).not.toContainText(opening);
 });
+
+
+for (const recovery of ['button', 'online'] as const) test(`service discovery recovers via ${recovery} without reloading a draft or opening a mic`, async ({ page }) => {
+  let checks = 0, turns = 0;
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.addInitScript(() => {
+    (window as any).__readinessMic = 0;
+    navigator.mediaDevices.getUserMedia = async () => { (window as any).__readinessMic++; throw new Error('Unexpected microphone'); };
+  });
+  page.on('request', r => { if (r.url().endsWith('/api/agent/turn')) turns++; });
+  await page.route('**/api/capabilities', async route => {
+    checks++;
+    if (checks === 1) { await route.fulfill({ status: 503, body: 'Temporarily unavailable' }); return; }
+    const response = await route.fetch(), caps = await response.json();
+    caps.asr.available = caps.tts.available = caps.agent.configured = true;
+    await route.fulfill({ json: caps });
+  });
+  await page.goto('/');
+  const draft = page.getByRole('textbox', { name: '想写的时候，写在这儿', exact: true });
+  await draft.fill('这句话还没想好怎么说。');
+  const reconnect = page.getByRole('button', { name: '重新连接', exact: true });
+  await expect(reconnect).toBeVisible();
+  if (recovery === 'button') await reconnect.click();
+  else await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(reconnect).toHaveCount(0);
+  await expect(draft).toHaveValue('这句话还没想好怎么说。');
+  await expect(page.getByRole('button', { name: /给面包打个电话/ })).not.toHaveAttribute('aria-disabled', 'true');
+  expect(checks).toBe(2); expect(turns).toBe(0);
+  expect(await page.evaluate(() => (window as any).__readinessMic)).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

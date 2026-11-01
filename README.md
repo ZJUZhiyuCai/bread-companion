@@ -6,12 +6,12 @@
 
 收到拒信的那个晚上，你可能只想把话说出来，还没有力气分析哪里出了问题。面包是一个中文陪伴与轻复盘工具：先陪你聊，等你愿意了，再一起看看那段回答。
 
-[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md)
+[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-soft-expression.jpg)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-light.png)
 
 *实际运行界面。可以直接在线体验，也可以在本地用无需密钥的规则演示开始。*
 
@@ -125,7 +125,7 @@ flowchart LR
 
 | 检查 | 已有结果与测量范围 |
 | --- | --- |
-| 工程回归 | **209 项单元/集成测试、47 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
+| 工程回归 | **216 项单元/集成测试、50 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
 | 核心任务（v15） | 最终一组 **8 个真实模型 API 回合**走完复盘、纠正、练习和保存；其中 **3 回合退回了原话卡或开放问题**，纠正后的训练反馈质量仍不够稳定 |
 | 中文对话（v14） | 8 个合成情境、16 轮接口调用，其中一句明确道别由本机规则回应；完整响应中位 **1.165 s**、p90 **1.477 s**，未测首 token |
 | 公网语音链路（0.4.0） | 两个合成回合中，转写、模型与合成的 HTTP 耗时合计 **7.89 / 9.12 s**；尚未测公网浏览器实际出声时间 |

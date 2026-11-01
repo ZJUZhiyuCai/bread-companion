@@ -6,11 +6,13 @@ import {dirname,resolve,sep} from 'node:path';
 export function openAdmissionDatabase(filename, trustedDirectory = '/srv/bread-companion/private') {
   let databasePath = ':memory:';
   if (filename !== ':memory:') {
-    const root = resolve(trustedDirectory);
-    const canonicalRoot = realpathSync(root);
-    const candidate = resolve(filename);
+    // Runtime data lives outside the release. Do not trace the working directory
+    // into the server artifact while resolving the configurable private path.
+    const root = resolve(/* turbopackIgnore: true */ trustedDirectory);
+    const canonicalRoot = realpathSync(/* turbopackIgnore: true */ root);
+    const candidate = resolve(/* turbopackIgnore: true */ filename);
     if (!candidate.startsWith(root + sep)) throw new Error('Admission database must stay inside its private directory');
-    const parent = realpathSync(dirname(candidate));
+    const parent = realpathSync(/* turbopackIgnore: true */ dirname(candidate));
     if (parent !== canonicalRoot && !parent.startsWith(canonicalRoot + sep)) throw new Error('Admission database parent must stay inside its private directory');
     if (lstatSync(candidate,{throwIfNoEntry:false})?.isSymbolicLink()) throw new Error('Admission database cannot be a symlink');
     databasePath = candidate;

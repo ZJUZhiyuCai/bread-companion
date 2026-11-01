@@ -86,7 +86,13 @@ export function SavePreview(props: SavePreviewProps) {
         <button type="button" className="btn btn--ghost" onClick={onClose} disabled={phase === 'saving'}>
           先不留
         </button>
-        <button type="button" className="btn btn--primary" onClick={save} disabled={phase === 'saving' || !savable}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={save}
+          disabled={phase === 'saving' || !savable}
+          aria-busy={phase === 'saving' || undefined}
+        >
           {phase === 'saving' ? (
             <>
               <LoaderCircle aria-hidden="true" className="spin" /> 正在留下…

@@ -2,6 +2,8 @@
 
 ## 当前产品
 
+- [评审体验迭代与发布门槛](reviewer-readiness.md)：浅色版、原地重连、完整回归与后续优先级。
+
 - [三分钟核心任务](demo.md)：在线进入、主动复盘、依据、纠正、练习与保存。
 - [核心任务验收与原始输出](../evaluations/task-control/README.md)：v15 用户控制修复、实际合成任务、未执行的观察计划。
 
@@ -23,6 +25,7 @@
 
 ## 设计与研究
 
+- [浅色、安静、可触摸的视觉细化](design-light-refinement.md)：暖白表面、哑光按钮、浅色通话页与移动端触控修复。
 - [灯下小桌子的细节设计](design-craft-release.md)、[原稿与接入差异](design-craft-provenance.json)、[字体来源与切片](fonts.md)。
 
 - [安抚优先的开场设计](design-calm-entry.md)、[本轮来源与接入差异](calm-entry-provenance.json)。

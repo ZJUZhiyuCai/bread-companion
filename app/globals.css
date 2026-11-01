@@ -15,80 +15,97 @@
 :root {
   color-scheme: light dark;
 
-  /* paper under a warm lamp; the ink is a warm sepia-black, like a fountain pen's, not a screen's grey */
-  --bg: #f5efe4;
-  --bg-deep: #ece3d3;
-  --surface: #fffbf4;
-  --surface-2: #f3ebde;
-  --line: #e4d8c5;
-  --line-strong: #cbbba1;
-  --ink: #2b2620;
-  --ink-2: #4e463d;
-  --ink-3: #6b6258;
+  /*
+   * The same table, with the lamp turned a little lower and the walls washed an oat white. Everything
+   * solid is lighter; the text keeps a warm ink weight so quiet never becomes faint.
+   */
+  --bg: #faf7f0;
+  --bg-deep: #f1e9dd;
+  --surface: #fffdf9;
+  --surface-2: #f6efe5;
+  --line: #e9dfd1;
+  --line-strong: #d9cbb8;
+  --ink: #38332c;
+  --ink-2: #5c5449;
+  --ink-3: #6f6659;
 
   /* paper you write on, and the table it lies on */
-  --sheet: #fffdf8;
-  --sheet-edge: #eadfcc;
-  --rule: rgba(160, 128, 88, 0.2);
-  --floor: rgba(196, 160, 118, 0.16);
-  --vignette: rgba(92, 64, 36, 0.07);
-  --glow-core: rgba(248, 210, 160, 0.34);
-  --enamel: #fbf4e6;
-  --enamel-2: #efe2c8;
-  --brass-deep: #8a6630;
-  --grain-opacity: 0.45;
+  --sheet: #fffefa;
+  --sheet-edge: #ece2d2;
+  --rule: rgba(150, 118, 80, 0.14);
+  --floor: rgba(196, 160, 118, 0.1);
+  --vignette: rgba(92, 64, 36, 0.035);
+  --glow-core: rgba(248, 213, 168, 0.22);
+  --enamel: #fbf6ed;
+  --enamel-2: #f2e7d4;
+  --brass-deep: #94724a;
+  --grain-opacity: 0.3;
   /* what paper is lying on, for its punched holes and torn edges; containers with their own colour reset it */
   --under: var(--bg);
 
-  --crust: #9c521c;
-  --crust-fill: #d9934f;
-  --crust-line: #8c4b1f;
-  /* the red phone: lacquer, its light and its shade; ivory and brass on the dial */
-  --phone: #c8322b;
-  --phone-hi: #f07a5e;
-  --phone-deep: #6e1418;
-  --phone-ink: #a8231d;
-  --ivory: #f4e8d2;
-  --brass: #c9a16a;
-  --hangup: #d33f3a;
-  --kraft: #ebd9ba;
-  --kraft-2: #e0c9a1;
-  --kraft-ink: #4f3219;
-  --receipt: #fffdf8;
+  --crust: #986742;
+  --crust-fill: #d4a878;
+  --crust-line: #8f6647;
+  /* the red phone: a soft brick lacquer, not a fire-engine red; ivory and brass on the dial */
+  --phone: #c7554d;
+  --phone-hi: #e88a75;
+  --phone-deep: #77302d;
+  --phone-ink: #a24742;
+  --ivory: #f7efe2;
+  --brass: #cdb18c;
+  --hangup: #c05c53;
+  --kraft: #f1e8d8;
+  --kraft-2: #e8dbc6;
+  --kraft-ink: #4f4133;
+  --receipt: #fffdf9;
 
   /* a low reading lamp, not a party: cream-peach rather than gold */
-  --lamp: #f5cfa0;
-  --glow: rgba(238, 196, 152, 0.26);
+  --lamp: #f0d2aa;
+  --glow: rgba(236, 198, 153, 0.17);
   /* the evening outside the lamp's circle — only ever a faint corner of the room */
-  --dusk: rgba(170, 164, 196, 0.1);
-  --glow-rec: rgba(229, 72, 77, 0.12);
+  --dusk: rgba(170, 164, 196, 0.06);
+  --glow-rec: rgba(192, 91, 83, 0.08);
 
-  --coral: #c8363c;
-  --coral-text: #b02e34;
-  --coral-soft: #fbe6e3;
-  --indigo: #2b5c9e;
-  --indigo-soft: #e4ecf7;
-  --amber: #85560a;
-  --amber-soft: #faefd6;
-  --green: #2f6b3f;
-  --green-soft: #e3f0e4;
+  --coral: #c05b55;
+  --coral-text: #9d403b;
+  --coral-soft: #fbeeeb;
+  --indigo: #3f607d;
+  --indigo-soft: #edf2f6;
+  --amber: #876438;
+  --amber-soft: #f9f1e3;
+  --green: #466b52;
+  --green-soft: #edf4ee;
 
-  --wood: #b88b5e;
+  --wood: #bc9a75;
 
-  --focus: #2b5c9e;
-  --focus-ring: rgba(43, 92, 158, 0.25);
+  --focus: #356b91;
+  --focus-ring: rgba(53, 107, 145, 0.2);
+
+  /* one quiet ink key for a primary action; never pure black, never a glossy plastic pill */
+  --primary-bg: #51483c;
+  --primary-bg-hover: #453e34;
+  --primary-ink: #fffdf8;
+  /* the call's large centre key: warm paper rather than a dark disc */
+  --call-key-bg: #fffdfa;
+  --call-key-bg-hover: #f7f0e6;
+  --call-primary-bg: #f1ddc5;
+  --call-primary-bg-hover: #ecd4b8;
+  --call-primary-border: #ddc3a3;
+  --call-primary-ink: #4b3b2b;
+  --call-hangup-bg: #fbeeeb;
+  --call-hangup-border: #e5c1ba;
+  --call-hangup-ink: #a34540;
 
   /*
    * Shadows are all cast by the same lamp (upper left), so they fall down and a touch to the right, and
    * each is a contact line plus a long soft falloff — the way paper actually sits on a table.
    */
-  --shadow-s: 0 0.5px 0 rgba(70, 44, 18, 0.08), 0 1px 2px rgba(70, 44, 18, 0.06);
-  --shadow: 0 0.5px 0 rgba(70, 44, 18, 0.07), 0 2px 4px -1px rgba(70, 44, 18, 0.06), 1px 12px 28px -10px rgba(70, 44, 18, 0.16);
-  --shadow-paper: 0 0.5px 0 rgba(70, 44, 18, 0.1), 0 1px 1.5px rgba(70, 44, 18, 0.07), 2px 8px 14px -6px rgba(70, 44, 18, 0.16),
-    4px 22px 36px -18px rgba(70, 44, 18, 0.22);
-  --shadow-l: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 2px 6px rgba(20, 14, 8, 0.08), 4px 30px 70px -12px rgba(20, 14, 8, 0.32);
+  --shadow-s: 0 1px 2px rgba(74, 54, 32, 0.04);
+  --shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 10px 24px -20px rgba(74, 54, 32, 0.22);
+  --shadow-paper: 0 1px 1px rgba(74, 54, 32, 0.05), 0 12px 24px -22px rgba(74, 54, 32, 0.24);
+  --shadow-l: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 18px 50px -32px rgba(48, 34, 19, 0.35);
   /* the light catching the top edge of anything raised */
-  --edge-hi: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --edge-hi: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Source Han Sans SC',
     'Microsoft YaHei', system-ui, sans-serif;
@@ -113,7 +130,7 @@
    * --grain is the fine tooth of writing paper; --fibre is the long strands in kraft.
    */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .16 .45 0 0 0 -.18'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)'/%3E%3C/svg%3E");
-  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .27 0 0 0 0 .12 .8 0 0 0 -.38'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)'/%3E%3C/svg%3E");
+  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .47 0 0 0 0 .38 0 0 0 0 .25 .42 0 0 0 -.22'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)'/%3E%3C/svg%3E");
   /* a soft crayon stroke, for the one phrase on the first screen that is worth underlining */
   --crayon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 16' preserveAspectRatio='none'%3E%3Cpath d='M3 10.5 C40 6.5 92 5.2 140 6.6 C163 7.3 182 8.6 197 7.4' fill='none' stroke='%23e9b98a' stroke-width='7' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 12 C58 9.4 118 8.8 192 10.6' fill='none' stroke='%23e9b98a' stroke-width='3' stroke-linecap='round' opacity='.4'/%3E%3C/svg%3E");
 }
@@ -168,13 +185,26 @@
 
     --wood: #6b5038;
 
-    --focus: #93b8f0;
-    --focus-ring: rgba(147, 184, 240, 0.28);
+    --focus: #9ec4e8;
+    --focus-ring: rgba(158, 196, 232, 0.26);
 
-    --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 1px 14px 30px -10px rgba(0, 0, 0, 0.5);
-    --shadow-paper: 0 1px 0 rgba(0, 0, 0, 0.35), 2px 10px 18px -8px rgba(0, 0, 0, 0.5), 4px 24px 40px -18px rgba(0, 0, 0, 0.55);
-    --shadow-l: 0 1px 0 rgba(255, 236, 210, 0.06) inset, 4px 30px 72px -12px rgba(0, 0, 0, 0.65);
+    --primary-bg: #efe4d4;
+    --primary-bg-hover: #fff5e7;
+    --primary-ink: #2a241d;
+    --call-key-bg: #241f19;
+    --call-key-bg-hover: #2e2820;
+    --call-primary-bg: #3a3025;
+    --call-primary-bg-hover: #463a2d;
+    --call-primary-border: #5d4d3b;
+    --call-primary-ink: #f6e8d3;
+    --call-hangup-bg: #3a2322;
+    --call-hangup-border: #653c38;
+    --call-hangup-ink: #ffb0a5;
+
+    --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 32px -22px rgba(0, 0, 0, 0.6);
+    --shadow-paper: 0 1px 1px rgba(0, 0, 0, 0.3), 0 16px 34px -24px rgba(0, 0, 0, 0.65);
+    --shadow-l: 0 1px 0 rgba(255, 236, 210, 0.06) inset, 0 22px 60px -30px rgba(0, 0, 0, 0.7);
     --edge-hi: inset 0 1px 0 rgba(255, 236, 210, 0.07);
   }
 }
@@ -306,8 +336,8 @@ button {
 }
 
 :where(a, button, input, textarea, select, summary, label, [tabindex]):focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
 }
 
 :where(h1, h2, h3, h4)[tabindex='-1']:focus,
@@ -319,6 +349,7 @@ li[tabindex='-1']:focus:not(.is-highlighted) {
   width: 1.15em;
   height: 1.15em;
   flex: none;
+  stroke-width: 1.85;
 }
 
 /* ---------- utilities ---------- */
@@ -404,19 +435,22 @@ kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 17px;
   border-radius: 999px;
-  border: 1.5px solid transparent;
+  border: 1px solid transparent;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   line-height: 1.3;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
   text-align: center;
+  white-space: nowrap;
   background: transparent;
   color: var(--ink);
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.12s, box-shadow 0.15s;
+  box-decoration-break: clone;
+  transition: background-color 0.16s var(--ease), border-color 0.16s var(--ease), color 0.16s var(--ease),
+    box-shadow 0.16s var(--ease), transform 0.12s var(--ease), opacity 0.16s;
 }
 .btn:active:not(:disabled) {
   transform: translateY(1px);
@@ -425,45 +459,57 @@ kbd {
   opacity: 0.42;
   cursor: not-allowed;
 }
-.btn .lucide {
-  width: 1.05em;
-  height: 1.05em;
+.btn[aria-busy='true'] {
+  opacity: 0.78;
+  cursor: progress;
 }
-/* An ink key: a little sheen on top, a lip underneath, sunk a pixel when pressed. */
+.btn .lucide {
+  width: 1.02em;
+  height: 1.02em;
+  stroke-width: 1.85;
+}
+/* One ink key. Matte, with a hairline edge and one soft contact shadow instead of a plastic highlight. */
 .btn--primary {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 86%, #fff), var(--ink) 55%);
-  color: var(--bg);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 1px 0 color-mix(in srgb, var(--ink) 40%, transparent),
-    1px 6px 14px -6px color-mix(in srgb, var(--ink) 55%, transparent);
+  border-color: var(--primary-bg);
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+  box-shadow: 0 1px 1.5px rgba(61, 43, 25, 0.11);
 }
 .btn--primary:hover:not(:disabled) {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 80%, var(--crust)), color-mix(in srgb, var(--ink) 90%, var(--crust)) 55%);
+  border-color: var(--primary-bg-hover);
+  background: var(--primary-bg-hover);
+  box-shadow: 0 4px 12px -10px rgba(61, 43, 25, 0.55);
 }
 .btn--primary:active:not(:disabled) {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(30, 20, 12, 0.15);
 }
-/* Kraft: the same paper as the notes 面包 writes. */
+/* Kraft: the same paper as the notes 面包 writes, but with the tooth turned down. */
 .btn--quiet {
-  background: var(--fibre), linear-gradient(to bottom, color-mix(in srgb, var(--kraft) 70%, #fff), var(--kraft));
-  background-size: 320px 320px, auto;
+  background: color-mix(in srgb, var(--kraft) 58%, var(--sheet));
   color: var(--kraft-ink);
-  border-color: color-mix(in srgb, var(--crust) 30%, transparent);
-  box-shadow: var(--edge-hi), 0 1px 0 color-mix(in srgb, var(--crust) 18%, transparent);
+  border-color: color-mix(in srgb, var(--crust) 20%, var(--line));
+  box-shadow: none;
 }
 .btn--quiet:hover:not(:disabled) {
-  background: var(--fibre), var(--kraft-2);
-  background-size: 320px 320px, auto;
+  background: var(--kraft);
+  border-color: color-mix(in srgb, var(--crust) 28%, var(--line));
+}
+.btn--quiet:active:not(:disabled) {
+  background: var(--kraft-2);
 }
 .btn--ghost {
   border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--sheet) 76%, transparent);
-  box-shadow: var(--edge-hi), 0 1px 0 color-mix(in srgb, var(--line-strong) 45%, transparent);
+  background: color-mix(in srgb, var(--sheet) 62%, transparent);
+  color: var(--ink-2);
+  box-shadow: none;
 }
 .btn--ghost:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--crust) 40%, var(--line-strong));
+  border-color: color-mix(in srgb, var(--crust) 33%, var(--line-strong));
   background: var(--sheet);
+  color: var(--ink);
+}
+.btn--ghost:active:not(:disabled) {
+  background: var(--surface-2);
 }
 /* Notices asks for this one: a plain, outlined key that sits on any toast. */
 .btn--secondary {
@@ -472,17 +518,25 @@ kbd {
   color: inherit;
 }
 .btn--secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 8%, transparent);
 }
 .btn--danger {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--coral) 94%, #fff), var(--coral) 60%);
-  color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 0 color-mix(in srgb, var(--coral) 50%, #000);
+  border-color: color-mix(in srgb, var(--coral) 38%, transparent);
+  background: var(--coral-soft);
+  color: var(--coral-text);
+  box-shadow: none;
+}
+.btn--danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--coral) 58%, transparent);
+  background: color-mix(in srgb, var(--coral) 13%, var(--surface));
+}
+.btn--danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--coral) 18%, var(--surface));
 }
 .btn--sm {
   min-height: 36px;
-  padding: 0 14px;
-  font-size: 0.86rem;
+  padding: 0 13px;
+  font-size: 0.85rem;
   gap: 6px;
 }
 .btn--block {
@@ -495,19 +549,24 @@ kbd {
   width: 44px;
   height: 44px;
   flex: none;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--ink-2);
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s;
 }
 .icon-btn .lucide {
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
 }
 .icon-btn:hover {
-  background: var(--surface-2);
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--sheet) 55%, transparent);
   color: var(--ink);
+}
+.icon-btn:active {
+  background: var(--surface-2);
 }
 .icon-btn[aria-disabled='true'],
 .icon-btn.is-blocked {
@@ -561,35 +620,40 @@ kbd {
   min-height: 34px;
   padding: 0 13px;
   border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: var(--sheet);
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--sheet) 58%, transparent);
   color: var(--ink-2);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 500;
+  line-height: 1.45;
   white-space: nowrap;
-  box-shadow: var(--edge-hi);
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  box-shadow: none;
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s;
 }
 .pill:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--crust) 35%, var(--line-strong));
-  background: var(--surface-2);
+  border-color: var(--line-strong);
+  background: var(--sheet);
   color: var(--ink);
+}
+.pill:active:not(:disabled) {
+  background: var(--surface-2);
 }
 .pill:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 .pill .lucide {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.85;
 }
 .pill--warm {
-  background: var(--kraft);
-  border-color: color-mix(in srgb, var(--crust) 35%, transparent);
+  background: color-mix(in srgb, var(--kraft) 64%, transparent);
+  border-color: color-mix(in srgb, var(--crust) 22%, var(--line));
   color: var(--kraft-ink);
 }
 .pill--warm:hover:not(:disabled) {
-  background: var(--kraft-2);
+  background: var(--kraft);
   color: var(--kraft-ink);
 }
 .pill--stop {
@@ -861,40 +925,45 @@ kbd {
   min-height: 28px;
   padding: 0;
   overflow: hidden;
-  border-radius: 6px;
-  border: 1px solid var(--line-strong);
-  background: var(--sheet);
-  font-size: 0.74rem;
-  font-weight: 700;
+  min-width: 44px;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: 0.06em;
-  box-shadow: var(--edge-hi), 0 1px 0 color-mix(in srgb, var(--line-strong) 50%, transparent);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.03em;
+  box-shadow: none;
+  position: relative;
+  transition: border-color 0.16s, background-color 0.16s;
 }
 /* A plain label, not a rubber stamp: it states a fact (an AI) and opens the rest. */
 .ai-stamp:hover {
-  border-color: color-mix(in srgb, var(--crust) 45%, var(--line-strong));
-  box-shadow: var(--edge-hi), 0 2px 6px -2px rgba(70, 44, 18, 0.2);
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--sheet) 50%, transparent);
 }
 .ai-stamp__ai {
   display: grid;
   place-items: center;
-  padding: 0 7px;
-  background: var(--ink-2);
-  color: var(--bg);
+  padding: 0 8px 0 9px;
+  background: transparent;
+  color: var(--ink-3);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 600;
   letter-spacing: 0.08em;
+  border-right: 1px solid var(--line);
 }
 .ai-stamp__mode {
   display: grid;
   place-items: center;
-  padding: 0 8px;
-  color: var(--ink-2);
+  padding: 0 9px 0 8px;
+  color: var(--ink-3);
   font-weight: 600;
 }
 .ai-stamp--mock {
-  border-style: dashed;
+  border-style: solid;
 }
 .ai-stamp--mock .ai-stamp__mode {
   color: var(--amber);
@@ -1843,12 +1912,12 @@ kbd {
   max-width: none;
   max-height: min(88dvh, 880px);
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--sheet-edge) 70%, transparent);
-  border-radius: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
   background: var(--grain), var(--surface);
   background-size: 240px 240px, auto;
   color: var(--ink);
-  box-shadow: var(--shadow-l);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 26px 70px -34px rgba(48, 34, 19, 0.4);
   overscroll-behavior: contain;
 }
 .dialog[open] {
@@ -1863,10 +1932,8 @@ kbd {
   width: min(780px, calc(100vw - 32px));
 }
 .dialog::backdrop {
-  background:
-    radial-gradient(120% 100% at 50% 40%, rgba(30, 20, 12, 0.3), rgba(14, 10, 8, 0.56)),
-    rgba(14, 12, 10, 0.12);
-  backdrop-filter: blur(3px) saturate(0.9);
+  background: rgba(72, 57, 40, 0.18);
+  backdrop-filter: blur(5px) saturate(0.92);
 }
 .dialog__inner {
   display: flex;
@@ -1886,10 +1953,10 @@ kbd {
 }
 .dialog__title {
   font-family: var(--font-serif);
-  font-size: 1.32rem;
+  font-size: 1.28rem;
   font-weight: 700;
   line-height: 1.4;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.035em;
 }
 .dialog__subtitle {
   margin-top: 4px;
@@ -1909,7 +1976,8 @@ kbd {
 .dialog__foot {
   padding: 14px 26px calc(16px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sheet) 60%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sheet) 45%, transparent);
 }
 .dialog__actions {
   display: flex;
@@ -1955,8 +2023,9 @@ kbd {
   padding: 14px 16px;
   margin-bottom: 20px;
   border-radius: var(--r-sheet);
-  background: var(--surface-2);
-  box-shadow: inset 0 1px 2px rgba(70, 44, 18, 0.06);
+  background: color-mix(in srgb, var(--surface-2) 58%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: none;
 }
 .about__lede {
   font-family: var(--font-serif);
@@ -2044,10 +2113,10 @@ kbd {
   height: 100vh;
   z-index: -1;
   background:
-    radial-gradient(22% 26% at 26% 40%, var(--glow-core), transparent 100%),
-    radial-gradient(42% 52% at 27% 46%, var(--glow), transparent 74%),
-    radial-gradient(46% 40% at 96% 100%, var(--dusk), transparent 70%),
-    linear-gradient(to bottom, transparent 64%, var(--floor) 100%);
+    radial-gradient(28% 30% at 27% 39%, var(--glow-core), transparent 100%),
+    radial-gradient(52% 58% at 28% 47%, var(--glow), transparent 76%),
+    radial-gradient(46% 40% at 96% 100%, var(--dusk), transparent 72%),
+    linear-gradient(to bottom, transparent 70%, var(--floor) 100%);
   pointer-events: none;
 }
 .entry__top {
@@ -2103,8 +2172,8 @@ kbd {
   z-index: -1;
   border-radius: 50%;
   background:
-    radial-gradient(34% 54% at 34% 48%, color-mix(in srgb, var(--lamp) 30%, transparent), transparent 100%),
-    radial-gradient(closest-side, color-mix(in srgb, var(--wood) 26%, transparent), color-mix(in srgb, var(--wood) 8%, transparent) 72%, transparent);
+    radial-gradient(34% 54% at 34% 48%, color-mix(in srgb, var(--lamp) 22%, transparent), transparent 100%),
+    radial-gradient(closest-side, color-mix(in srgb, var(--wood) 20%, transparent), color-mix(in srgb, var(--wood) 6%, transparent) 72%, transparent);
   pointer-events: none;
 }
 .entry__scene {
@@ -2123,10 +2192,10 @@ kbd {
   max-width: min(14em, 48%);
   padding: 11px 16px 12px;
   border-radius: 16px 16px 16px 5px;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
+  border: 1px solid var(--line);
   background: var(--grain), var(--sheet);
   background-size: 240px 240px, auto;
-  box-shadow: var(--edge-hi), 0 0.5px 0 rgba(70, 44, 18, 0.08), 2px 8px 18px -10px rgba(70, 44, 18, 0.28);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 10px 24px -20px rgba(74, 54, 32, 0.22);
   /* it is simply there when the page has settled — no pop, no scale */
   animation: settle-in 1.2s 0.4s ease-out both;
 }
@@ -2137,8 +2206,8 @@ kbd {
   bottom: -7px;
   width: 14px;
   height: 14px;
-  border-right: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
-  border-bottom: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   border-bottom-right-radius: 4px;
   background: var(--sheet);
   transform: rotate(45deg);
@@ -2205,39 +2274,34 @@ kbd {
   width: 100%;
   margin-top: 28px;
   padding: 12px 14px 12px 12px;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 55%, var(--line));
+  border: 1px solid var(--line);
   border-radius: var(--r-sheet);
-  background: var(--grain), linear-gradient(to bottom, var(--sheet), color-mix(in srgb, var(--sheet) 70%, var(--surface-2)));
+  background: var(--grain), color-mix(in srgb, var(--sheet) 78%, var(--surface-2));
   background-size: 240px 240px, auto;
   color: var(--ink);
   text-align: left;
-  box-shadow: var(--edge-hi), var(--shadow-s);
-  transition: border-color 0.2s, box-shadow 0.25s var(--ease), transform 0.25s var(--ease);
+  box-shadow: none;
+  transition: border-color 0.18s, background-color 0.18s, box-shadow 0.2s var(--ease);
 }
 .rest-listen:hover {
-  border-color: color-mix(in srgb, var(--crust) 40%, var(--line-strong));
-  box-shadow: var(--edge-hi), var(--shadow);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--crust) 26%, var(--line-strong));
+  background: var(--grain), var(--sheet);
+  box-shadow: 0 8px 20px -22px rgba(74, 54, 32, 0.3);
 }
 .rest-listen:active {
-  transform: translateY(0);
-  box-shadow: var(--edge-hi), var(--shadow-s);
+  background: var(--grain), var(--surface-2);
+  box-shadow: inset 0 1px 2px rgba(74, 54, 32, 0.06);
 }
-/* the speaker: a brass ring round a cloth grille */
+/* the speaker: a quiet outlined badge, not a brass ring */
 .rest-listen__icon {
   flex: none;
-  width: 44px !important;
-  height: 44px !important;
+  width: 42px !important;
+  height: 42px !important;
   padding: 11px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle, color-mix(in srgb, var(--crust) 22%, transparent) 0.9px, transparent 1.3px) 0 0 / 4px 4px,
-    radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--kraft) 70%, #fff), var(--kraft) 70%);
-  box-shadow:
-    inset 0 0 0 1.5px color-mix(in srgb, var(--brass) 75%, transparent),
-    inset 0 2px 3px rgba(70, 44, 18, 0.18),
-    0 1px 0 rgba(255, 255, 255, 0.6);
-  color: var(--crust);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-2);
 }
 .rest-listen__text {
   display: flex;
@@ -2263,11 +2327,11 @@ kbd {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--crust) 30%, var(--line-strong));
-  background: var(--sheet);
+  border: 1px solid var(--line);
+  background: transparent;
   color: var(--crust);
-  box-shadow: var(--edge-hi), 0 1px 0 color-mix(in srgb, var(--line-strong) 60%, transparent);
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  box-shadow: none;
+  transition: background-color 0.18s, color 0.18s, border-color 0.18s;
 }
 .rest-listen__play svg {
   width: 12px;
@@ -2276,8 +2340,8 @@ kbd {
   fill: currentColor;
 }
 .rest-listen:hover .rest-listen__play {
-  border-color: transparent;
-  background: var(--crust);
+  border-color: var(--ink);
+  background: var(--ink);
   color: var(--sheet);
 }
 
@@ -2288,7 +2352,7 @@ kbd {
   gap: 2px 22px;
   margin-top: 20px;
   padding-top: 12px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
 }
 .later-link {
   display: inline-flex;
@@ -2341,17 +2405,17 @@ kbd {
   box-shadow: var(--shadow-paper);
   transition: border-color 0.2s, box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
 }
-/* the gum along the top of the pad */
+/* the gum along the top of the pad: one quiet band, not a tan bar */
 .first-note::before {
   content: '';
   position: absolute;
   left: -1px;
   right: -1px;
   top: -1px;
-  height: 7px;
+  height: 5px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--kraft-2) 85%, var(--crust)), var(--kraft));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 22%, transparent), 0 2px 3px -1px rgba(70, 44, 18, 0.18);
+  background: color-mix(in srgb, var(--kraft) 62%, var(--sheet));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 10%, transparent);
 }
 /* the next sheet down, peeking out under this one */
 .first-note::after {
@@ -2370,8 +2434,8 @@ kbd {
   transform-origin: 0 0;
 }
 .first-note:focus-within {
-  border-color: color-mix(in srgb, var(--crust) 45%, var(--sheet-edge));
-  box-shadow: var(--shadow-paper), 0 0 0 4px var(--focus-ring);
+  border-color: color-mix(in srgb, var(--focus) 42%, var(--sheet-edge));
+  box-shadow: var(--shadow-paper), 0 0 0 3px var(--focus-ring);
 }
 .first-note__label {
   display: block;
@@ -2397,8 +2461,12 @@ kbd {
 .first-note__input:focus-visible {
   outline: none;
 }
-.first-note__input::placeholder {
-  color: color-mix(in srgb, var(--ink-3) 82%, transparent);
+.first-note__input::placeholder,
+.composer__input::placeholder,
+.field-input::placeholder,
+.material__input::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
 }
 .first-note__row {
   display: flex;
@@ -2467,47 +2535,14 @@ kbd {
   transition: background-color 0.6s;
 }
 .session.is-calling {
-  color-scheme: dark;
-  --bg: #16130f;
-  --bg-deep: #100e0b;
-  --surface: #221d17;
-  --surface-2: #2c251d;
-  --line: #3a3128;
-  --line-strong: #5a4d3e;
-  --ink: #f6ecdc;
-  --ink-2: #ddd0bc;
-  --ink-3: #b3a590;
-  --crust: #f0b878;
-  --crust-fill: #cf8a48;
-  --crust-line: #6e3a16;
-  --phone-ink: #ff9b92;
-  --kraft: #3a3026;
-  --kraft-2: #4a3d2e;
-  --kraft-ink: #f1ddbf;
-  --lamp: #ffcb73;
-  --glow: rgba(255, 186, 96, 0.1);
-  --coral: #e0565b;
-  --coral-text: #ff9b92;
-  --coral-soft: #3a2224;
-  --amber: #f0c46c;
-  --amber-soft: #3a301b;
-  --green: #93d3a2;
-  --green-soft: #1d3224;
-  --focus: #9cc0f5;
-  --focus-ring: rgba(156, 192, 245, 0.3);
-  --shadow-s: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 1px 14px 30px -10px rgba(0, 0, 0, 0.5);
-  --shadow-paper: 0 1px 0 rgba(0, 0, 0, 0.35), 2px 10px 18px -8px rgba(0, 0, 0, 0.5);
-  --edge-hi: inset 0 1px 0 rgba(255, 236, 210, 0.07);
-  --sheet: #241f19;
-  --sheet-edge: #3a3227;
-  --rule: rgba(232, 196, 150, 0.1);
-  --enamel: #2c261f;
-  --enamel-2: #241f19;
-  --brass-deep: #6a4c22;
-  /* the room past the lamp goes dark at the edges; the light stays on 面包 */
-  background: radial-gradient(120% 90% at 50% 30%, transparent 50%, rgba(0, 0, 0, 0.38) 100%), var(--bg);
+  /* The room gets quieter, not darker: one broad pool of daylight over the table, open at the edges. */
+  background:
+    radial-gradient(120% 82% at 50% -8%, color-mix(in srgb, var(--surface) 72%, transparent), transparent 68%),
+    radial-gradient(70% 54% at 50% 30%, var(--glow), transparent 72%),
+    linear-gradient(to bottom, transparent 58%, color-mix(in srgb, var(--bg-deep) 36%, transparent)),
+    var(--bg);
   color: var(--ink);
+  transition: background-color 0.6s, background 0.6s;
 }
 .topbar--call .topbar__controls {
   margin-left: auto;
@@ -2530,11 +2565,11 @@ kbd {
   min-height: 60px;
   padding: 8px clamp(10px, 2vw, 22px);
   padding-top: max(8px, env(safe-area-inset-top));
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
   /* a hairline of light under the rule: the bar is a shelf edge, not a band of colour */
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--sheet) 55%, transparent);
-  backdrop-filter: saturate(1.2) blur(10px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--sheet) 45%, transparent);
+  backdrop-filter: saturate(1.05) blur(12px);
   z-index: 5;
 }
 .topbar__id {
@@ -2556,6 +2591,7 @@ kbd {
   gap: 7px;
   min-height: 44px;
   min-width: 44px;
+  white-space: nowrap;
   padding: 0 12px;
   border: 0;
   border-radius: 999px;
@@ -2566,7 +2602,7 @@ kbd {
 }
 .tool-btn:hover,
 .tool-btn.is-on {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--sheet) 58%, transparent);
   color: var(--ink);
 }
 .tool-btn .lucide {
@@ -2600,50 +2636,64 @@ kbd {
   align-items: center;
   gap: 6px;
   min-height: 40px;
-  padding: 0 14px;
+  white-space: nowrap;
+  padding: 0 13px;
   border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: var(--sheet);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  box-shadow: var(--edge-hi), 0 1px 0 color-mix(in srgb, var(--line-strong) 50%, transparent);
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: none;
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s, box-shadow 0.16s;
 }
 .ctl:hover:not(:disabled) {
   color: var(--ink);
-  border-color: var(--ink-3);
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--sheet) 55%, transparent);
 }
 .ctl:active:not(:disabled) {
-  box-shadow: inset 0 1px 2px rgba(70, 44, 18, 0.15);
+  background: var(--surface-2);
 }
 .ctl:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 .ctl .lucide {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
 }
 .ctl--stop .lucide {
   fill: currentColor;
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
+  stroke-width: 1.7;
 }
 .ctl--stop.is-hot {
-  border-color: var(--coral);
+  border-color: color-mix(in srgb, var(--coral) 25%, transparent);
   background: var(--coral-soft);
   color: var(--coral-text);
+}
+.ctl--end {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--sheet) 60%, transparent);
+  color: var(--ink-2);
+}
+.ctl--end:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  background: var(--sheet);
+  color: var(--ink);
 }
 .ctl__dot {
   position: absolute;
   top: 4px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--crust-fill);
-  box-shadow: 0 0 0 2px var(--surface);
+  background: var(--crust);
+  box-shadow: 0 0 0 2px var(--sheet);
 }
 
 /* ---------- conversation ---------- */
@@ -2841,7 +2891,7 @@ kbd {
   padding: 11px 16px 12px;
   border-radius: 12px 12px 3px 12px;
   border: 1px solid color-mix(in srgb, var(--crust) 16%, transparent);
-  background: var(--fibre), linear-gradient(to bottom, color-mix(in srgb, var(--kraft) 82%, #fff), var(--kraft) 40%);
+  background: var(--fibre), linear-gradient(to bottom, color-mix(in srgb, var(--kraft) 84%, var(--sheet)), var(--kraft) 40%);
   background-size: 320px 320px, auto;
   color: var(--kraft-ink);
   box-shadow: var(--edge-hi), 0 0.5px 0 rgba(70, 44, 18, 0.1), 1px 5px 10px -6px rgba(70, 44, 18, 0.3);
@@ -2985,11 +3035,12 @@ kbd {
 .paper {
   position: relative;
   padding: 26px 22px 20px;
-  border-radius: 22px var(--r-sheet) var(--r-sheet) var(--r-sheet);
+  border-radius: 18px var(--r-sheet) var(--r-sheet) var(--r-sheet);
   corner-shape: bevel round round round;
+  border: 1px solid color-mix(in srgb, var(--crust) 10%, var(--line));
   background:
     var(--fibre),
-    radial-gradient(120% 90% at 18% 0%, color-mix(in srgb, var(--kraft) 70%, #fff), transparent 70%),
+    radial-gradient(120% 90% at 18% 0%, color-mix(in srgb, var(--kraft) 58%, var(--sheet)), transparent 70%),
     var(--kraft);
   background-size: 320px 320px, auto, auto;
   color: var(--kraft-ink);
@@ -3019,8 +3070,8 @@ kbd {
   pointer-events: none;
 }
 .paper.is-draft {
-  outline: 1.5px dashed color-mix(in srgb, var(--crust-line) 45%, transparent);
-  outline-offset: -7px;
+  outline: 1px dashed color-mix(in srgb, var(--crust-line) 32%, transparent);
+  outline-offset: -6px;
 }
 .paper.is-stale,
 .paper.is-disputed {
@@ -3039,10 +3090,9 @@ kbd {
   background: var(--under);
   /* the hole's own shadow, then the paper reinforcement ring round it */
   box-shadow:
-    inset 1px 1.5px 2px rgba(0, 0, 0, 0.3),
-    0 0 0 3.5px color-mix(in srgb, var(--kraft-2) 80%, var(--crust)),
-    0 0 0 4px color-mix(in srgb, var(--crust-line) 30%, transparent),
-    0.5px 1px 1px 4px rgba(70, 44, 18, 0.12);
+    inset 0.5px 1px 1.5px rgba(0, 0, 0, 0.22),
+    0 0 0 3px color-mix(in srgb, var(--kraft-2) 72%, var(--crust)),
+    0 0 0 4px color-mix(in srgb, var(--crust-line) 18%, transparent);
 }
 .paper__string {
   position: absolute;
@@ -3140,7 +3190,11 @@ kbd {
 .paper__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
+}
+.paper__actions > .btn {
+  flex: 0 0 auto;
 }
 .paper__export {
   display: flex;
@@ -3169,7 +3223,7 @@ kbd {
 .paper--slip {
   max-width: 540px;
   margin: 26px 0 8px 42px;
-  transform: rotate(-0.6deg);
+  transform: rotate(-0.35deg);
   animation: land 0.6s var(--ease) both;
 }
 .paper--slip .paper__kicker {
@@ -3364,11 +3418,11 @@ kbd {
   color: var(--ink-2);
 }
 .doing__dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--crust-fill);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--crust-fill) 22%, transparent);
+  background: var(--crust);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--crust) 12%, transparent);
 }
 .doing__back {
   min-height: 32px;
@@ -3388,40 +3442,44 @@ kbd {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 7px;
   animation: rise 0.45s var(--ease) both;
 }
 .offers__lead {
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   color: var(--ink-3);
-  margin-right: 2px;
+  margin-right: 1px;
 }
 .offer {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 13px;
+  min-height: 34px;
+  padding: 0 12px;
   border-radius: 999px;
-  border: 1px dashed var(--line-strong);
-  background: color-mix(in srgb, var(--sheet) 82%, transparent);
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--sheet) 54%, transparent);
   color: var(--ink-2);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 500;
   white-space: nowrap;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.2s var(--ease);
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s, transform 0.16s var(--ease);
 }
 .offer .lucide {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
   color: var(--crust);
+  stroke-width: 1.8;
 }
 .offer:hover:not(:disabled) {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--crust) 45%, transparent);
-  background: var(--kraft);
-  color: var(--kraft-ink);
+  border-color: var(--line-strong);
+  background: var(--sheet);
+  color: var(--ink);
   transform: translateY(-1px);
+}
+.offer:active:not(:disabled) {
+  background: var(--surface-2);
+  transform: translateY(0);
 }
 .offer:disabled {
   opacity: 0.45;
@@ -3437,10 +3495,10 @@ kbd {
   gap: 8px 14px;
   padding: 12px 18px;
   border-radius: var(--r-sheet);
-  border: 1.5px dashed color-mix(in srgb, var(--crust) 45%, transparent);
-  background: var(--grain), var(--receipt);
+  border: 1px dashed color-mix(in srgb, var(--crust) 27%, var(--line));
+  background: var(--grain), color-mix(in srgb, var(--receipt) 88%, var(--surface-2));
   background-size: 240px 240px, auto;
-  box-shadow: 1px 6px 14px -8px rgba(70, 44, 18, 0.3);
+  box-shadow: var(--shadow-s);
 }
 .ticket::before,
 .ticket::after {
@@ -3453,7 +3511,7 @@ kbd {
   margin-top: -7px;
   border-radius: 50%;
   background: var(--under);
-  border: 1.5px dashed color-mix(in srgb, var(--crust) 45%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--crust) 27%, var(--line));
 }
 .ticket::before {
   left: -8px;
@@ -3531,7 +3589,7 @@ kbd {
   border: 1px solid var(--sheet-edge);
   background: var(--grain), var(--sheet);
   background-size: 240px 240px, auto;
-  box-shadow: var(--shadow-paper);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 14px 34px -30px rgba(74, 54, 32, 0.3);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .composer::before {
@@ -3540,15 +3598,15 @@ kbd {
   left: -1px;
   right: -1px;
   top: -1px;
-  height: 6px;
+  height: 4px;
   border-radius: 4px 4px 0 0;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--kraft-2) 85%, var(--crust)), var(--kraft));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 20%, transparent);
+  background: color-mix(in srgb, var(--kraft) 58%, var(--sheet));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 9%, transparent);
   pointer-events: none;
 }
 .composer:focus-within {
-  border-color: color-mix(in srgb, var(--crust) 45%, var(--sheet-edge));
-  box-shadow: var(--shadow-paper), 0 0 0 4px var(--focus-ring);
+  border-color: color-mix(in srgb, var(--focus) 36%, var(--sheet-edge));
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 0 0 3px var(--focus-ring);
 }
 .composer__input {
   display: block;
@@ -3567,15 +3625,16 @@ kbd {
   outline: none;
 }
 .composer__input::placeholder {
-  color: color-mix(in srgb, var(--ink-3) 85%, transparent);
+  color: var(--ink-3);
+  opacity: 1;
 }
 .composer__input--boxed {
   min-height: 84px;
   padding: 10px 12px;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--bg);
-  box-shadow: inset 0 1px 2px rgba(70, 44, 18, 0.07);
+  background: var(--surface);
+  box-shadow: inset 0 1px 2px rgba(70, 44, 18, 0.035);
   line-height: 1.7;
   resize: vertical;
 }
@@ -3602,46 +3661,48 @@ kbd {
   min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--crust) 22%, var(--line));
-  background: var(--fibre), var(--kraft);
-  background-size: 320px 320px, auto;
+  border: 1px solid color-mix(in srgb, var(--crust) 17%, var(--line));
+  background: color-mix(in srgb, var(--kraft) 46%, transparent);
   color: var(--kraft-ink);
-  font-size: 0.78rem;
+  font-size: 0.77rem;
   font-variant-numeric: tabular-nums;
+  transition: background-color 0.16s, border-color 0.16s;
 }
 .mat-chip:hover {
-  border-color: color-mix(in srgb, var(--crust) 45%, var(--line));
+  border-color: color-mix(in srgb, var(--crust) 32%, var(--line));
+  background: color-mix(in srgb, var(--kraft) 72%, transparent);
 }
-/* The same ink key as .btn--primary, round. Empty, it sinks back into the paper rather than vanishing. */
+/* The same ink key as .btn--primary, round. Empty, it becomes a quiet paper key rather than a dark blob. */
 .send-btn {
   display: inline-grid;
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 50%;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 86%, #fff), var(--ink) 60%);
-  color: var(--bg);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 1px 0 color-mix(in srgb, var(--ink) 40%, transparent),
-    1px 5px 12px -5px color-mix(in srgb, var(--ink) 60%, transparent);
-  transition: background-color 0.15s, transform 0.15s var(--ease), opacity 0.15s, box-shadow 0.15s;
+  background: var(--primary-bg);
+  color: var(--primary-ink);
+  box-shadow: 0 1px 1.5px rgba(61, 43, 25, 0.1);
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s, transform 0.12s var(--ease), opacity 0.16s;
 }
 .send-btn .lucide {
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.9;
 }
 .send-btn:hover:not(:disabled) {
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 80%, var(--crust)), color-mix(in srgb, var(--ink) 90%, var(--crust)) 60%);
+  background: var(--primary-bg-hover);
   transform: translateY(-1px);
 }
 .send-btn:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 2px rgba(30, 20, 12, 0.14);
 }
 .send-btn:disabled {
-  opacity: 0.28;
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface-2) 56%, transparent);
+  color: var(--ink-3);
+  opacity: 0.6;
   box-shadow: none;
   cursor: not-allowed;
 }
@@ -3668,9 +3729,9 @@ kbd {
   padding: 0 8px;
 }
 .composer__help {
-  font-size: 0.78rem;
+  font-size: 0.77rem;
   color: var(--ink-3);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 .composer__help.is-over,
 .composer__count.is-over {
@@ -4525,8 +4586,8 @@ kbd {
   bottom: -7px;
   width: 12px;
   height: 12px;
-  border-right: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
-  border-bottom: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   background: var(--sheet);
   transform: rotate(45deg);
 }
@@ -4634,7 +4695,7 @@ kbd {
   outline: none;
 }
 .phone-door--hero .phone-door__btn:focus-visible .phone-door__text {
-  outline: 2px solid var(--crust);
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
 /* Its shadows are drawn in the same light as 面包's, inside the SVG; the box itself never moves. */
@@ -4660,6 +4721,11 @@ kbd {
 }
 .phone-door.is-blocked .phone-door__btn {
   cursor: not-allowed;
+}
+/* When the call is unavailable the plaque grows a line taller; reserve that line instead of
+   letting the plate sit on the heading below it. */
+.entry__hero:has(.phone-door.is-blocked) {
+  margin-bottom: 1.25rem;
 }
 .phone-door.is-pending .phone-door__btn {
   cursor: progress;
@@ -4718,41 +4784,23 @@ kbd {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 9px 24px 10px;
-  border: 1px solid color-mix(in srgb, var(--brass) 70%, var(--line-strong));
+  min-height: 44px;
+  padding: 9px 18px 10px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 72%, var(--line));
   border-radius: 999px;
-  background:
-    radial-gradient(60% 120% at 22% 0%, rgba(255, 255, 255, 0.55), transparent 70%),
-    linear-gradient(to bottom, var(--enamel), var(--enamel-2));
-  box-shadow:
-    inset 0 0 0 2.5px var(--enamel),
-    inset 0 0 0 3.25px color-mix(in srgb, var(--phone) 42%, transparent),
-    0 1px 0 color-mix(in srgb, var(--brass-deep) 45%, transparent),
-    2px 10px 18px -10px rgba(72, 34, 12, 0.55);
+  background: color-mix(in srgb, var(--enamel) 80%, var(--sheet));
+  box-shadow: 0 1px 2px rgba(72, 45, 24, 0.04);
   text-align: left;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.25s var(--ease);
+  transition: border-color 0.18s, background-color 0.18s, box-shadow 0.2s, transform 0.18s var(--ease);
 }
-/* the two brass screws, slots turned the way a hand left them */
-.phone-door--hero .phone-door__text::before,
-.phone-door--hero .phone-door__text::after {
+/* A single hairline echoes the enamel pinstripe, without a second metal frame. */
+.phone-door--hero .phone-door__text::before {
   content: '';
   position: absolute;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  margin-top: -3.5px;
-  border-radius: 50%;
-  background:
-    linear-gradient(var(--slot, 35deg), transparent 43%, rgba(70, 46, 14, 0.6) 43% 57%, transparent 57%),
-    radial-gradient(circle at 34% 30%, #f8e6bf, var(--brass) 58%, var(--brass-deep));
-  box-shadow: 0 0.5px 0 rgba(255, 255, 255, 0.5), inset 0 -0.5px 0.5px rgba(0, 0, 0, 0.25);
-}
-.phone-door--hero .phone-door__text::before {
-  left: 10px;
-}
-.phone-door--hero .phone-door__text::after {
-  --slot: -20deg;
-  right: 10px;
+  inset: 3px;
+  border: 1px solid color-mix(in srgb, var(--phone) 13%, transparent);
+  border-radius: inherit;
+  pointer-events: none;
 }
 .phone-door--hero .phone-door__title {
   display: flex;
@@ -4781,19 +4829,14 @@ kbd {
   transform: translateY(-1px);
 }
 .phone-door--hero .phone-door__btn:not([aria-disabled='true']):hover .phone-door__text {
-  border-color: color-mix(in srgb, var(--brass) 80%, var(--phone));
-  box-shadow:
-    inset 0 0 0 2.5px var(--enamel),
-    inset 0 0 0 3.25px color-mix(in srgb, var(--phone) 70%, transparent),
-    0 1px 0 color-mix(in srgb, var(--brass-deep) 45%, transparent),
-    3px 14px 24px -12px rgba(72, 34, 12, 0.6);
+  border-color: color-mix(in srgb, var(--phone) 34%, var(--line-strong));
+  background: var(--enamel);
+  box-shadow: 0 4px 14px -14px rgba(72, 34, 12, 0.35);
 }
 .phone-door--hero .phone-door__btn:not([aria-disabled='true']):active .phone-door__text {
   transform: translateY(0.5px);
-  box-shadow:
-    inset 0 0 0 2.5px var(--enamel),
-    inset 0 0 0 3.25px color-mix(in srgb, var(--phone) 70%, transparent),
-    inset 0 1px 3px rgba(72, 34, 12, 0.2);
+  background: var(--enamel-2);
+  box-shadow: inset 0 1px 2px rgba(72, 34, 12, 0.08);
 }
 .phone-door__btn:not([aria-disabled='true']):hover .phone-door__go {
   color: var(--phone);
@@ -4844,23 +4887,15 @@ kbd {
   flex-direction: row;
   gap: 12px;
   padding: 8px 16px 8px 8px;
-  border: 1px solid color-mix(in srgb, var(--brass) 60%, var(--line-strong));
-  border-radius: 16px;
-  background:
-    radial-gradient(70% 120% at 20% 0%, rgba(255, 255, 255, 0.5), transparent 70%),
-    linear-gradient(to bottom, var(--enamel), var(--enamel-2));
-  box-shadow:
-    inset 0 0 0 2.5px var(--enamel),
-    inset 0 0 0 3.25px color-mix(in srgb, var(--phone) 30%, transparent),
-    var(--shadow-paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--enamel) 72%, var(--sheet));
+  box-shadow: none;
   text-align: left;
 }
 .phone-door--panel .phone-door__btn:not([aria-disabled='true']):hover {
-  border-color: color-mix(in srgb, var(--brass) 70%, var(--phone));
-  box-shadow:
-    inset 0 0 0 2.5px var(--enamel),
-    inset 0 0 0 3.25px color-mix(in srgb, var(--phone) 60%, transparent),
-    var(--shadow-paper);
+  border-color: var(--line-strong);
+  background: var(--enamel);
 }
 .phone-door--panel .phone-door__phone {
   flex: none;
@@ -4921,12 +4956,13 @@ kbd {
   z-index: 6;
   max-width: min(300px, calc(100vw - 24px));
   padding: 8px 12px;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--bg);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
   font-size: 0.84rem;
-  line-height: 1.5;
-  box-shadow: var(--shadow);
+  line-height: 1.55;
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 12px 26px -22px rgba(48, 34, 19, 0.3);
   animation: rise 0.25s var(--ease) both;
 }
 .call-pill__hint:empty {
@@ -4957,13 +4993,13 @@ kbd {
   padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
 }
 .callroom__main::before {
-  /* the one lamp left on, right above 面包 */
+  /* one broad, low light above 面包 — a room at rest, not a stage */
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 75%;
+  height: 78%;
   z-index: -1;
-  background: radial-gradient(44% 58% at 50% 30%, rgba(255, 190, 100, 0.22), transparent 72%);
+  background: radial-gradient(46% 58% at 50% 28%, color-mix(in srgb, var(--lamp) 13%, transparent), transparent 74%);
   pointer-events: none;
   transition: opacity 0.6s;
 }
@@ -4971,7 +5007,7 @@ kbd {
   animation: glow-breathe 2.4s ease-in-out infinite;
 }
 .callroom:is([data-phase='paused'], [data-phase='muted'], [data-phase='error']) .callroom__main::before {
-  opacity: 0.45;
+  opacity: 0.6;
 }
 
 .callroom__bar {
@@ -4982,21 +5018,22 @@ kbd {
   gap: 4px 14px;
   width: 100%;
   max-width: 640px;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   color: var(--ink-2);
 }
 .callroom__live {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
+  gap: 7px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 .callroom__pulse {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--green);
-  animation: live-pulse 2s ease-out infinite;
+  animation: live-pulse 3.2s ease-out infinite;
 }
 .callroom:is([data-phase='paused'], [data-phase='error'], [data-phase='connecting']) .callroom__pulse {
   background: var(--amber);
@@ -5050,7 +5087,7 @@ kbd {
   grid-area: 1 / 1;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--lamp) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--lamp) 48%, transparent);
   opacity: 0;
   transition: transform 0.12s ease-out, opacity 0.4s, border-color 0.4s;
 }
@@ -5065,16 +5102,16 @@ kbd {
 }
 /* listening: the rings follow the loudness of your voice */
 .cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(1) {
-  opacity: 1;
+  opacity: 0.7;
 }
 .cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(2) {
-  opacity: 0.6;
+  opacity: 0.42;
 }
 .cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(3) {
-  opacity: 0.32;
+  opacity: 0.24;
 }
 .cstage[data-phase='listening'] .cstage__halo span {
-  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 24%, transparent);
 }
 .cstage[data-phase='listening'] .cstage__halo span:nth-child(1) {
   transform: scale(calc(1 + var(--lvl, 0) * 0.14));
@@ -5104,8 +5141,8 @@ kbd {
 }
 /* Just interrupted: the rings come up to full strength for a beat, as a plain state change. */
 .callroom.is-caught .cstage__halo span:nth-child(n) {
-  border-color: color-mix(in srgb, var(--ink) 65%, transparent);
-  opacity: 1;
+  border-color: color-mix(in srgb, var(--ink) 38%, transparent);
+  opacity: 0.9;
 }
 
 .callroom__status {
@@ -5116,35 +5153,40 @@ kbd {
 /* One short line per phase, in 面包's own voice — so in its hand. */
 .callroom__phase {
   font-family: var(--font-voice);
-  font-size: clamp(1.5rem, 3vw, 1.95rem);
+  font-size: clamp(1.42rem, 2.6vw, 1.8rem);
   font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.06em;
+  line-height: 1.35;
+  letter-spacing: 0.045em;
 }
 .callroom__phase:focus {
   outline: none;
 }
 /* Only four phases say anything here, so no row is reserved: the space goes to the captions. */
 .callroom__hint {
-  margin-top: 4px;
-  font-size: 0.95rem;
+  margin-top: 5px;
+  font-size: 0.92rem;
+  line-height: 1.65;
   color: var(--ink-2);
 }
 /* Said once per call, the first time 面包 speaks, then gone for good. */
 .callroom__cue {
-  margin-top: 6px;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  margin-top: 7px;
+  font-size: 0.88rem;
+  line-height: 1.65;
   color: var(--ink-3);
   animation: rise 0.4s var(--ease) both;
 }
 .callroom__error {
-  margin-top: 10px;
-  padding: 8px 14px;
-  border-radius: var(--r-sheet);
-  border: 1px solid var(--amber);
-  background: var(--amber-soft);
+  max-width: 34em;
+  margin: 10px auto 0;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--coral) 30%, var(--line));
+  background: color-mix(in srgb, var(--coral-soft) 72%, var(--surface));
+  color: var(--ink);
   font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.65;
 }
 
 .callroom__captions {
@@ -5153,11 +5195,11 @@ kbd {
   flex-direction: column;
   justify-content: flex-start;
   overflow-y: auto;
-  gap: 10px;
+  gap: 9px;
   width: 100%;
-  max-width: 620px;
-  min-height: 56px;
-  margin-top: 16px;
+  max-width: 600px;
+  min-height: 52px;
+  margin-top: 14px;
 }
 .cap {
   flex: none;
@@ -5168,12 +5210,12 @@ kbd {
 }
 .cap__who {
   flex: none;
-  padding: 1px 8px;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: var(--surface-2);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  background: color-mix(in srgb, var(--surface-2) 76%, transparent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
 }
 .cap--you .cap__text {
@@ -5186,18 +5228,16 @@ kbd {
 }
 /* 面包's line: a card held up in the lamplight, warm along its top edge. */
 .cap--bread {
-  padding: 12px 16px;
+  padding: 12px 15px;
   border-radius: var(--r-sheet);
   border: 1px solid var(--line);
-  background:
-    linear-gradient(to bottom, color-mix(in srgb, var(--lamp) 7%, transparent), transparent 60%),
-    color-mix(in srgb, var(--surface) 88%, transparent);
-  box-shadow: var(--edge-hi), 2px 10px 22px -12px rgba(0, 0, 0, 0.6);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  background: color-mix(in srgb, var(--surface) 92%, var(--sheet));
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 12px 28px -28px rgba(48, 34, 19, 0.26);
+  transition: border-color 0.3s, background-color 0.3s, box-shadow 0.3s;
 }
 .cap--bread .cap__who {
-  background: color-mix(in srgb, var(--lamp) 20%, transparent);
-  color: var(--lamp);
+  background: var(--surface-2);
+  color: var(--ink-3);
 }
 .cap--bread .cap__text {
   max-height: 5.5em;
@@ -5211,8 +5251,9 @@ kbd {
   overflow-wrap: anywhere;
 }
 .cap--bread.is-live {
-  border-color: color-mix(in srgb, var(--lamp) 50%, transparent);
-  box-shadow: var(--edge-hi), 0 0 0 4px color-mix(in srgb, var(--lamp) 10%, transparent), 2px 10px 22px -12px rgba(0, 0, 0, 0.6);
+  border-color: color-mix(in srgb, var(--crust) 26%, var(--line));
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04);
 }
 /* Cut off mid-sentence. Static properties only, so this still reads with reduced motion on. */
 .cap--bread.is-cut {
@@ -5234,18 +5275,18 @@ kbd {
 
 .callroom__controls {
   margin-top: auto;
-  padding-top: 18px;
+  padding-top: 20px;
   display: flex;
   flex: none;
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(16px, 6vw, 44px);
+  gap: clamp(18px, 6vw, 46px);
 }
 .callkey {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   width: 92px;
   text-align: center;
 }
@@ -5255,79 +5296,78 @@ kbd {
  * the shape and position never change between phases.
  */
 .callkey__btn {
-  --key: var(--surface-2);
+  --key: var(--call-key-bg);
   display: grid;
   place-items: center;
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 80%, transparent);
-  background: radial-gradient(circle at 36% 26%, color-mix(in srgb, var(--key) 82%, #fff), var(--key) 52%, color-mix(in srgb, var(--key) 78%, #000));
-  color: var(--ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 240, 220, 0.14),
-    inset -1px -3px 4px rgba(0, 0, 0, 0.28),
-    0 2px 0 rgba(0, 0, 0, 0.45),
-    2px 10px 18px -8px rgba(0, 0, 0, 0.65);
-  transition: background-color 0.2s, color 0.2s, transform 0.15s var(--ease), box-shadow 0.15s, opacity 0.2s;
+  border: 1px solid var(--line);
+  background: var(--key);
+  color: var(--ink-2);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.045), 0 10px 22px -22px rgba(48, 34, 19, 0.3);
+  transition: background-color 0.18s, border-color 0.18s, color 0.18s, transform 0.12s var(--ease), box-shadow 0.18s, opacity 0.18s;
 }
 .callkey__btn .lucide {
-  width: 26px;
-  height: 26px;
+  width: 25px;
+  height: 25px;
+  stroke-width: 1.75;
 }
 .callkey__btn:hover:not([aria-disabled='true']) {
-  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  background: var(--call-key-bg-hover);
+  color: var(--ink);
 }
 .callkey__btn:active:not([aria-disabled='true']) {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 240, 220, 0.1),
-    inset -1px -2px 3px rgba(0, 0, 0, 0.3),
-    0 0 0 rgba(0, 0, 0, 0.45),
-    1px 4px 8px -4px rgba(0, 0, 0, 0.6);
+  transform: translateY(1px);
+  box-shadow: inset 0 1px 2px rgba(74, 54, 32, 0.06);
+}
+.callkey__btn:focus-visible {
+  outline-offset: 3px;
 }
 .callkey__btn[aria-disabled='true'] {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.48;
 }
 .callkey__label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  line-height: 1.3;
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--ink-2);
 }
-/* the lit key: the lamp's own amber, glowing faintly onto the table round it */
+/* The lit key: a warm paper disc, sized and placed first so the eye finds it without a dark slab. */
 .callkey--primary .callkey__btn {
-  --key: var(--lamp);
   width: 80px;
   height: 80px;
-  border-color: color-mix(in srgb, var(--lamp) 60%, #000);
-  color: #2a1a08;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 250, 235, 0.6),
-    inset -1px -4px 6px rgba(120, 60, 0, 0.3),
-    0 2px 0 color-mix(in srgb, var(--lamp) 40%, #000),
-    0 8px 30px -4px color-mix(in srgb, var(--lamp) 40%, transparent);
+  border-color: var(--call-primary-border);
+  background: var(--call-primary-bg);
+  color: var(--call-primary-ink);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.05), 0 14px 30px -26px rgba(96, 64, 30, 0.38);
+}
+.callkey--primary .callkey__btn:hover:not([aria-disabled='true']) {
+  border-color: color-mix(in srgb, var(--call-primary-border) 80%, var(--crust));
+  background: var(--call-primary-bg-hover);
+  color: var(--call-primary-ink);
 }
 .callkey--primary .callkey__btn .lucide {
-  width: 30px;
-  height: 30px;
+  width: 29px;
+  height: 29px;
+  stroke-width: 1.8;
 }
 .callkey--primary .callkey__label {
   color: var(--ink);
+  font-weight: 600;
 }
 /* 插话: same slot and size, but quiet — speaking up is the usual way; this is the way round it. */
 .callkey--soft .callkey__btn {
-  --key: var(--surface-2);
-  border-color: var(--line-strong);
+  background: var(--call-key-bg);
+  border-color: var(--line);
   color: var(--ink-2);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 240, 220, 0.12),
-    inset -1px -3px 4px rgba(0, 0, 0, 0.28),
-    0 2px 0 rgba(0, 0, 0, 0.45);
+  box-shadow: none;
 }
 .callkey--soft .callkey__btn:hover:not([aria-disabled='true']) {
-  --key: color-mix(in srgb, var(--surface-2) 80%, var(--ink-3));
+  background: var(--call-key-bg-hover);
+  border-color: var(--line-strong);
   color: var(--ink);
 }
 .callkey--soft .callkey__label {
@@ -5335,26 +5375,28 @@ kbd {
 }
 .callkey--wait .callkey__btn,
 .callkey--wait .callkey__btn[aria-disabled='true'] {
-  border: 1.5px dashed var(--line-strong);
-  background: transparent;
+  border: 1px dashed var(--line-strong);
+  background: color-mix(in srgb, var(--surface) 28%, transparent);
   color: var(--ink-3);
   box-shadow: none;
   opacity: 1;
 }
-/* hang up: the phone's own red lacquer */
+/* Hang up: the phone's red, held back to a tinted paper key with a red rim and icon. */
 .callkey--hangup .callkey__btn {
-  --key: var(--hangup);
-  border-color: color-mix(in srgb, var(--phone-deep) 70%, transparent);
-  background: radial-gradient(circle at 36% 26%, #f07a5e, var(--hangup) 52%, var(--phone-deep));
-  color: #fff;
+  border-color: var(--call-hangup-border);
+  background: var(--call-hangup-bg);
+  color: var(--call-hangup-ink);
+  box-shadow: none;
 }
 .callkey--hangup .callkey__btn:hover {
-  background: radial-gradient(circle at 36% 26%, #e66a50, color-mix(in srgb, var(--hangup) 88%, #000) 52%, var(--phone-deep));
+  border-color: color-mix(in srgb, var(--call-hangup-ink) 38%, var(--call-hangup-border));
+  background: color-mix(in srgb, var(--call-hangup-bg) 72%, var(--surface));
+  color: color-mix(in srgb, var(--call-hangup-ink) 88%, var(--ink));
 }
 .callkey--mute .callkey__btn[aria-pressed='true'] {
-  --key: var(--ink);
-  border-color: transparent;
-  color: var(--bg);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .callroom__more {
@@ -5362,36 +5404,39 @@ kbd {
   flex: none;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2px 14px;
+  gap: 1px 10px;
   margin-top: 10px;
 }
 .callroom__link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 0;
+  min-height: 44px;
+  padding: 0 11px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: none;
-  color: var(--ink-2);
-  font-size: 0.9rem;
+  color: var(--ink-3);
+  font-size: 0.86rem;
+  transition: background-color 0.16s, border-color 0.16s, color 0.16s;
 }
 .callroom__link:hover {
-  background: var(--surface-2);
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--sheet) 54%, transparent);
   color: var(--ink);
 }
 .callroom__link .lucide {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
 }
 
 .callroom__side {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-left: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+  border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 44%, transparent);
 }
 
 .calllog {
@@ -5439,7 +5484,7 @@ kbd {
   color: var(--ink-3);
 }
 .calllog__item--assistant .calllog__who {
-  color: var(--lamp);
+  color: var(--crust);
 }
 .calllog__text {
   font-size: 0.95rem;
@@ -5462,7 +5507,7 @@ kbd {
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-sheet);
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
 }
 .calllog--compact .calllog__h {
   padding: 12px 16px 6px;
@@ -5508,11 +5553,13 @@ body:has(.session.is-calling) .toasts {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 8px 10px 16px;
+  padding: 10px 8px 10px 15px;
   border-radius: 12px;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--ink) 90%, #fff), var(--ink) 50%);
-  color: var(--bg);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 2px 16px 34px -12px rgba(20, 14, 8, 0.55);
+  border: 1px solid var(--line);
+  background: var(--grain), var(--surface);
+  background-size: 240px 240px, auto;
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.05), 0 16px 36px -24px rgba(48, 34, 19, 0.35);
   pointer-events: auto;
   animation: rise 0.3s var(--ease) both;
 }
@@ -5525,12 +5572,12 @@ body:has(.session.is-calling) .toasts {
   color: inherit;
 }
 .toast .icon-btn:hover {
-  background: color-mix(in srgb, var(--bg) 15%, transparent);
+  background: var(--surface-2);
 }
 .toast--error {
-  background: var(--coral-soft);
+  background: var(--grain), color-mix(in srgb, var(--coral-soft) 64%, var(--surface));
   color: var(--ink);
-  border: 1.5px solid var(--coral);
+  border-color: color-mix(in srgb, var(--coral) 24%, var(--line));
 }
 .toast--error .toast__icon {
   color: var(--coral-text);
@@ -5634,10 +5681,7 @@ body:has(.session.is-calling) .toasts {
     padding: 9px 19px 10px;
   }
   .phone-door--hero .phone-door__text::before {
-    left: 7px;
-  }
-  .phone-door--hero .phone-door__text::after {
-    right: 7px;
+    inset: 3px;
   }
   .phone-door--hero .phone-door__go {
     width: 15px;
@@ -5717,17 +5761,12 @@ body:has(.session.is-calling) .toasts {
     padding: 2px 10px calc(8px + env(safe-area-inset-bottom));
   }
   .offers {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    margin: 0 -10px;
-    padding: 2px 10px 4px;
-    scrollbar-width: none;
-  }
-  .offers::-webkit-scrollbar {
-    display: none;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 2px 0 4px;
   }
   .offers__lead {
-    flex: none;
+    display: none;
   }
   .starters,
   .conv-call {
@@ -5808,6 +5847,7 @@ body:has(.session.is-calling) .toasts {
   }
   .dialog__actions .btn {
     flex: 1 1 auto;
+    min-width: 0;
   }
   .tray-sheet .dialog__body {
     padding-top: 10px;
@@ -5824,8 +5864,10 @@ body:has(.session.is-calling) .toasts {
     gap: 0;
   }
 
+  /* On phones, a toast belongs under the bar, not on top of the offers and the writing pad. */
   body:has(.session) .toasts {
-    bottom: calc(150px + env(safe-area-inset-bottom));
+    top: calc(72px + env(safe-area-inset-top));
+    bottom: auto;
   }
 }
 
@@ -5919,12 +5961,40 @@ body:has(.session.is-calling) .toasts {
     top: -4.5rem;
     max-width: 100%;
   }
+  .topbar {
+    gap: 2px;
+    padding-inline: 8px;
+  }
+  .topbar__id {
+    gap: 4px;
+  }
   .topbar .brand-logo__type {
     display: none;
+  }
+  /* Keep the visible mode label off the narrowest bars; the button's accessible name still carries it. */
+  .ai-stamp__mode {
+    display: none;
+  }
+  .ai-stamp__ai {
+    padding-inline: 8px;
+    border-right: 0;
+  }
+  .topbar__tools {
+    gap: 0;
+  }
+  .topbar__controls {
+    gap: 2px;
+    padding-left: 2px;
+  }
+  .ctl {
+    padding-inline: 10px;
   }
 }
 
 @media (pointer: coarse) {
+  .ai-stamp {
+    min-height: 44px;
+  }
   .btn--sm,
   .pill,
   .offer,
@@ -5936,13 +6006,16 @@ body:has(.session.is-calling) .toasts {
     min-height: 44px;
   }
   .msg__meta .pill {
-    min-height: 40px;
+    min-height: 44px;
   }
   .icon-btn--sm {
     width: 44px;
     height: 44px;
   }
   .ctl {
+    min-height: 44px;
+  }
+  .composer__input {
     min-height: 44px;
   }
 }
@@ -6342,10 +6415,10 @@ body:has(.session.is-calling) .toasts {
 }
 @keyframes live-pulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 32%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 8px transparent;
+    box-shadow: 0 0 0 6px transparent;
   }
 }
 @keyframes halo-out {
@@ -6431,7 +6504,7 @@ body:has(.session.is-calling) .toasts {
     opacity: 1;
   }
   50% {
-    opacity: 0.55;
+    opacity: 0.74;
   }
 }
 
