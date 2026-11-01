@@ -12,6 +12,8 @@ import { RunController } from './run-controller';
 import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
+import { requestVoiceTurn } from './voice-turn';
+import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
 
@@ -31,7 +33,10 @@ export class BreadController {
   private view: BreadViewModel;
   private call = idleCall();
   private callController: CallController;
+  private voiceFetcher: typeof fetch;
+  private preparedCallSpeech: { text: string; token: RunToken; signal: AbortSignal; audio: Promise<Blob> } | null = null;
   constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController(), callAudio?: CallAudioPort) {
+    this.voiceFetcher = fetcher;
     this.fetcher = (input, init) => fetchComplete(fetcher, input, init, String(input).includes('/capabilities') ? 8000 : 60000);
     this.callController = new CallController({
       update: call => { this.call = call; this.publish(); },
@@ -64,6 +69,11 @@ export class BreadController {
       },
       synthesize: async (text, signal) => {
         signal.throwIfAborted();
+        const prepared = this.preparedCallSpeech; this.preparedCallSpeech = null;
+        if (prepared && prepared.text === text && prepared.token.sessionId === this.state.sessionId && prepared.token.epoch === this.state.epoch && prepared.token.contextRevision === this.state.contextRevision) {
+          // A failed combined request must not silently bill a second synthesis.
+          return withAbort(prepared.audio, AbortSignal.any([signal, prepared.signal]));
+        }
         const token = { sessionId: this.state.sessionId, runId: uid('call'), epoch: this.state.epoch, contextRevision: this.state.contextRevision };
         const response = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
         if (!response.ok) { const json = await response.json(); throw new Error(json.error?.userMessage || '声音暂时没出来，文字回复还在。'); }
@@ -102,7 +112,7 @@ export class BreadController {
     }
   };
   dispose() { this.disposed = true; this.capabilityRequest?.abort(); this.capabilityRequest = null; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
-  private cancelResources() { this.failedTurn = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
+  private cancelResources() { this.failedTurn = null; this.preparedCallSpeech = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。', retainFailedTurn = false) { if (!retainFailedTurn) this.failedTurn = null; this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   dismissNotice = () => { this.notice = ''; this.publish(); };
   clearNotice = () => { this.failedTurn = null; this.notice = ''; this.error = ''; this.publish(); };
@@ -169,13 +179,23 @@ export class BreadController {
     let retryable = true;
     try {
       const validated = turnRequestSchema.safeParse(request); if (!validated.success) { retryable = false; throw new Error('这段内容有点长，可以分几段发送。'); }
-      const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
-      const json = await res.json(); if (!isCurrent(this.state, token) || signal.aborted) return;
-      if (!res.ok) { retryable = json.error?.retryable !== false; throw new Error(json.error?.userMessage || '回复没有接上，再试一次？'); }
+      let json: unknown;
+      let speech: Promise<Blob> | undefined;
+      if (channel === 'call' && request.mode === 'listen' && this.capabilities?.tts.turnStream) {
+        const stream = requestVoiceTurn(this.voiceFetcher, validated.data, signal);
+        speech = stream.audio; json = await stream.candidate;
+      } else {
+        const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
+        const body = await res.json(); json = body;
+        if (!isCurrent(this.state, token) || signal.aborted) return;
+        if (!res.ok) { retryable = body.error?.retryable !== false; throw new Error(body.error?.userMessage || '回复没有接上，再试一次？'); }
+      }
+      if (!isCurrent(this.state, token) || signal.aborted) return;
       this.dispatch({ type: 'ACTIVITY', token, activity: 'validating' });
       const candidate = candidateSchema.parse(json);
       if (validateCandidate(candidate, request).length) throw new Error('这次回复没有通过引用与版本检查，已丢弃。');
       if (!isCurrent(this.state, token) || signal.aborted) return;
+      if (speech) this.preparedCallSpeech = { text: candidate.assistantText, token, signal, audio: speech };
       this.dispatch({ type: 'CANDIDATE', candidate });
     } catch (e) { if (isCurrent(this.state, token) && !signal.aborted) {
       if (channel === 'text' && retryable) this.failedTurn = { text, sessionId: token.sessionId, epoch: token.epoch, contextRevision: token.contextRevision, mode: request.mode };

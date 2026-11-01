@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const capabilitiesSchema = z.object({
   agent: z.object({ mode: z.enum(['mock', 'real']), label: z.string(), configured: z.boolean() }),
   asr: z.object({ available: z.boolean(), label: z.string(), reason: z.string().optional() }),
-  tts: z.object({ available: z.boolean(), label: z.string(), reason: z.string().optional(), greeting: z.string().optional() }),
+  tts: z.object({ available: z.boolean(), label: z.string(), reason: z.string().optional(), greeting: z.string().optional(), turnStream: z.boolean().optional() }),
   limits: z.object({ maxInputChars: z.number().positive(), maxSourceChars: z.number().positive(), maxAudioBytes: z.number().positive(), maxRecordingSeconds: z.number().positive() }),
   processingNotice: z.string(),
 });

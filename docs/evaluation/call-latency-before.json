@@ -1,0 +1,59 @@
+{
+  "at": "2026-11-01T16:39:10.236Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "transport": "legacy",
+  "synthetic": true,
+  "scope": "Text-to-reply-and-audio HTTP latency; excludes endpoint detection, ASR, audio decoding and physical device playback. Four samples are not a long-term SLA.",
+  "cases": [
+    {
+      "case": 1,
+      "input": "准备了一周的面试，最后还是被拒了。我现在什么建议都不想听。",
+      "status": "ok",
+      "replyMs": 3815,
+      "reply": "准备了一周，最后还是被拒了，这个结果确实不好受。建议我先不说。",
+      "agentTiming": "provider;dur=3685.8, total;dur=3688.6",
+      "speechTiming": "provider;dur=1484.6, total;dur=1486.9",
+      "audioMs": 5604,
+      "bytes": 105972
+    },
+    {
+      "case": 2,
+      "input": "我今天这个面试又出了点问题。",
+      "status": "ok",
+      "replyMs": 4906,
+      "reply": "面试里碰上不顺的地方，确实挺烦的。",
+      "agentTiming": "provider;dur=4779.5, total;dur=4781.9",
+      "speechTiming": "provider;dur=890.8, total;dur=893.1",
+      "audioMs": 6022,
+      "bytes": 55860
+    },
+    {
+      "case": 3,
+      "input": "今天不想复盘，也别问我问题，就想说说话。",
+      "status": "ok",
+      "replyMs": 1967,
+      "reply": "行，今天不翻旧账，也不问。你想说什么就说什么，我听着。",
+      "agentTiming": "provider;dur=1832.9, total;dur=1835.6",
+      "speechTiming": "provider;dur=828.4, total;dur=830.7",
+      "audioMs": 3077,
+      "bytes": 84660
+    },
+    {
+      "case": 4,
+      "input": "不是我没准备，是对方临时换了题，别再说我准备不足。",
+      "status": "ok",
+      "replyMs": 1991,
+      "reply": "好，是我说错了。临时换题，准备得再充分也接不住。",
+      "agentTiming": "provider;dur=1741.9, total;dur=1744.3",
+      "speechTiming": "provider;dur=775.7, total;dur=778.0",
+      "audioMs": 3064,
+      "bytes": 84660
+    }
+  ],
+  "summary": {
+    "successful": 4,
+    "planned": 4,
+    "medianAudioMs": 4340.5,
+    "maxAudioMs": 6022
+  }
+}

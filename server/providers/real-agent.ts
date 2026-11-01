@@ -51,7 +51,7 @@ export class RealProvider implements AgentProvider {
       signal.throwIfAborted();
       const system = systemPrompt(input.mode, input.mode === 'practice' && !input.context.selectedQuestion, input.channel) + repair;
       const anthropic = protocol === 'anthropic';
-      const maxTokens = input.mode === 'listen' ? 768 : 4096;
+      const maxTokens = input.mode === 'listen' ? (input.channel === 'call' ? 384 : 512) : 4096;
       const body = anthropic ? { model, max_tokens: maxTokens, temperature: 0.4, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
         : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: effort ? 'enabled' : 'disabled' }, ...(effort ? { reasoning_effort: effort } : {}), messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await fetcher(`${baseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'manual', cache: 'no-store' });
@@ -63,7 +63,11 @@ export class RealProvider implements AgentProvider {
         if (typeof text !== 'string') throw new Error();
         content = JSON.parse(text.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim());
       } catch { repair = '\n上次输出不是合法 JSON。请按结构重新生成一次，不输出代码块。'; if (!attempt) continue; throw new AppError('INVALID_MODEL_OUTPUT', 502, true); }
-      const parsed = modelContentSchema.safeParse(content);
+      // Listening has no evidence/card work. The harness supplies its empty arrays,
+      // while retaining any model-supplied fields for strict validation (never hiding a violation).
+      const normalized = input.mode === 'listen' && content && typeof content === 'object' && !Array.isArray(content)
+        ? { findings: [], warnings: [], ...content } : content;
+      const parsed = modelContentSchema.safeParse(normalized);
       if (!parsed.success) {
         const issues = parsed.error.issues.map(i => ({ code: i.code, path: i.path.join('.') }));
         console.warn(JSON.stringify({ stage: 'agent_validation', code: 'SCHEMA', issues }));
