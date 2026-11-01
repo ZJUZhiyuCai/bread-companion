@@ -4,6 +4,7 @@ import { BreadController } from '@/services/bread-controller';
 import { mockCandidate } from '@/server/providers/mock-agent';
 import type { TurnRequest } from '@/domain/types';
 import { listSaved } from '@/services/card-store';
+import { getCapabilities } from '@/server/config';
 describe('late asynchronous work', () => {
   it('ending before a provider returns publishes nothing and erases raw text', async () => {
     let finish!: (res:Response)=>void;let input!:TurnRequest;
@@ -104,5 +105,57 @@ describe('agent handles preparation', () => {
     expect(next.getSnapshot().state.caseId).not.toBe(saved.caseId);
     expect(next.getSnapshot().state.sources.every(s=>s.confirmed)).toBe(true);
     await next.assist('practice');expect(next.getSnapshot().state.selectedQuestion).not.toBe('');
+  });
+});
+
+
+describe('recovering service readiness without losing the conversation', () => {
+  it('recovers after a failed check without clearing another error or resending a turn', async () => {
+    let checks = 0, turns = 0;
+    const c = new BreadController(async url => {
+      if (String(url).endsWith('/capabilities')) return ++checks === 1 ? new Response('', { status: 503 }) : Response.json(getCapabilities());
+      turns++; return Response.json({ error: { userMessage: '回复暂时没接上。', retryable: true } }, { status: 503 });
+    });
+    await c.refreshCapabilities(); expect(c.getSnapshot().connectionError).not.toBe('');
+    await c.send('这一句不能因为重连丢掉。');
+    const before = c.getSnapshot().state.messages;
+    expect(c.getSnapshot().canRetry).toBe(true);
+    await c.refreshCapabilities();
+    expect(c.getSnapshot().connectionError).toBe(''); expect(c.getSnapshot().capabilities).not.toBeNull();
+    expect(c.getSnapshot().error).toBe('回复暂时没接上。'); expect(c.getSnapshot().canRetry).toBe(true);
+    expect(c.getSnapshot().state.messages).toEqual(before); expect(turns).toBe(1); c.dispose();
+  });
+  it('coalesces concurrent reconnection attempts', async () => {
+    let finish!: (r: Response) => void;
+    const fetcher = vi.fn(() => new Promise<Response>(r => { finish = r; }));
+    const c = new BreadController(fetcher);
+    const first = c.refreshCapabilities(); await c.refreshCapabilities();
+    expect(fetcher).toHaveBeenCalledTimes(1); expect(c.getSnapshot().connectionChecking).toBe(true);
+    finish(Response.json(getCapabilities())); await first;
+    expect(c.getSnapshot().connectionChecking).toBe(false); c.dispose();
+  });
+  it('rejects incomplete service metadata and permits recovery', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ agent: {} })).mockResolvedValueOnce(Response.json(getCapabilities()));
+    const c = new BreadController(fetcher); await c.refreshCapabilities();
+    expect(c.getSnapshot().capabilities).toBeNull(); expect(c.getSnapshot().connectionError).not.toBe('');
+    await c.refreshCapabilities(); expect(c.getSnapshot().connectionError).toBe(''); c.dispose();
+  });
+  it('bounds a stalled check and leaves a usable retry', async () => {
+    vi.useFakeTimers();
+    const c = new BreadController(vi.fn().mockImplementationOnce(() => new Promise(() => {})).mockResolvedValueOnce(Response.json(getCapabilities())));
+    try {
+      const pending = c.refreshCapabilities(); await vi.advanceTimersByTimeAsync(8001); await pending;
+      expect(c.getSnapshot().connectionChecking).toBe(false); expect(c.getSnapshot().connectionError).not.toBe('');
+      await c.refreshCapabilities(); expect(c.getSnapshot().connectionError).toBe('');
+    } finally { c.dispose(); vi.useRealTimers(); }
+  });
+  it('aborts a disposed check and ignores its late result after remount', async () => {
+    let finish!: (r: Response) => void, oldSignal: AbortSignal;
+    const fetcher = vi.fn().mockImplementationOnce((_url, init) => { oldSignal = init.signal; return new Promise<Response>(r => { finish = r; }); }).mockResolvedValueOnce(Response.json(getCapabilities()));
+    const c = new BreadController(fetcher); const pending = c.refreshCapabilities(); c.dispose();
+    expect(oldSignal!.aborted).toBe(true);
+    await c.initialize(); const current = c.getSnapshot().capabilities;
+    finish(Response.json({ agent: {} })); await pending;
+    expect(c.getSnapshot().capabilities).toBe(current); expect(c.getSnapshot().connectionError).toBe(''); c.dispose();
   });
 });

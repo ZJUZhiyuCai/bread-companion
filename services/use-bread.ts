@@ -8,6 +8,14 @@ export function useBread(): BreadViewModel {
   const controller = ref.current;
   const view = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   useEffect(() => { void controller.initialize(); return () => controller.dispose(); }, [controller]);
+  useEffect(() => {
+    const recover = () => {
+      if (!document.hidden && controller.getSnapshot().connectionError) void controller.refreshCapabilities();
+    };
+    window.addEventListener('online', recover);
+    document.addEventListener('visibilitychange', recover);
+    return () => { window.removeEventListener('online', recover); document.removeEventListener('visibilitychange', recover); };
+  }, [controller]);
   useEffect(() => { const onHide = () => controller.end(); window.addEventListener('pagehide', onHide); return () => window.removeEventListener('pagehide', onHide); }, [controller]);
   useEffect(() => { const onVisibility = () => { if (document.hidden) controller.pauseForBackground(); }; document.addEventListener('visibilitychange', onVisibility); return () => document.removeEventListener('visibilitychange', onVisibility); }, [controller]);
   return view;

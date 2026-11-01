@@ -3,6 +3,9 @@ import type { CallState, Capabilities, Card, Mode, Origin, SavedCase, SessionSta
 export interface BreadViewModel {
   state: SessionState;
   capabilities: Capabilities | null;
+  connectionError: string;
+  connectionChecking: boolean;
+  refreshCapabilities: () => Promise<void>;
   currentCard: Card | null;
   savedCases: SavedCase[];
   notice: string;

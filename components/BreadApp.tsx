@@ -30,11 +30,6 @@ export default function BreadApp() {
     document.documentElement.dataset.textSize = textSize;
   }, [textSize]);
 
-  // The archive count on the entry screen. Read-only.
-  useEffect(() => {
-    void vmRef.current.refreshSaved();
-  }, []);
-
   // Whatever the user chose on the entry screen runs once the session has actually started.
   useEffect(() => {
     if (!state.started || state.lifecycle !== 'active') return;
@@ -143,7 +138,8 @@ export default function BreadApp() {
 
       <AboutSheet open={aboutOpen} onClose={() => setAboutOpen(false)} caps={vm.capabilities} textSize={textSize} setTextSize={setTextSize} />
 
-      <Notices notice={vm.notice} error={vm.error} clearNotice={vm.dismissNotice} />
+      <Notices notice={vm.notice} error={vm.error} clearNotice={vm.dismissNotice}
+        connectionError={vm.connectionError} connectionChecking={vm.connectionChecking} refreshCapabilities={vm.refreshCapabilities} />
     </>
   );
 }

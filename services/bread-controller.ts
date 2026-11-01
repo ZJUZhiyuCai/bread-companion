@@ -1,6 +1,6 @@
 import type { BreadViewModel } from '@/domain/view-model';
 import type { Activity, Card, EndSnapshot, Mode, Origin, RunToken, SavedCase, Source } from '@/domain/types';
-import { candidateSchema, sourceSchema, turnRequestSchema } from '@/domain/schemas';
+import { candidateSchema, capabilitiesSchema, sourceSchema, turnRequestSchema } from '@/domain/schemas';
 import { buildTurn, materialSources } from '@/domain/context-builder';
 import { cardCanConfirm, refKey, validateCandidate } from '@/domain/evidence';
 import { explicitIntent, isActionOnly } from '@/domain/policy';
@@ -25,7 +25,8 @@ export class BreadController {
   private run = new RunController(); private disposed = false;
   private artifactVersion = 0;
   private failedTurn: { text: string; sessionId: string; epoch: number; contextRevision: number; mode: Mode } | null = null;
-  private initialization = 0;
+  private connectionError = '';
+  private capabilityRequest: AbortController | null = null;
   private listeners = new Set<() => void>();
   private view: BreadViewModel;
   private call = idleCall();
@@ -76,19 +77,31 @@ export class BreadController {
   private publish() { this.view = this.buildView(); for (const f of this.listeners) f(); }
   private dispatch(event: Event) { this.state = reducer(this.state, event); this.publish(); }
   private buildView(): BreadViewModel {
-    return { state: this.state, capabilities: this.capabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds, canRetry: this.canRetry(), retryLastTurn: this.retryLastTurn,
+    return { state: this.state, capabilities: this.capabilities, connectionError: this.connectionError, connectionChecking: !!this.capabilityRequest, refreshCapabilities: this.refreshCapabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds, canRetry: this.canRetry(), retryLastTurn: this.retryLastTurn,
       call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.callController.resume,
       busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice, dismissNotice: this.dismissNotice };
   }
   async initialize() {
     this.disposed = false;
-    const initialization = ++this.initialization;
-    const archive = this.refreshSaved();
-    try { const res = await this.fetcher('/api/capabilities', { cache: 'no-store' }); if (!res.ok) throw new Error(); const caps = await res.json(); if (!this.disposed && initialization === this.initialization) { this.capabilities = caps; this.publish(); } }
-    catch { if (!this.disposed && initialization === this.initialization) { this.error = '暂时没连上面包，刷新再试一下。'; this.publish(); } }
-    await archive;
+    await Promise.all([this.refreshSaved(), this.refreshCapabilities()]);
   }
-  dispose() { this.disposed = true; this.initialization++; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
+  /** Recheck only service readiness: never reload a draft, resend text or open a microphone. */
+  refreshCapabilities = async () => {
+    if (this.disposed || this.capabilityRequest) return;
+    const pending = new AbortController(); this.capabilityRequest = pending; this.publish();
+    const current = () => !this.disposed && this.capabilityRequest === pending && !pending.signal.aborted;
+    try {
+      const res = await this.fetcher('/api/capabilities', { cache: 'no-store', signal: pending.signal });
+      if (!res.ok) throw new Error('Service readiness unavailable');
+      const caps = capabilitiesSchema.parse(await res.json());
+      if (current()) { this.capabilities = caps; this.connectionError = ''; }
+    } catch {
+      if (current()) this.connectionError = '暂时没连上，你写的话还在。';
+    } finally {
+      if (this.capabilityRequest === pending) { this.capabilityRequest = null; if (!this.disposed) this.publish(); }
+    }
+  };
+  dispose() { this.disposed = true; this.capabilityRequest?.abort(); this.capabilityRequest = null; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
   private cancelResources() { this.failedTurn = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。', retainFailedTurn = false) { if (!retainFailedTurn) this.failedTurn = null; this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   dismissNotice = () => { this.notice = ''; this.publish(); };

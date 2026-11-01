@@ -9,10 +9,13 @@ interface NoticesProps {
   clearNotice: () => void;
   canRetry?: boolean;
   retryLastTurn?: () => Promise<void>;
+  connectionError?: string;
+  connectionChecking?: boolean;
+  refreshCapabilities?: () => Promise<void>;
 }
 
 /** Results come only from the hook's notice/error — the UI never announces a success on its own. */
-export function Notices({ notice, error, clearNotice, canRetry, retryLastTurn }: NoticesProps) {
+export function Notices({ notice, error, clearNotice, canRetry, retryLastTurn, connectionError, connectionChecking, refreshCapabilities }: NoticesProps) {
   const [hiddenError, setHiddenError] = useState('');
   const clearRef = useRef(clearNotice);
   clearRef.current = clearNotice;
@@ -30,6 +33,14 @@ export function Notices({ notice, error, clearNotice, canRetry, retryLastTurn }:
   return (
     <div className="toasts">
       <div role="status" aria-live="polite" className="toasts__slot">
+        {connectionError && (
+          <div className="toast toast--connection">
+            <p className="toast__text">{connectionChecking ? '正在重新连接…' : connectionError}</p>
+            <button type="button" className="btn btn--ghost btn--sm" disabled={connectionChecking} aria-busy={connectionChecking || undefined} onClick={() => void refreshCapabilities?.()}>
+              重新连接
+            </button>
+          </div>
+        )}
         {notice && (
           <div className="toast">
             <CircleCheck aria-hidden="true" className="toast__icon" />

@@ -938,13 +938,6 @@ kbd {
   position: relative;
   transition: border-color 0.16s, background-color 0.16s;
 }
-/* The visible pill stays small; the touch target reaches 44px without moving the header. */
-.ai-stamp::after {
-  content: '';
-  position: absolute;
-  inset: -8px 0;
-  border-radius: 999px;
-}
 /* A plain label, not a rubber stamp: it states a fact (an AI) and opens the rest. */
 .ai-stamp:hover {
   border-color: var(--line-strong);
@@ -5999,6 +5992,9 @@ body:has(.session.is-calling) .toasts {
 }
 
 @media (pointer: coarse) {
+  .ai-stamp {
+    min-height: 44px;
+  }
   .btn--sm,
   .pill,
   .offer,
