@@ -111,6 +111,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
         className="phone-door__btn"
         onClick={press}
         aria-disabled={!!block || undefined}
+        aria-label="给面包打个电话"
         aria-describedby={`${id}-pre`}
         data-phone
         title={block ? [block, detail].filter(Boolean).join(' ') : undefined}

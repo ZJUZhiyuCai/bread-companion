@@ -19,7 +19,7 @@ The core flow is low-effort expression → voluntary review → one grounded nex
 
 ## What works
 
-- A lamp-lit desk with self-hosted WenKai typography, ruled notepaper, a brass player, enamel telephone plaques and bakelite call controls. Static textures, responsive spacing and light/dark modes share one material system.
+- A warm paper room with self-hosted WenKai typography, a quiet listen strip, ruled notepaper and light matte controls. Connection recovery makes room for the page, while saving and leaving remain visible before a long final card. [Frontend relay and verification](docs/frontend-relay-validation.md).
 
 - An original plush character with steady, fully open glass eyes, a muted felt flower, fine embroidered lashes and soft blush. Speech gently parts the original stitched smile; highlights and touch responses remain subtle. Rest, pause and error keep the eyes open; reduced-motion preferences are respected.
 - A Blender-built, Three.js-rendered rotary phone with lacquer-red surfaces, an ivory dial and brass details. It dials and lifts its handset with the real connection state; a bundled opening uses the configured default voice.

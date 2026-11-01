@@ -1,0 +1,42 @@
+{
+  "end-desktop": {
+    "serious": [],
+    "total": []
+  },
+  "end-dark-desktop": {
+    "serious": [],
+    "total": []
+  },
+  "call-speaking-desktop": {
+    "serious": [],
+    "total": []
+  },
+  "call-paused-desktop": {
+    "serious": [],
+    "total": []
+  },
+  "end-mobile": {
+    "serious": [],
+    "total": []
+  },
+  "end-dark-mobile": {
+    "serious": [],
+    "total": []
+  },
+  "call-speaking-mobile": {
+    "serious": [],
+    "total": []
+  },
+  "call-paused-mobile": {
+    "serious": [],
+    "total": []
+  },
+  "phone-control": [
+    {
+      "cls": "phone-door__btn",
+      "text": "1234567890给面包打个电话用说的，不用打字",
+      "label": "给面包打个电话",
+      "desc": "call-_R_1m9btb_-pre"
+    }
+  ]
+}

@@ -126,7 +126,7 @@ export function EntryScreen(props: EntryScreenProps) {
               <p id="entry-first-help" className="first-note__help small warn-text">
                 {over ? `超过 ${maxInput} 字了，可以先说一部分` : ''}
               </p>
-              <button type="submit" className={`btn ${typing ? 'btn--primary' : 'btn--ghost'}`} disabled={over}>
+              <button type="submit" className={`btn ${typing ? 'btn--primary' : 'btn--quiet'}`} disabled={over}>
                 {typing ? '说给面包' : '进去慢慢写'} <ArrowRight aria-hidden="true" />
               </button>
             </div>
