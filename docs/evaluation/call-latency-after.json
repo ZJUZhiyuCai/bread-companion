@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-01T17:08:27.751Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "transport": "combined",
+  "synthetic": true,
+  "scope": "Text-to-reply-and-audio HTTP latency; excludes endpoint detection, ASR, audio decoding and physical device playback. Four samples are not a long-term SLA.",
+  "cases": [
+    {
+      "case": 1,
+      "input": "准备了一周的面试，最后还是被拒了。我现在什么建议都不想听。",
+      "status": "ok",
+      "replyMs": 2771,
+      "reply": "准备了一周，等来的是被拒，这个落差确实不好受。建议我不说，就在这儿陪你待着。",
+      "timing": {
+        "agentMs": 2585.757346000002,
+        "ttsMs": 1716.3999079999994,
+        "totalMs": 4318.076359000001
+      },
+      "audioMs": 4680,
+      "bytes": 130740
+    },
+    {
+      "case": 2,
+      "input": "我今天这个面试又出了点问题。",
+      "status": "ok",
+      "replyMs": 1441,
+      "reply": "面试里碰上不顺的地方，确实挺烦的。",
+      "timing": {
+        "agentMs": 1296.2083669999993,
+        "ttsMs": 657.0076689999987,
+        "totalMs": 1960.4405049999987
+      },
+      "audioMs": 2205,
+      "bytes": 53556
+    },
+    {
+      "case": 3,
+      "input": "今天不想复盘，也别问我问题，就想说说话。",
+      "status": "ok",
+      "replyMs": 1569,
+      "reply": "好，今天不聊复盘，也不问。你想说什么都行，我听着。",
+      "timing": {
+        "agentMs": 1423.561619,
+        "ttsMs": 707.9557709999972,
+        "totalMs": 2139.6088500000005
+      },
+      "audioMs": 2432,
+      "bytes": 76020
+    },
+    {
+      "case": 4,
+      "input": "不是我没准备，是对方临时换了题，别再说我准备不足。",
+      "status": "ok",
+      "replyMs": 2736,
+      "reply": "是我理解错了，准备不足这句话收回。临时换题确实让人措手不及。",
+      "timing": {
+        "agentMs": 2597.3124470000002,
+        "ttsMs": 862.72264,
+        "totalMs": 3466.394981999998
+      },
+      "audioMs": 3773,
+      "bytes": 99636
+    }
+  ],
+  "summary": {
+    "successful": 4,
+    "planned": 4,
+    "medianAudioMs": 3102.5,
+    "maxAudioMs": 4680
+  }
+}

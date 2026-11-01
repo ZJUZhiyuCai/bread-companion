@@ -30,7 +30,7 @@ The core flow is low-effort expression → voluntary review → one grounded nex
 - Explicit save preview, browser-local storage, Markdown/JSON export and JSON import.
 - Bounded context, in-session preferences, timeouts, deduplication, cancellation and retry without duplicate messages.
 
-**Version 0.4.0 preview, available locally and as an HTTPS online trial.** The hosted version uses automatic, signed anonymous visit cookies and shared D1 admission budgets. Chats and saved cards remain browser-local. There are no accounts, cross-device sync or persistent relationship memories; the trial is capacity-limited, not an availability guarantee. See [deployment](docs/deployment.md), [data handling](docs/data-handling.md) and [hosting dependency review](docs/hosting-dependencies.md). Calls use sequential ASR → text generation → TTS, not a native full-duplex speech model.
+**Version 0.4.0 preview, available locally and as an HTTPS online trial.** Both deployments use signed anonymous visit cookies and shared admission budgets: SQLite on the primary Node host, D1 on the Worker backup. Chats and saved cards remain browser-local. There are no accounts, cross-device sync or persistent relationship memories; the trial is capacity-limited, not an availability guarantee. See [deployment](docs/deployment.md), [data handling](docs/data-handling.md) and [hosting dependency review](docs/hosting-dependencies.md). Calls use ASR → text generation → TTS. On the primary host, one response delivers the validated text and then its complete MP3, avoiding a separate browser synthesis request. It is not a native full-duplex speech model.
 
 ## Run without API keys
 
@@ -53,9 +53,11 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 ## Evidence, not an EQ badge
 
-216 unit/integration checks and 50 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+235 unit/integration checks and 53 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
-A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening needs no synthesis round trip; subsequent replies still do. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
+A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening uses bundled audio; subsequent replies need live synthesis. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
+
+On November 2, the primary public host's three-turn median fell from **9.475 to 5.108 s**, measured from the end of the same synthetic utterance to browser playback start. One new turn still took **10.412 s**; three additional diagnostic turns took **5.062–5.801 s**. A real-provider interruption recovered in **419 ms** and completed the next turn. These are desktop Chrome AudioWorklet tests at a mobile viewport, not physical-phone measurements. The [latency report and raw results](docs/call-latency.md) retain the slow sample and distinguish browser timing from HTTP timing.
 
 ```sh
 npm run typecheck
