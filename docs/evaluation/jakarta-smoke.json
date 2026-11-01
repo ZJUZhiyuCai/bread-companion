@@ -1,0 +1,101 @@
+{
+  "at": "2026-11-01T05:40:08.418Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "fixture": "Operator-selected synthetic WAV; no physical microphone",
+  "steps": [
+    {
+      "path": "/api/capabilities",
+      "status": 200,
+      "expected": 200,
+      "ms": 804,
+      "bytes": 1024,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 246,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 217,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 221,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 400,
+      "expected": 400,
+      "ms": 222,
+      "bytes": 190,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "expected": 200,
+      "ms": 24918,
+      "bytes": 125,
+      "serverTiming": "provider;dur=24413.9, total;dur=24691.2"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 200,
+      "expected": 200,
+      "ms": 5597,
+      "bytes": 332,
+      "serverTiming": "provider;dur=5323.5, total;dur=5328.0"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 409,
+      "expected": 409,
+      "ms": 588,
+      "bytes": 206,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/synthesize",
+      "status": 200,
+      "expected": 200,
+      "ms": 7739,
+      "bytes": 77748,
+      "serverTiming": "provider;dur=5866.0, total;dur=5870.4"
+    }
+  ],
+  "providers": {
+    "agent": {
+      "mode": "real",
+      "label": "豆包 + DeepSeek",
+      "configured": true
+    },
+    "asr": {
+      "available": true,
+      "label": "MiniMax 语音转写"
+    },
+    "tts": {
+      "available": true,
+      "label": "MiniMax · 温暖闺蜜",
+      "greeting": "/companion/hello-warm-bestie.mp3?v=1"
+    }
+  },
+  "fixtureSha256": "8a73f25cac18f471c6bc62ebeb47b06d60e26d5996fc69c08d75f6559b484e51",
+  "transcript": "今晚先说说，想停的时候随时停。",
+  "assistantText": "好，今晚就慢慢说，你想停的时候我们就停。",
+  "audioSha256": "8154fee8b0f2beac4fdc27138d66f22c24cc776b17fd39e39cd1a901687b26ad",
+  "completed": true,
+  "boundary": "Real hosted HTTP chain and request guards; browser audio, physical microphones and acoustic echo are separate checks."
+}

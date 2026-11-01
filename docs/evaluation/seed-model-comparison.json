@@ -1,0 +1,476 @@
+{
+  "testedAt": "2026-11-01T05:17:14.899Z",
+  "promptVersion": "bread-2026-11-01-v16-gentle-call",
+  "synthetic": true,
+  "interleaved": true,
+  "results": [
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1755,
+      "response": {
+        "assistantText": "面试出问题确实挺闹心的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 31,
+        "prompt_tokens": 1375,
+        "total_tokens": 1406,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1369,
+      "response": {
+        "assistantText": "面试出问题确实挺闹心的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 31,
+        "prompt_tokens": 1375,
+        "total_tokens": 1406,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 13754,
+      "response": {
+        "assistantText": "面试出状况确实挺闹心的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 488,
+        "prompt_tokens": 1378,
+        "total_tokens": 1866,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 457
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2560,
+      "response": {
+        "assistantText": "连着两次没过，心里肯定不好受。这阵子是挺磨人的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 1377,
+        "total_tokens": 1415,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2225,
+      "response": {
+        "assistantText": "连着两次没过，心里肯定不好受。这阵子你已经很用力了，别因为这两次就把自己全盘否定。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 1377,
+        "total_tokens": 1426,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 8892,
+      "response": {
+        "assistantText": "连着两次没通过，心里肯定不好受，这哪能就说明你差啊。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 327,
+        "prompt_tokens": 1380,
+        "total_tokens": 1707,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 286
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1990,
+      "response": {
+        "assistantText": "被拒了啊，今天这结果确实让人心里堵得慌。我在这儿，你想说什么都行。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 46,
+        "prompt_tokens": 1384,
+        "total_tokens": 1430,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2070,
+      "response": {
+        "assistantText": "被拒的滋味真不好受，我就在这儿听着。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 1384,
+        "total_tokens": 1420,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 8399,
+      "response": {
+        "assistantText": "行，我就在这儿待着，不劝休息也不给主意，你想说啥都可以。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 331,
+        "prompt_tokens": 1387,
+        "total_tokens": 1718,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 288
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2036,
+      "response": {
+        "assistantText": "是我刚才想多了。流程乱确实很烦人，折腾人还没个准谱。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 43,
+        "prompt_tokens": 1393,
+        "total_tokens": 1436,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 3480,
+      "response": {
+        "assistantText": "是我刚才想多了。流程乱确实挺让人烦的，来回折腾。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 1393,
+        "total_tokens": 1433,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 6145,
+      "response": {
+        "assistantText": "是我刚才猜错了，流程乱糟糟的确实挺闹心的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 241,
+        "prompt_tokens": 1396,
+        "total_tokens": 1637,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 204
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 3064,
+      "response": {
+        "assistantText": "双蛋面，这顿直接升级成豪华套餐了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 35,
+        "prompt_tokens": 1379,
+        "total_tokens": 1414,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1524,
+      "response": {
+        "assistantText": "双蛋面这配置，今天这顿饭直接赢麻了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 1379,
+        "total_tokens": 1415,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 5667,
+      "response": {
+        "assistantText": "双蛋豪华配置啊，这顿面吃得可太赚了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 197,
+        "prompt_tokens": 1382,
+        "total_tokens": 1579,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 160
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "seed-disabled",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2341,
+      "response": {
+        "assistantText": "现在确实还说不准，先别把原因都往自己身上揽。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 1380,
+        "total_tokens": 1418,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "seed-minimal",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2065,
+      "response": {
+        "assistantText": "嗯，现在确实还说不准是哪一环。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 33,
+        "prompt_tokens": 1380,
+        "total_tokens": 1413,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "seed-low",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 9637,
+      "response": {
+        "assistantText": "本来面试就有好多不确定因素，也不一定是你回答没讲清的问题。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 349,
+        "prompt_tokens": 1383,
+        "total_tokens": 1732,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 308
+        }
+      },
+      "finishReason": "stop"
+    }
+  ]
+}

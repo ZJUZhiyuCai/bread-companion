@@ -1,0 +1,216 @@
+{
+  "testedAt": "2026-11-01T05:18:40.471Z",
+  "promptVersion": "bread-2026-11-01-v17-mobile-seed",
+  "synthetic": true,
+  "interleaved": true,
+  "results": [
+    {
+      "id": "opening-2",
+      "text": "今天面试又出了问题，挺烦的。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1914,
+      "response": {
+        "assistantText": "面试出问题确实挺烦的，先缓口气吧。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 35,
+        "prompt_tokens": 1492,
+        "total_tokens": 1527,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "specific",
+      "text": "我准备了好久，还是在最后一道题卡住了。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2251,
+      "response": {
+        "assistantText": "准备了这么久，最后卡在那道题上，确实挺堵的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 1494,
+        "total_tokens": 1533,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "self-blame",
+      "text": "这次我又没答出来，我怎么这么没用。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2265,
+      "response": {
+        "assistantText": "这题没答上来而已，先别把自己整个人都否了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 1493,
+        "total_tokens": 1532,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "correction-2",
+      "text": "不是紧张，我那时候只是没听懂题目。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2492,
+      "response": {
+        "assistantText": "是我刚才猜错了，没听懂题目确实会一下子卡住。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 1507,
+        "total_tokens": 1543,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "uncertain-2",
+      "text": "结果还没出来，可能我说太快，也可能是我多想了。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2024,
+      "response": {
+        "assistantText": "结果没出来之前，怎么猜都容易悬着心。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 35,
+        "prompt_tokens": 1497,
+        "total_tokens": 1532,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "quiet",
+      "text": "今天不想分析，只想跟你说说，我很累。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 2044,
+      "response": {
+        "assistantText": "好，那就不分析。你就这么待着，想说什么说什么，累也没关系。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 43,
+        "prompt_tokens": 1493,
+        "total_tokens": 1536,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "joy-2",
+      "text": "下班路上买到最后一个热乎乎的红薯！",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 3298,
+      "response": {
+        "assistantText": "这运气也太好了，最后一个热红薯，下班路上直接暖到手里。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 1490,
+        "total_tokens": 1529,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    },
+    {
+      "id": "exit",
+      "text": "我要去睡了，明天再聊。",
+      "variant": "seed-minimal-final",
+      "model": "seed-2.1-pro",
+      "status": 200,
+      "ms": 1561,
+      "response": {
+        "assistantText": "好，晚安，明天再聊。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 30,
+        "prompt_tokens": 1491,
+        "total_tokens": 1521,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "finishReason": "stop"
+    }
+  ]
+}

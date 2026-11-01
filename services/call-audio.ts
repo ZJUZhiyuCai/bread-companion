@@ -2,12 +2,20 @@ import { encodeWav } from './media-controller';
 import { resampleMono, VoiceActivity } from './voice-activity';
 import { PlaybackEchoGuard, speechLikeFrame } from './playback-echo';
 import { startDialTone } from './dial-tone';
+import { CaptureHealth } from './capture-health';
+
+export function microphoneRecoveryHint(userAgent = navigator.userAgent): string {
+  return /MicroMessenger/i.test(userAgent)
+    ? '在微信右上角“···”选择“在浏览器打开”，再允许浏览器使用麦克风。'
+    : '检查浏览器的麦克风权限后重试，也可以用手机自带浏览器打开。';
+}
 
 export interface CallAudioEvents {
   meter: (level: number, heardSpeech: boolean) => void;
   utterance: (file: File) => void;
   failure: (message: string) => void;
   speechStart?: () => void;
+  inputWarning?: (message: string) => void;
 }
 export interface CallAudioPort {
   open: (events: CallAudioEvents) => Promise<boolean>;
@@ -33,19 +41,22 @@ export class BrowserCallAudio implements CallAudioPort {
   private interruptible = false;
   private echo = new PlaybackEchoGuard();
   private events: CallAudioEvents | null = null;
+  private health = new CaptureHealth();
+  private healthTimer: ReturnType<typeof setInterval> | null = null;
+  private inputWarning = '';
   private stopRingback: (() => void) | null = null;
   stopDialTone = () => { this.stopRingback?.(); this.stopRingback = null; };
 
   async open(events: CallAudioEvents): Promise<boolean> {
     this.close(); const generation = this.generation;
-    if (!globalThis.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') throw new Error('这个浏览器暂时不能接通语音，可以继续打字。');
+    if (!globalThis.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') throw new Error('这个浏览器暂时不能接通语音。' + microphoneRecoveryHint());
     // Created/resumed synchronously inside the user's click, before permission/network awaits.
     const context = new AudioContext(); this.context = context;
     const resumed = context.resume(); void resumed.catch(() => {});
     this.stopRingback = startDialTone(context);
     let stream: MediaStream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }, video: false }); }
-    catch { if (generation === this.generation) this.close(); throw new Error('还没能打开麦克风。允许麦克风后可以重试，也可以继续打字。'); }
+    catch { if (generation === this.generation) this.close(); throw new Error('还没能打开麦克风。' + microphoneRecoveryHint()); }
     if (generation !== this.generation) { stream.getTracks().forEach(t => t.stop()); return false; }
     this.stream = stream; stream.getAudioTracks().forEach(t => { t.enabled = false; t.onended = () => events.failure('麦克风断开了，重新接通后再说。'); });
     try {
@@ -66,19 +77,33 @@ export class BrowserCallAudio implements CallAudioPort {
       capture.onprocessorerror = () => events.failure('声音处理暂时中断了，可以重试或打字。');
       capture.port.onmessage = ({ data }: MessageEvent<{ samples: Float32Array; epoch: number; at: number }>) => {
         if (generation !== this.generation || !this.listening || data.epoch !== this.captureEpoch || !(data.samples instanceof Float32Array)) return;
+        this.health.frame(data.samples, performance.now());
         const isEcho = this.echo.isEcho(data.samples, data.at);
         const frame = isEcho ? new Float32Array(data.samples.length) : data.samples;
-        const result = this.detector!.push(frame, !this.interruptible || speechLikeFrame(frame));
+        const result = this.detector!.push(frame, speechLikeFrame(frame, this.interruptible ? .009 : .002));
         if (result.speechStarted) events.speechStart?.();
         if (generation !== this.generation || !this.listening) return;
         events.meter(result.level, result.heardSpeech);
         if (result.utterance) this.submit(result.utterance);
       };
+      this.healthTimer = setInterval(() => {
+        if (generation !== this.generation || !this.listening) return;
+        const state = this.health.check(performance.now(), !!this.stream?.getAudioTracks().some(t => t.muted));
+        if (state === 'stalled' || state === 'muted') {
+          // Close first, even when an embedding host doesn't close in its failure callback.
+          this.close();
+          events.failure((state === 'muted' ? '麦克风被浏览器暂停了。' : '没有收到麦克风声音。') + microphoneRecoveryHint());
+          return;
+        }
+        const warning = state === 'silent' ? '还没收到声音；如果你正在说话，' + microphoneRecoveryHint() : '';
+        if (warning !== this.inputWarning) { this.inputWarning = warning; events.inputWarning?.(warning); }
+      }, 500);
       return true;
     } catch (e) { if (generation === this.generation) this.close(); throw e; }
   }
   listen(enabled: boolean, options: { interruptible?: boolean; preserve?: boolean } = {}) {
     const preserve = enabled && this.listening && options.preserve;
+    if (enabled && !this.listening) this.health.reset(performance.now());
     this.listening = enabled; this.interruptible = !!options.interruptible;
     if (!preserve) { this.captureEpoch++; this.detector?.reset(); }
     this.stream?.getAudioTracks().forEach(t => { t.enabled = enabled; });
@@ -114,6 +139,8 @@ export class BrowserCallAudio implements CallAudioPort {
     this.resolvePlayback?.(); this.resolvePlayback = null;
   }
   close() {
+    if (this.healthTimer) clearInterval(this.healthTimer); this.healthTimer = null;
+    this.inputWarning = '';
     this.generation++; this.listening = false; this.captureEpoch++; this.stopPlayback();
     if (this.capture) { this.capture.port.onmessage = null; this.capture.onprocessorerror = null; this.capture.disconnect(); this.capture.port.close(); }
     this.capture = null; this.source?.disconnect(); this.source = null;

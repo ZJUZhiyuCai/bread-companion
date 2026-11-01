@@ -1,0 +1,208 @@
+{
+  "testedAt": "2026-11-01T05:46:06.793Z",
+  "promptVersion": "bread-2026-11-01-v18-deepseek-empathy",
+  "synthetic": true,
+  "interleaved": true,
+  "results": [
+    {
+      "id": "screenshot",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1375,
+      "response": {
+        "assistantText": "面试不太顺啊。愿意说说出了什么状况吗？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1409,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别给建议，也别问问题，就陪我说两句。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1245,
+      "response": {
+        "assistantText": "被拒了，心里肯定不好受。我就在这儿，陪你待着。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1419,
+        "output_tokens": 39
+      }
+    },
+    {
+      "id": "opening-2",
+      "text": "今天面试又出了问题，挺烦的。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1117,
+      "response": {
+        "assistantText": "面试不太顺啊，是哪个环节卡住了吗？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1410,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "specific",
+      "text": "我准备了好久，还是在最后一道题卡住了。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1372,
+      "response": {
+        "assistantText": "准备了好久，偏偏卡在最后一道题上，这个落差挺让人堵得慌。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1412,
+        "output_tokens": 41
+      }
+    },
+    {
+      "id": "self-blame",
+      "text": "这次我又没答出来，我怎么这么没用。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1410,
+      "response": {
+        "assistantText": "这次没答出来，你心里正堵得慌吧。先不急着给自己下结论。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1411,
+        "output_tokens": 42
+      }
+    },
+    {
+      "id": "correction-2",
+      "text": "不是紧张，我那时候只是没听懂题目。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1411,
+      "response": {
+        "assistantText": "是我猜错了，不是紧张，是题目没听懂。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1426,
+        "output_tokens": 35
+      }
+    },
+    {
+      "id": "uncertain-2",
+      "text": "结果还没出来，可能我说太快，也可能是我多想了。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1303,
+      "response": {
+        "assistantText": "结果还没出来，心里就先来回琢磨了。说太快还是多想了，现在也还说不准。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1414,
+        "output_tokens": 44
+      }
+    },
+    {
+      "id": "quiet",
+      "text": "今天不想分析，只想跟你说说，我很累。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1159,
+      "response": {
+        "assistantText": "好，那就不分析。累了就说，我听着。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1412,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "joy-2",
+      "text": "下班路上买到最后一个热乎乎的红薯！",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1473,
+      "response": {
+        "assistantText": "最后一个还热乎，这运气可以啊，路上吃着正好。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1410,
+        "output_tokens": 36
+      }
+    },
+    {
+      "id": "exit",
+      "text": "我要去睡了，明天再聊。",
+      "variant": "deepseek-empathy-v18",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1371,
+      "response": {
+        "assistantText": "好，去睡吧，明天再聊。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1409,
+        "output_tokens": 32
+      }
+    }
+  ]
+}

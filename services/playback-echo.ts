@@ -32,7 +32,7 @@ export class PlaybackEchoGuard {
 }
 
 /** Reject DC/clicks/white hiss as interruption triggers; pre-roll still retains consonant onsets. */
-export function speechLikeFrame(frame: Float32Array): boolean {
+export function speechLikeFrame(frame: Float32Array, minRms = .009): boolean {
   if (frame.length < 2) return false;
   let crossings = 0, power = 0, peak = 0;
   for (let i = 0; i < frame.length; i++) {
@@ -40,5 +40,5 @@ export function speechLikeFrame(frame: Float32Array): boolean {
     if (i && ((value >= 0) !== (frame[i - 1] >= 0))) crossings++;
   }
   const rms = Math.sqrt(power / frame.length), rate = crossings / frame.length;
-  return rms > .009 && rate > .003 && rate < .32 && peak > rms * 1.25;
+  return rms > minRms && rate > .003 && rate < .32 && peak > rms * 1.25;
 }

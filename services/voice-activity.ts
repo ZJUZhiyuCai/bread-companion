@@ -5,7 +5,7 @@ export class VoiceActivity {
   private duration = 0;
   private voiced = 0;
   private silence = 0;
-  private floor = 0.002;
+  private floor = 0.0005;
   private started = false;
   private announced = false;
   constructor(readonly sampleRate: number, private gapSeconds = 0.85, private maxSeconds = 55) {}
@@ -13,7 +13,8 @@ export class VoiceActivity {
   push(frame: Float32Array, allowVoice = true): { level: number; heardSpeech: boolean; speechStarted: boolean; utterance: Float32Array | null } {
     const dt = frame.length / this.sampleRate;
     const rms = Math.sqrt(frame.reduce((n, v) => n + v * v, 0) / Math.max(1, frame.length));
-    const threshold = Math.max(0.009, Math.min(0.04, this.floor * 3));
+    // Normal listening admits a quiet phone microphone; barge-in retains its stricter spectral gate.
+    const threshold = Math.max(0.002, Math.min(0.025, this.floor * 3));
     const loud = allowVoice && rms > threshold;
     if (!this.started && !loud && allowVoice) this.floor = this.floor * 0.97 + rms * 0.03;
     if (!this.started) {
