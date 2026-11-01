@@ -49,4 +49,17 @@ npm run check:models
 
 模型需要保留 `phone`、`phone_body`、`handset`、`handset_body`、`dial_wheel`、`cord_root` 和 `cord_tip` 等节点。检查脚本会拒绝缺少关键节点、外部资源、越界缓冲区或超出预算的导出。
 
-按钮和命中区独立于 Canvas。加载、解析或 WebGL 失败时仍可通过 SVG 电话拨号；软件渲染器也自动使用 SVG，避免冷着色器编译冻结输入和通话控制。服务能力未就绪时不初始化 3D；`?phone=svg` 供开发时对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。
+首页先显示 `bread-phone-rest.webp`：从同一模型、运行时相机和灯光导出的透明静帧。它与 Canvas 共用 `HERO_PHONE.overlay`，不先展示轮廓不同的 SVG；服务检查期间保留红色，按钮仍不可拨号。模型首次成功绘制后，两层在同一次界面更新中交接，不叠加淡入淡出。不要将解析成功当成首帧完成。
+
+按钮和 SVG 命中区独立于 Canvas。首页加载、解析或 WebGL 失败时保留同一静帧，通话画面仍用可动画的 SVG；软件渲染器也走静态路径，避免冷着色器编译冻结输入和通话控制。静帧文件本身损坏时才退回 SVG。服务能力未就绪时不初始化 3D；`?phone=svg` 供开发时禁用 WebGL 对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。
+
+修改模型、相机、灯光或材质后，需要同时更新静帧；它是实际渲染产物，不是另一套手绘外观。用运行新代码的本机页面和 Playwright CLI 执行 `scripts/3d/capture-phone-poster.js`，导出不含页面纹理、滤镜的透明 PNG，然后以 632×484 像素保存为无损 WebP。截图导出会临时保留测试浏览器的 WebGL 缓冲区，生产渲染器不启用该选项。
+
+```sh
+playwright-cli -s=phone-poster open http://127.0.0.1:3210/ --browser chrome --headed
+playwright-cli -s=phone-poster run-code --filename scripts/3d/capture-phone-poster.js
+node --input-type=module -e "import sharp from 'sharp'; await sharp('output/playwright/bread-phone-rest.png').resize(632,484).webp({lossless:true,effort:6}).toFile('public/companion/3d/bread-phone-rest.webp');"
+playwright-cli -s=phone-poster close
+```
+
+[本轮加载验收记录](phone-loading-validation.json)保留桌面与手机尺寸下的四阶段边界、颜色和首帧交接检查，以及电话故障回归结果。

@@ -93,6 +93,12 @@ async function instrument(page: Page, fault: 'construct' | 'software' | '' = '')
 const audit = (page: Page) => page.evaluate(() => (window as any).__phoneAudit());
 const phone = (page: Page) => page.getByRole('button', { name: /给面包打个电话/ });
 const canvas = (page: Page) => page.locator('.phone3d[data-state="ready"] canvas');
+const poster = (page: Page) => page.locator('.phone-door__poster');
+async function expectStaticPhone(page: Page) {
+  await expect(poster(page)).toBeVisible();
+  await expect.poll(() => poster(page).evaluate(el => (el as HTMLImageElement).naturalWidth)).toBe(632);
+  await expect(page.locator('.phone-door__phone .rp-shake')).toHaveCSS('opacity', '0');
+}
 async function home(page: Page, query = '') {
   await page.goto('/' + query);
   // Readiness has an 8 s network deadline, plus initial hydration on the software
@@ -119,6 +125,7 @@ test('a slow model cannot block a call, repeated taps or hangup; a late response
   });
   await home(page);
   await expect.poll(() => requested).toBe(1);
+  await expectStaticPhone(page);
   await phone(page).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
   expect((await audit(page)).micCalls).toBe(1);
@@ -180,7 +187,7 @@ test('rest, reduced motion and a hidden call stop drawing; hangup releases all g
 });
 
 for (const fault of ['construct', 'draw', 'context'] as const) {
-  test(`a ${fault} graphics failure keeps the callable SVG and releases its context`, async ({ page }) => {
+  test(`a ${fault} graphics failure keeps the same callable phone and releases its context`, async ({ page }) => {
     const errors: Error[] = [];
     page.on('pageerror', e => errors.push(e));
     await instrument(page, fault === 'construct' ? 'construct' : '');
@@ -197,8 +204,7 @@ for (const fault of ['construct', 'draw', 'context'] as const) {
     await expect.poll(async () => (await audit(page)).contexts, { timeout: 15_000 }).toBeGreaterThan(0);
     await expect(page.locator('.phone-door__art')).not.toHaveClass(/is-3d/);
     await expect.poll(async () => (await audit(page)).liveContexts).toBe(0);
-    await expect(page.locator('.phone-door__phone .rp-shake')).toBeVisible();
-    await expect(page.locator('.phone-door__phone .rp-shake')).toHaveCSS('opacity', '1');
+    await expectStaticPhone(page);
     await phone(page).focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
@@ -207,7 +213,7 @@ for (const fault of ['construct', 'draw', 'context'] as const) {
   });
 }
 
-test('SVG comparison skips the model and WebGL while retaining keyboard calling', async ({ page }) => {
+test('static comparison skips the model and WebGL while retaining keyboard calling', async ({ page }) => {
   await instrument(page);
   let greetingRequests = 0;
   await page.route('**/companion/hello-warm-bestie.mp3*', async route => {
@@ -217,6 +223,7 @@ test('SVG comparison skips the model and WebGL while retaining keyboard calling'
   let requests = 0;
   page.on('request', request => { if (request.url().includes('.glb')) requests++; });
   await home(page, '?phone=svg');
+  await expectStaticPhone(page);
   await phone(page).focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking', { timeout: 8000 });
@@ -257,13 +264,14 @@ test('a stalled download expires; the next stage retries only after the welcome 
   await hangup(page);
 });
 
-test('software graphics keeps the SVG callable without compiling room shaders', async ({ page }) => {
+test('software graphics keeps the same phone callable without compiling room shaders', async ({ page }) => {
   await instrument(page, 'software');
   await home(page);
   await expect.poll(async () => (await audit(page)).contexts).toBe(1);
   await expect(page.locator('.phone3d')).toHaveCount(0);
   expect((await audit(page)).liveContexts).toBe(0);
   expect((await audit(page)).draws).toBe(0);
+  await expectStaticPhone(page);
   await phone(page).click();
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
   expect((await audit(page)).greetings).toBe(1);
@@ -271,7 +279,7 @@ test('software graphics keeps the SVG callable without compiling room shaders', 
   await hangup(page);
 });
 
-test('pending service readiness does not start graphics work', async ({ page }) => {
+test('readiness and model loading keep one red phone, stable bounds and no premature graphics work', async ({ page }) => {
   await instrument(page);
   let release!: () => void;
   const held = new Promise<void>(resolve => { release = resolve; });
@@ -284,6 +292,10 @@ test('pending service readiness does not start graphics work', async ({ page }) 
   });
   await page.goto('/');
   await expect(phone(page)).toHaveAttribute('aria-disabled', 'true');
+  await expectStaticPhone(page);
+  await expect(page.locator('.phone-door--hero')).not.toHaveClass(/is-blocked/);
+  await page.evaluate(() => document.fonts.ready);
+  const before = await page.locator('.phone-door__art').boundingBox();
   // Longer than the graphics idle callback's 1.5-second deadline, with the network held independently.
   await page.waitForTimeout(1800);
   expect((await audit(page)).contexts).toBe(0);
@@ -291,15 +303,17 @@ test('pending service readiness does not start graphics work', async ({ page }) 
   release();
   await expect(phone(page)).not.toHaveAttribute('aria-disabled', 'true');
   await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
+  await expect(poster(page)).toBeHidden();
+  expect(await page.locator('.phone-door__art').boundingBox()).toEqual(before);
 });
 
-test('a corrupt model releases its renderer and stays on SVG for the rest of the call', async ({ page }) => {
+test('a corrupt model releases its renderer and retains the static phone', async ({ page }) => {
   await instrument(page);
   await page.route('**/bread-phone.glb', route => route.fulfill({ body: 'corrupt model', contentType: 'model/gltf-binary' }));
   await home(page);
   await expect.poll(async () => (await audit(page)).contexts, { timeout: 15_000 }).toBe(1);
   await expect.poll(async () => (await audit(page)).liveContexts).toBe(0);
-  await expect(page.locator('.phone-door__phone .rp-shake')).toHaveCSS('opacity', '1');
+  await expectStaticPhone(page);
   await phone(page).click();
   await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
   expect((await audit(page)).contexts).toBe(1);

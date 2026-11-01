@@ -1,0 +1,172 @@
+{
+  "recordedAt": "2026-11-01T01:13:02.618897+00:00",
+  "scope": "Home phone startup; synthetic service/model/frame holds, no physical microphone or paid model calls",
+  "poster": {
+    "path": "public/companion/3d/bread-phone-rest.webp",
+    "width": 632,
+    "height": 484,
+    "bytes": 91044,
+    "sha256": "626ee67570573ce1aa613570e47954438df228fa4ea7927948601d494c6743d1",
+    "modelSha256": "d3f1a5c4f07a9815e832651f576e0f36af7b0955bb2736fc3a75e5c710324117",
+    "capture": "Transparent WebGL framebuffer, HERO_PHONE camera and runtime materials; CSS/page texture excluded"
+  },
+  "checks": {
+    "phoneBrowserRegression": {
+      "passed": 10,
+      "duration": "1.8m"
+    },
+    "typecheck": "pass",
+    "nextProductionBuild": "pass",
+    "workerBuild": "pass",
+    "boundsAndColorUnchanged": true,
+    "firstFrameGate": "Still visible after model parse while animation frames are held; live model visible only after first successful draw"
+  },
+  "visualStages": [
+    {
+      "viewport": "1280x720",
+      "stages": [
+        {
+          "name": "phone-after-1-checking",
+          "classes": "phone-door phone-door--hero is-pending",
+          "box": {
+            "x": 353.8828125,
+            "y": 360.921875,
+            "width": 280,
+            "height": 236.921875,
+            "top": 360.921875,
+            "right": 633.8828125,
+            "bottom": 597.84375,
+            "left": 353.8828125
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": null
+        },
+        {
+          "name": "phone-after-2-model-pending",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 353.8828125,
+            "y": 360.921875,
+            "width": 280,
+            "height": 236.921875,
+            "top": 360.921875,
+            "right": 633.8828125,
+            "bottom": 597.84375,
+            "left": 353.8828125
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": "loading"
+        },
+        {
+          "name": "phone-after-3-first-frame-pending",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 353.8828125,
+            "y": 360.921875,
+            "width": 280,
+            "height": 236.921875,
+            "top": 360.921875,
+            "right": 633.8828125,
+            "bottom": 597.84375,
+            "left": 353.8828125
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": "loading"
+        },
+        {
+          "name": "phone-after-4-rendered",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 353.8828125,
+            "y": 360.921875,
+            "width": 280,
+            "height": 236.921875,
+            "top": 360.921875,
+            "right": 633.8828125,
+            "bottom": 597.84375,
+            "left": 353.8828125
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "hidden",
+          "canvas": "ready"
+        }
+      ]
+    },
+    {
+      "viewport": "390x844",
+      "stages": [
+        {
+          "name": "phone-mobile-after-1-checking",
+          "classes": "phone-door phone-door--hero is-pending",
+          "box": {
+            "x": 220.0625,
+            "y": 216.8984375,
+            "width": 157.515625,
+            "height": 133.28125,
+            "top": 216.8984375,
+            "right": 377.578125,
+            "bottom": 350.1796875,
+            "left": 220.0625
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": null
+        },
+        {
+          "name": "phone-mobile-after-2-model-pending",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 220.0625,
+            "y": 216.8984375,
+            "width": 157.515625,
+            "height": 133.28125,
+            "top": 216.8984375,
+            "right": 377.578125,
+            "bottom": 350.1796875,
+            "left": 220.0625
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": "loading"
+        },
+        {
+          "name": "phone-mobile-after-3-first-frame-pending",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 220.0625,
+            "y": 216.8984375,
+            "width": 157.515625,
+            "height": 133.28125,
+            "top": 216.8984375,
+            "right": 377.578125,
+            "bottom": 350.1796875,
+            "left": 220.0625
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "visible",
+          "canvas": "loading"
+        },
+        {
+          "name": "phone-mobile-after-4-rendered",
+          "classes": "phone-door phone-door--hero ",
+          "box": {
+            "x": 220.0625,
+            "y": 216.8984375,
+            "width": 157.515625,
+            "height": 133.28125,
+            "top": 216.8984375,
+            "right": 377.578125,
+            "bottom": 350.1796875,
+            "left": 220.0625
+          },
+          "filter": "saturate(0.86) brightness(0.97) drop-shadow(rgba(82, 44, 20, 0.14) 0px 16px 12px)",
+          "poster": "hidden",
+          "canvas": "ready"
+        }
+      ]
+    }
+  ]
+}

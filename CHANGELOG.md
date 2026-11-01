@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Keep one red telephone throughout home loading, using a matching rendered still while capabilities, model bytes and the first GPU frame are pending. Graphics failure retains the same callable image; pending service checks no longer briefly gray the phone out.
+
 ## 0.4.0 — 2026-11-01
 
 A lamp-lit desk with self-hosted typography, isolated service capacity and an HTTPS trial deployment.

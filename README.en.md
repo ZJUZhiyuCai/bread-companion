@@ -45,7 +45,7 @@ Open **http://127.0.0.1:3210**. Default Mock mode is visibly labeled and support
 
 The hosted version connects directly to the same Wanjie DeepSeek upstream rather than a loopback Magpie proxy. For real services, see [Setup](docs/setup.md). The tested configuration uses an Anthropic-compatible Magpie route to DeepSeek, and MiniMax ASR / Speech 2.8 HD with `Chinese (Mandarin)_Warm_Bestie`. Route IDs are provider-specific. Keys stay server-side; never put them in `NEXT_PUBLIC_*`.
 
-The telephone falls back to a callable SVG on loading or graphics failures. See the [model source and rebuild guide](docs/phone-model.md); running Bread does not require Blender.
+The home telephone keeps the same appearance throughout loading: a matching model still stays visible until the first 3D frame is painted, and remains callable if graphics fail. The call scene uses an animated SVG fallback. See the [model source and rebuild guide](docs/phone-model.md); running Bread does not require Blender.
 
 ## Evidence, not an EQ badge
 

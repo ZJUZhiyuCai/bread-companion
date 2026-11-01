@@ -182,6 +182,7 @@ export class PhoneEngine {
   private last = 0;
   private onScreen = true;
   private disposed = false;
+  private painted = false;
 
   private readonly p = new Vector3();
   private readonly q = new Quaternion();
@@ -195,6 +196,7 @@ export class PhoneEngine {
     private readonly canvas: HTMLCanvasElement,
     private readonly layout: PhoneLayout,
     private readonly onLost: () => void,
+    private readonly onFirstFrame: () => void,
   ) {
     // Throws when WebGL 2 can't be had; the caller keeps the drawn phone.
     const context = canvas.getContext('webgl2', {
@@ -656,6 +658,10 @@ export class PhoneEngine {
     try {
       const busy = this.step(dt, now);
       this.renderer.render(this.scene, this.camera);
+      if (!this.painted) {
+        this.painted = true;
+        this.onFirstFrame();
+      }
       if (busy) this.raf = requestAnimationFrame(this.frame);
       else this.last = 0;
     } catch {

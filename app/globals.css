@@ -1401,6 +1401,24 @@ kbd {
   display: block;
   width: 100%;
 }
+.phone-door__poster {
+  position: absolute;
+  display: block;
+  max-width: none;
+  pointer-events: none;
+}
+/* The server-rendered still and the live render share camera, lighting and bounds.
+ * Swap in one paint; a crossfade would briefly double their translucent shadows. */
+.phone-door__art .phone3d {
+  opacity: 0;
+  transition: none;
+}
+.phone-door__art.is-3d .phone3d[data-state='ready'] {
+  opacity: 1;
+}
+.phone-door__art.is-3d .phone-door__poster {
+  visibility: hidden;
+}
 /*
  * Once the model is up, the drawing steps aside — all but two layers that belong to the room rather than
  * to the drawing: the floor (the long soft shadow toward the lower right and the phone's warm red glow
@@ -1411,14 +1429,20 @@ kbd {
 .rp > * {
   transition: opacity 0.4s var(--ease);
 }
-:is(.phone-door__art, .cstage).is-3d .rp > :not(.rp-bell, .rp-floor) {
+:is(.phone-door__art, .cstage).is-3d .rp > :not(.rp-bell, .rp-floor),
+.phone-door__art.has-poster .rp > :not(.rp-bell, .rp-floor) {
   opacity: 0;
 }
 /* the 3D phone's own contact shade sits in the drawn one; keep the pair from doubling up */
-:is(.phone-door__art, .cstage).is-3d .rp-floor > ellipse:last-child {
+:is(.phone-door__art, .cstage).is-3d .rp-floor > ellipse:last-child,
+.phone-door__art.has-poster .rp-floor > ellipse:last-child {
   opacity: 0.45;
 }
 .phone-door.is-blocked .phone3d[data-state='ready'] {
+  opacity: 0.8;
+  filter: saturate(0.3);
+}
+.phone-door.is-blocked .phone-door__poster {
   opacity: 0.8;
   filter: saturate(0.3);
 }
@@ -4621,6 +4645,9 @@ kbd {
 }
 .phone-door.is-blocked .phone-door__btn {
   cursor: not-allowed;
+}
+.phone-door.is-pending .phone-door__btn {
+  cursor: progress;
 }
 .phone-door.is-blocked .phone-door__phone {
   filter: saturate(0.3);
