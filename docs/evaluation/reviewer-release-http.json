@@ -1,0 +1,101 @@
+{
+  "at": "2026-11-01T11:15:55.748Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "fixture": "Operator-selected synthetic WAV; no physical microphone",
+  "steps": [
+    {
+      "path": "/api/capabilities",
+      "status": 200,
+      "expected": 200,
+      "ms": 912,
+      "bytes": 1011,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 211,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 185,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 503,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 400,
+      "expected": 400,
+      "ms": 234,
+      "bytes": 190,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "expected": 200,
+      "ms": 1452,
+      "bytes": 125,
+      "serverTiming": "provider;dur=934.0, total;dur=1266.3"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 200,
+      "expected": 200,
+      "ms": 2406,
+      "bytes": 329,
+      "serverTiming": "provider;dur=2268.6, total;dur=2272.0"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 409,
+      "expected": 409,
+      "ms": 127,
+      "bytes": 206,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/synthesize",
+      "status": 200,
+      "expected": 200,
+      "ms": 1166,
+      "bytes": 59892,
+      "serverTiming": "provider;dur=798.6, total;dur=801.8"
+    }
+  ],
+  "providers": {
+    "agent": {
+      "mode": "real",
+      "label": "DeepSeek",
+      "configured": true
+    },
+    "asr": {
+      "available": true,
+      "label": "MiniMax 语音转写"
+    },
+    "tts": {
+      "available": true,
+      "label": "MiniMax · 温暖闺蜜",
+      "greeting": "/companion/hello-warm-bestie.mp3?v=1"
+    }
+  },
+  "fixtureSha256": "8a73f25cac18f471c6bc62ebeb47b06d60e26d5996fc69c08d75f6559b484e51",
+  "transcript": "今晚先说说，想停的时候随时停。",
+  "assistantText": "好，今晚就听你说。你想从哪儿开始都行。",
+  "audioSha256": "733fd3300f4b2f5e3b64b4b6c28124c46b9ee6507c278be58437166b20cbc331",
+  "completed": true,
+  "boundary": "Real hosted HTTP chain and request guards; browser audio, physical microphones and acoustic echo are separate checks."
+}

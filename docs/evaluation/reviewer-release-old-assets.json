@@ -1,0 +1,47 @@
+[
+  {
+    "path": "/_next/static/chunks/0r-yur70-ku2o.js",
+    "status": 200,
+    "bytes": 185420
+  },
+  {
+    "path": "/_next/static/chunks/3wbm-994r45kr.js",
+    "status": 200,
+    "bytes": 229820
+  },
+  {
+    "path": "/_next/static/chunks/turbopack-3-ry682tkyiqk.js",
+    "status": 200,
+    "bytes": 10030
+  },
+  {
+    "path": "/_next/static/chunks/0umf92h1sb77c.js",
+    "status": 200,
+    "bytes": 13822
+  },
+  {
+    "path": "/_next/static/chunks/1f8l9pblasx-k.js",
+    "status": 200,
+    "bytes": 215
+  },
+  {
+    "path": "/_next/static/chunks/2607d2s7u_19b.js",
+    "status": 200,
+    "bytes": 395469
+  },
+  {
+    "path": "/_next/static/chunks/0cz1d0mv5g_q7.js",
+    "status": 200,
+    "bytes": 112594
+  },
+  {
+    "path": "/_next/static/chunks/038tw6aly3e2j.js",
+    "status": 200,
+    "bytes": 641634
+  },
+  {
+    "path": "/_next/static/chunks/3cfn99dbrcvvp.js",
+    "status": 200,
+    "bytes": 16898
+  }
+]
