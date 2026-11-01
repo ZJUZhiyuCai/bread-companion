@@ -1,0 +1,30 @@
+{
+  "integrationBase": "39bee96f43d541da02d3c29c0c0a51325cfb5c9c",
+  "deepseek": {
+    "sourceCommit": "74160091ade218ab65039ef0f44d005e7e0df77b",
+    "sourceBase": "058ad153e27bd6470a7e5ef4cab778a93d659a6d",
+    "integrationCommit": "a1d14d9",
+    "method": "Cherry-picked without conflicts onto the current backend."
+  },
+  "claude": {
+    "task": "20261101-bread-frontend-relay",
+    "session": "15ac8a36-7cdb-45b7-a8f5-b3213c36b8e8",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "actualInitVerified": true,
+    "permissionMode": "acceptEdits",
+    "rawCommit": "083083f",
+    "rawFiles": {
+      "app/globals.css": "feb2c187819b51ee1bc7ac793ed76fad3e6ee23b49cff19b92b32f6912a94aaf",
+      "components/Notices.tsx": "24f69de913f45659bf1ce36711751a1a67c9b460ea9578ce5ec39e6b49f3f502",
+      "components/EndView.tsx": "d26d2234f3279a333ae90f3bb0ecce6115515557aceae2efec4d4cd44669c594",
+      "DESIGN-PLAN.md": "4cfc2406d7e476622b59ed138e1ed3630394a3445a64da9e42aa357200c4e3e4",
+      "CLAUDE-DESIGN-NOTES.md": "e18af15b7a7dd5f189c60af3275994fe1430689335ac7ab0f32537091e6d5aab"
+    }
+  },
+  "codexAdjustments": [
+    "Call topbar selector specificity keeps its transparent surface from being overridden.",
+    "End-page save dialog returns keyboard focus to a connected control after its original opener unmounts.",
+    "Regression selectors target the new first-screen save entry; coverage now checks recovery layout and farewell focus."
+  ]
+}

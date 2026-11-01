@@ -6,14 +6,14 @@
 
 收到拒信的那个晚上，你可能只想把话说出来，还没有力气分析哪里出了问题。面包是一个中文陪伴与轻复盘工具：先陪你聊，等你愿意了，再一起看看那段回答。
 
-[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md)
+[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md) · [最新前端接力](docs/frontend-relay-validation.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
 ![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-light.png)
 
-*实际运行界面。可以直接在线体验，也可以在本地用无需密钥的规则演示开始。*
+*本地生产构建的实际界面，截图使用规则演示与合成媒体。在线版连接真实文字和语音服务。*
 
 ## 先聊聊，想整理时再继续
 

@@ -2659,7 +2659,7 @@ kbd {
   color: var(--ink);
   transition: background-color 0.6s, background 0.6s;
 }
-.topbar--call {
+.topbar.topbar--call {
   background: transparent;
   border-bottom-color: transparent;
   box-shadow: none;

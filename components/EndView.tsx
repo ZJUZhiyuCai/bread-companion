@@ -34,6 +34,9 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
   const headingRef = useRef<HTMLHeadingElement>(null);
   const confirmRef = useRef<HTMLParagraphElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const saveOrigin = useRef<HTMLElement | null>(null);
+  const saveReturnTo = useRef<Leave | null>(null);
+  const restoreSaveFocus = useRef(false);
   // Where focus goes back to after "再想想": the way out that was just pressed.
   const backTo = useRef<Leave | null>(null);
 
@@ -50,6 +53,24 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
     backTo.current = null;
     if (kind) actionsRef.current?.querySelector<HTMLButtonElement>(`[data-leave='${kind}']`)?.focus();
   }, [confirmLeave]);
+
+  useEffect(() => {
+    if (saveOpen || !restoreSaveFocus.current) return;
+    restoreSaveFocus.current = false;
+    const origin = saveOrigin.current;
+    const kind = saveReturnTo.current;
+    // Saving or dismissing the leave confirmation may unmount the original opener.
+    const target = origin?.isConnected ? origin
+      : kind ? actionsRef.current?.querySelector<HTMLButtonElement>(`[data-leave='${kind}']`)
+      : document.querySelector<HTMLButtonElement>('.end-desk__read');
+    target?.focus();
+  }, [saveOpen]);
+
+  const openSave = () => {
+    saveOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    saveReturnTo.current = confirmLeave;
+    setSaveOpen(true);
+  };
 
   const ctx: EvidenceContext = { sources: null, snapshot: snapshot?.evidence ?? [] };
   const evidence = snapshot ? cardEvidence(snapshot.card, snapshot.findings, ctx) : [];
@@ -107,7 +128,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
               </p>
               <div className="end-desk__row">
                 {!saved && (
-                  <button type="button" className="btn btn--primary" onClick={() => setSaveOpen(true)}>
+                  <button type="button" className="btn btn--primary" onClick={openSave}>
                     <HardDrive aria-hidden="true" /> 留下这张…
                   </button>
                 )}
@@ -128,7 +149,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
                 这张卡片还没留下。{confirmLeave === 'reset' ? '回到开始' : '重新开始'}后，它会从页面上消失。
               </p>
               <div className="row gap-s wrap">
-                <button type="button" className="btn btn--primary" onClick={() => setSaveOpen(true)}>
+                <button type="button" className="btn btn--primary" onClick={openSave}>
                   先留下它
                 </button>
                 <button type="button" className="btn btn--danger" onClick={() => go(confirmLeave)}>
@@ -177,7 +198,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
               ctx={ctx}
               readOnly
               saved={saved}
-              onRequestSave={() => setSaveOpen(true)}
+              onRequestSave={openSave}
               onExport={vm.exportCard}
             />
             {snapshot.confirmedPractice.length > 0 && (
@@ -203,6 +224,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
         <SavePreview
           open={saveOpen}
           onClose={() => {
+            restoreSaveFocus.current = true;
             setSaveOpen(false);
             setConfirmLeave(null);
           }}

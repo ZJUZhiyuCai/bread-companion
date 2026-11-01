@@ -111,10 +111,23 @@ test('late candidate is discarded after ending even if the network completes',as
 });
 
 test('an unsaved note survives ending and is only kept after the explicit preview action',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
   await note(page);await page.getByRole('button',{name:'结束',exact:true}).click();
   await expect(page.getByText('这张卡片还在桌上')).toBeVisible();
-  await page.getByRole('button',{name:'留下这张…',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('连同它引用的');
+  const save=page.locator('.end-desk').getByRole('button',{name:'留下这张…',exact:true});
+  await expect(save).toBeInViewport();
+  const reset=page.getByRole('button',{name:'回到开始',exact:true});
+  await expect(reset).toBeInViewport();
+  await reset.click();await expect(page.locator('#end-confirm-msg')).toBeFocused();
+  await page.getByRole('button',{name:'再想想',exact:true}).click();await expect(reset).toBeFocused();
+  await reset.click();await page.getByRole('button',{name:'先留下它',exact:true}).click();
+  await page.getByRole('button',{name:'先不留',exact:true}).click();await expect(reset).toBeFocused();
+  await expect(page.getByText('这张卡片还在桌上')).toBeVisible();
+  await save.click();await expect(page.getByRole('dialog')).toContainText('连同它引用的');
+  await audit(page);
   await page.getByRole('button',{name:'就留下这些',exact:true}).click();await expect(page.getByRole('dialog')).toContainText('留好了');await page.getByRole('button',{name:'好',exact:true}).click();
+  await expect(page.getByRole('button',{name:'读一遍全文',exact:true})).toBeFocused();await audit(page);
+  await page.getByRole('button',{name:'读一遍全文',exact:true}).click();await expect(page.locator('#end-card')).toBeFocused();
   const waiting=page.waitForEvent('download');await page.getByRole('button',{name:'JSON 备份',exact:true}).click();expect((await waiting).suggestedFilename()).toMatch(/\.json$/);
   await page.reload();await page.getByRole('button',{name:/以前留下的/}).click();
   await page.getByRole('dialog').getByRole('button',{name:/今晚，先留一个记号/}).click();
@@ -204,9 +217,14 @@ for (const recovery of ['button', 'online'] as const) test(`service discovery re
   await draft.fill('这句话还没想好怎么说。');
   const reconnect = page.getByRole('button', { name: '重新连接', exact: true });
   await expect(reconnect).toBeVisible();
+  const connection=await page.locator('.connbar').boundingBox();
+  const scrollY=await page.evaluate(()=>window.scrollY);
+  expect((await page.locator('main').boundingBox())!.y+scrollY).toBeGreaterThanOrEqual(connection!.y+connection!.height);
   if (recovery === 'button') await reconnect.click();
   else await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await expect(reconnect).toHaveCount(0);
+  await expect(page.locator('.connbar')).toHaveCount(0);
+  await expect(page.locator('body')).toHaveCSS('padding-top','0px');
   await expect(draft).toHaveValue('这句话还没想好怎么说。');
   await expect(page.getByRole('button', { name: /给面包打个电话/ })).not.toHaveAttribute('aria-disabled', 'true');
   expect(checks).toBe(2); expect(turns).toBe(0);
