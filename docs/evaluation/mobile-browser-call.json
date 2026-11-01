@@ -1,0 +1,135 @@
+{
+  "startedAt": "2026-11-01T05:26:21.901Z",
+  "inputs": [
+    {
+      "name": "first",
+      "at": 295935.0999994278,
+      "endsAt": 300880.9749994278,
+      "seconds": 4.945875
+    },
+    {
+      "name": "interrupt",
+      "at": 306637.30000019073,
+      "endsAt": 311536.73750019073,
+      "seconds": 4.8994375
+    }
+  ],
+  "outputs": [
+    {
+      "at": 292372.69999980927,
+      "duration": 3.1463125
+    },
+    {
+      "at": 306036,
+      "duration": 5.154833333333333
+    },
+    {
+      "at": 316187.30000019073,
+      "duration": 4.56275
+    }
+  ],
+  "stops": [
+    306999.5
+  ],
+  "phases": [
+    {
+      "phase": "connecting",
+      "at": 292233.0999994278
+    },
+    {
+      "phase": "speaking",
+      "at": 292374.0999994278
+    },
+    {
+      "phase": "listening",
+      "at": 295533.69999980927
+    },
+    {
+      "phase": "transcribing",
+      "at": 301477.19999980927
+    },
+    {
+      "phase": "thinking",
+      "at": 302663.89999961853
+    },
+    {
+      "phase": "speaking",
+      "at": 306036.80000019073
+    },
+    {
+      "phase": "listening",
+      "at": 307000.5999994278
+    },
+    {
+      "phase": "transcribing",
+      "at": 312171.0999994278
+    },
+    {
+      "phase": "thinking",
+      "at": 313210.5
+    },
+    {
+      "phase": "speaking",
+      "at": 316187.89999961853
+    },
+    {
+      "phase": "listening",
+      "at": 320749.5
+    },
+    {
+      "phase": "idle",
+      "at": 335272.5
+    }
+  ],
+  "network": [
+    {
+      "url": "/api/speech/transcribe",
+      "at": 301476.89999961853,
+      "status": 200,
+      "ms": 1182.9000005722046,
+      "text": "今天的面试结束了，我有一点累，先不想复盘，就想跟你说说话。"
+    },
+    {
+      "url": "/api/agent/turn",
+      "at": 302663.0999994278,
+      "status": 200,
+      "ms": 2658.5,
+      "text": "好，那就先不复盘。面试完先松口气，你随便说，我听着。"
+    },
+    {
+      "url": "/api/speech/synthesize",
+      "at": 305324.80000019073,
+      "status": 200,
+      "ms": 704.0999994277954
+    },
+    {
+      "url": "/api/speech/transcribe",
+      "at": 312170.5,
+      "status": 200,
+      "ms": 1037,
+      "text": "等一下，我不想聊面试了。我今天买了一张很可爱的猫咪贴纸。"
+    },
+    {
+      "url": "/api/agent/turn",
+      "at": 313209.5999994278,
+      "status": 200,
+      "ms": 2293.300000190735,
+      "text": "猫咪贴纸啊，听着就很治愈。是圆乎乎那种奶猫脸吗？"
+    },
+    {
+      "url": "/api/speech/synthesize",
+      "at": 315504.19999980927,
+      "status": 200,
+      "ms": 678.1000003814697
+    }
+  ],
+  "tracks": [
+    {
+      "state": "ended"
+    }
+  ],
+  "barge": true,
+  "inputScheduled": true,
+  "fixture": "Synthetic Chinese speech, real browser audio graph and real providers; no physical microphone",
+  "tapAt": 291467.19999980927
+}

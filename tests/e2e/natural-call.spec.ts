@@ -97,3 +97,40 @@ test('a new voice turn cancels a pending model and mute really disables the trac
   await expect.poll(() => stats.turns.length, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
   expect(stats.tts).toBe(2); await hangup(page);
 });
+
+test('mobile detects a muted microphone and reconnects to a new working capture', async({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  const stats=await setup(page);
+  await page.evaluate(() => { for(const t of (window as any).__audio.tracks) Object.defineProperty(t,'muted',{configurable:true,get:()=>true}); });
+  await phase(page,'error');
+  await expect(page.locator('.callroom').getByRole('alert')).toContainText('麦克风被浏览器暂停');
+  expect(stats.asr).toHaveLength(0);
+  await page.getByRole('button',{name:'再试一次',exact:true}).click();await phase(page,'listening');
+  await speak(page);await expect.poll(()=>stats.asr.length,{timeout:12000}).toBe(1);
+  await page.getByRole('button',{name:'挂断，改成打字',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:'写给面包',exact:true})).toBeVisible();
+});
+
+test('mobile shows digital silence and offers reconnection without claiming speech or billing ASR', async({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.addInitScript(()=>Object.defineProperty(navigator,'userAgent',{get:()=> 'Mozilla HarmonyOS MicroMessenger/8.0'}));
+  const stats=await setup(page);
+  await expect(page.getByRole('status').filter({hasText:'还没收到声音'})).toBeVisible({timeout:12000});
+  await expect(page.getByRole('status').filter({hasText:'还没收到声音'})).toContainText('在微信右上角');
+  await phase(page,'listening');expect(stats.asr).toHaveLength(0);
+  await page.getByRole('button',{name:'重新连接麦克风',exact:true}).click();await phase(page,'listening');
+  await speak(page);await expect.poll(()=>stats.asr.length,{timeout:12000}).toBe(1);
+  await hangup(page);
+});
+
+test('mobile detects a stalled worklet instead of silently waiting forever', async({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.addInitScript(()=>{
+    const Node=window.AudioWorkletNode;
+    window.AudioWorkletNode=class extends Node {constructor(...args:ConstructorParameters<typeof AudioWorkletNode>){super(...args);(window as any).__capture=this;}};
+  });
+  const stats=await setup(page);
+  await page.evaluate(()=>{(window as any).__capture.port.onmessage=null;});
+  await phase(page,'error');await expect(page.locator('.callroom').getByRole('alert')).toContainText('没有收到麦克风声音');
+  expect(stats.asr).toHaveLength(0);await hangup(page);
+});

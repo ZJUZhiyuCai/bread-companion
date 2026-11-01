@@ -1,0 +1,64 @@
+{
+  "startedAt": "2026-11-01T05:50:35.163Z",
+  "inputs": [
+    {
+      "name": "first",
+      "at": 9517.300000190735,
+      "endsAt": 14463.275000572205,
+      "seconds": 4.945875
+    }
+  ],
+  "outputs": [
+    {
+      "at": 5954.300000190735,
+      "duration": 3.1463125
+    }
+  ],
+  "stops": [],
+  "phases": [
+    {
+      "phase": "idle",
+      "at": 4906.10000038147
+    },
+    {
+      "phase": "connecting",
+      "at": 5528.400000572205
+    },
+    {
+      "phase": "speaking",
+      "at": 5955.60000038147
+    },
+    {
+      "phase": "listening",
+      "at": 9116
+    },
+    {
+      "phase": "transcribing",
+      "at": 15062.900000572205
+    },
+    {
+      "phase": "error",
+      "at": 27207.70000076294
+    }
+  ],
+  "network": [
+    {
+      "url": "/api/speech/transcribe",
+      "at": 15061.10000038147,
+      "status": 502,
+      "ms": 12138.199999809265
+    }
+  ],
+  "tracks": [
+    {
+      "state": "ended",
+      "enabled": false
+    }
+  ],
+  "barge": true,
+  "inputScheduled": true,
+  "fixture": "Synthetic Chinese speech, real browser audio graph and real providers; no physical microphone",
+  "tapAt": 4510.700000762939,
+  "secureContext": true,
+  "overflow": false
+}

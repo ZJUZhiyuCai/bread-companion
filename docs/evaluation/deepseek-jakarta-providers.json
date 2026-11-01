@@ -1,0 +1,37 @@
+{
+  "fixture": "Two synthetic utterances per provider, interleaved from Jakarta with v18; same DeepSeek Flash, thinking disabled",
+  "results": [
+    {
+      "name": "wanjie",
+      "text": "我今天这个面试又出了点问题。",
+      "status": 200,
+      "ms": 3772,
+      "reply": "{\"assistantText\":\"面试不太顺啊。愿意说说发生了什么吗？\",\"findings\":[],\"warnings\":[],\"supportGuidance\":false}",
+      "error": null
+    },
+    {
+      "name": "tokendance",
+      "text": "我今天这个面试又出了点问题。",
+      "status": 200,
+      "ms": 3021,
+      "reply": "{\"assistantText\":\"面试不太顺啊。愿意说说出了什么状况吗？\",\"findings\":[],\"warnings\":[],\"supportGuidance\":false}",
+      "error": null
+    },
+    {
+      "name": "wanjie",
+      "text": "今天不想复盘，也别给建议，就想说说话。",
+      "status": 200,
+      "ms": 1655,
+      "reply": "{\"assistantText\":\"行，今天不翻旧账也不出主意，你想说什么我就听着。\",\"findings\":[],\"warnings\":[],\"supportGuidance\":false}",
+      "error": null
+    },
+    {
+      "name": "tokendance",
+      "text": "今天不想复盘，也别给建议，就想说说话。",
+      "status": 200,
+      "ms": 1711,
+      "reply": "{\"assistantText\":\"行，今天不翻旧账也不出主意，就随便聊。想说什么都行。\",\"findings\":[],\"warnings\":[],\"supportGuidance\":false}",
+      "error": null
+    }
+  ]
+}

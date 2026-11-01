@@ -12,12 +12,13 @@ export interface SqlDatabase {
 export interface ServerRuntime {
   env: Record<string, unknown>;
   db?: SqlDatabase;
+  nodeInternalOrigin?: string;
   defer?: (promise: Promise<unknown>) => void;
 }
 const runtime = new AsyncLocalStorage<ServerRuntime>();
 /** Worker secrets and bindings belong to this request, never mutable process-wide state. */
 export const withServerRuntime = <T>(context: ServerRuntime, run: () => T): T => runtime.run(context, run);
-export const serverRuntime = () => runtime.getStore();
+export const serverRuntime = () => runtime.getStore() ?? (globalThis as typeof globalThis & { __breadNodeRuntime?: ServerRuntime }).__breadNodeRuntime;
 export function serverEnv(): Record<string, string | undefined> {
   const env = runtime.getStore()?.env;
   return env ? Object.fromEntries(Object.entries(env).filter(([, value]) => typeof value === 'string')) as Record<string, string> : process.env;

@@ -1,0 +1,25 @@
+# Add only this independent host to your existing public gateway; do not replace other hosts.
+http://bread.163-7-7-42.sslip.io {
+    redir https://bread.163-7-7-42.sslip.io{uri} 308
+}
+https://bread.163-7-7-42.sslip.io {
+    tls {
+        issuer acme {
+            dir https://acme-v02.api.letsencrypt.org/directory
+        }
+    }
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+        Permissions-Policy "microphone=(self), camera=(), geolocation=()"
+        -Server
+    }
+    request_body {
+        max_size 2300KB
+    }
+    reverse_proxy 127.0.0.1:3220 {
+        header_up X-Forwarded-Proto https
+    }
+}

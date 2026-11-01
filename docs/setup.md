@@ -21,7 +21,7 @@
 
 本机测试用 `wanjie/deepseek-v4.1-flash-1017`，它是当前 Magpie 路由标识，并非要求每位贡献者购买或安装同一服务。仓库不附带 Magpie、不提供共享 key，也不会在失败时静默换供应商。
 
-可选的 `AGENT_COMPANION_MODEL` 用于倾听，`AGENT_CALL_MODEL` 用于电话；为空时逐级继承。两者通过同一个基础端点与 key，协议和处理方标签按 `.env.example` 配置。模型需能输出本项目要求的结构化候选；标准 HTTP 兼容性不保证所有模型都适合陪伴或证据任务。
+可选的 `AGENT_COMPANION_MODEL` 用于倾听，`AGENT_CALL_MODEL` 用于电话；为空时逐级继承。默认通过同一个基础端点与 key。也可设置 `AGENT_COMPANION_BASE_URL` 和独立的 `AGENT_COMPANION_API_KEY`，将文字倾听及电话路由到另一服务；新端点缺少密钥时会拒绝调用，不复用分析服务的密钥。OpenAI 协议可用 `AGENT_COMPANION_REASONING_EFFORT=minimal`；留空关闭思考。协议和处理方标签按 `.env.example` 配置。模型需能输出本项目要求的结构化候选；标准 HTTP 兼容性不保证所有模型都适合陪伴或证据任务。
 
 ## MiniMax 语音
 
@@ -53,6 +53,6 @@ MINIMAX_VOICE_SPEED=1
 
 ## 在线部署
 
-`dev` / `start` 仍绑定 `127.0.0.1`。在线版通过 `deployment/sites/` 的独立 Vinext / Worker 适配复用业务代码；配置 HTTPS 原点、签名访客 cookie、D1 共享配额与服务端 secrets，不能仅改监听地址。完整发布、迁移、验证与回退方法见 [部署指南](deployment.md)。
+`dev` / `start` 仍绑定 `127.0.0.1`。在线版通过 `deployment/sites/` 的独立 Vinext / Worker 适配复用业务代码；配置 HTTPS 原点、签名访客 cookie、D1 共享配额与服务端 secrets，不能仅改监听地址。Node 自托管也可用 SQLite 保留同样的原子配额和去重，详见 [Node 部署](../deployment/node/README.md)。完整发布、迁移、验证与回退方法见 [部署指南](deployment.md)。
 
 公网实例不能连接维护者电脑上的 `127.0.0.1:3425`。需使用已授权的 HTTPS 上游端点和该端点实际支持的模型 ID；本项目线上使用 `https://maas-openapi.wanjiedata.com/api/anthropic/v1` 与 `deepseek-v4.1-flash-1017`。它们是运营者配置，访客不能修改。

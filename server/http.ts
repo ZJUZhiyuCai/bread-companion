@@ -3,6 +3,7 @@ import { AppError, asAppError } from './errors';
 import { readStream } from './read-stream';
 import { timeoutSignal } from './limits';
 import { publicOrigin, requestPrincipal } from './visitor';
+import { serverRuntime } from './runtime';
 
 export const NO_STORE = { 'Cache-Control': 'no-store, max-age=0', 'X-Content-Type-Options': 'nosniff' };
 let readingBodies = 0;
@@ -11,7 +12,10 @@ export function assertAppRequest(req: Request) {
   const hosted = publicOrigin();
   if (hosted) {
     const expected = new URL(hosted);
-    if (url.origin !== hosted || (req.headers.get('host') ?? url.host) !== expected.host) throw new AppError('PERMISSION_DENIED', 403);
+    const internal = serverRuntime()?.nodeInternalOrigin;
+    // NextRequest normalizes both loopback literals to localhost, without changing the port.
+    const normalizedInternal = internal?.replace('://127.0.0.1', '://localhost').replace('://[::1]', '://localhost');
+    if ((url.origin !== hosted && url.origin !== internal && url.origin !== normalizedInternal) || (req.headers.get('host') ?? url.host) !== expected.host) throw new AppError('PERMISSION_DENIED', 403);
     const origin = req.headers.get('origin');
     if ((req.method !== 'GET' && origin !== hosted) || (origin && origin !== hosted)) throw new AppError('PERMISSION_DENIED', 403);
     if (['cross-site', 'same-site'].includes(req.headers.get('sec-fetch-site') ?? '')) throw new AppError('PERMISSION_DENIED', 403);

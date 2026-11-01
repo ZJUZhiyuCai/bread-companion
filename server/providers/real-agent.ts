@@ -21,7 +21,12 @@ export class RealProvider implements AgentProvider {
     const call = input.mode === 'listen' && input.channel === 'call' && !!cfg.callModel;
     const model = call ? cfg.callModel : companion ? cfg.companionModel : cfg.agentModel;
     const protocol = call ? cfg.callProtocol : companion ? cfg.companionProtocol : cfg.agentProtocol;
-    if (!cfg.agentKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
+    // A dedicated companion endpoint must have its own key; never leak an analysis key to another host.
+    const dedicated = input.mode === 'listen' && !!cfg.companionBaseUrl;
+    const baseUrl = dedicated ? cfg.companionBaseUrl : cfg.agentBaseUrl;
+    const apiKey = dedicated ? cfg.companionKey : cfg.agentKey;
+    const effort = input.mode === 'listen' ? cfg.companionEffort : '';
+    if (!apiKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
     const meta = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, serviceMode: 'real' as const };
     if (needsImmediateSupport(input.userMessage)) return { ...meta, assistantText: SUPPORT_TEXT, findings: [], warnings: [], supportGuidance: true };
     const farewell = input.mode === 'listen' ? farewellReply(input.userMessage) : null;
@@ -48,8 +53,8 @@ export class RealProvider implements AgentProvider {
       const anthropic = protocol === 'anthropic';
       const maxTokens = input.mode === 'listen' ? 768 : 4096;
       const body = anthropic ? { model, max_tokens: maxTokens, temperature: 0.4, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
-        : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: 'disabled' }, messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
-      const response = await fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.agentKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'manual', cache: 'no-store' });
+        : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: effort ? 'enabled' : 'disabled' }, ...(effort ? { reasoning_effort: effort } : {}), messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
+      const response = await fetcher(`${baseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'manual', cache: 'no-store' });
       if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
       const payload = await readProviderJson(response, 160000, signal) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
       let content: unknown;
@@ -79,7 +84,7 @@ export class RealProvider implements AgentProvider {
           const auditBody = anthropic
             ? {model, max_tokens:128, temperature:0, system:REJECTION_REVIEW_PROMPT, thinking:{type:'disabled'}, messages:[{role:'user',content:auditData}]}
             : {model, max_tokens:128, temperature:0, response_format:{type:'json_object'}, thinking:{type:'disabled'}, messages:[{role:'system',content:REJECTION_REVIEW_PROMPT},{role:'user',content:auditData}]};
-          const auditResponse = await fetcher(`${cfg.agentBaseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${cfg.agentKey}`,...(anthropic?{'anthropic-version':'2023-06-01'}:{})},body:JSON.stringify(auditBody),signal,redirect:'manual',cache:'no-store'});
+          const auditResponse = await fetcher(`${baseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${apiKey}`,...(anthropic?{'anthropic-version':'2023-06-01'}:{})},body:JSON.stringify(auditBody),signal,redirect:'manual',cache:'no-store'});
           if (!auditResponse.ok) throw new AppError(auditResponse.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', auditResponse.status === 429 ? 429 : 502);
           const auditPayload = await readProviderJson(auditResponse,16000,signal) as {content?:{type:string;text?:string}[];choices?:{message?:{content?:string}}[]};
           const auditText = anthropic ? auditPayload.content?.filter(b=>b.type==='text').map(b=>b.text??'').join('') : auditPayload.choices?.[0]?.message?.content;
@@ -90,7 +95,7 @@ export class RealProvider implements AgentProvider {
       if (!errors.length) return candidate;
       if (attempt && errors.every(e=>e === 'REJECTED_INTERPRETATION_REPEATED' || e === 'REJECTED_FINDING_REPEATED')) return correctionFallback(input);
       console.warn(JSON.stringify({ stage: 'agent_validation', code: 'CANDIDATE', errors }));
-      repair = `\n上次候选被程序拒绝：${errors.join(',')}。重新核对模式、长度、引用和卡片关联，生成合法 JSON。不允许捏造原文。若错误是 REJECTED_INTERPRETATION_REPEATED，表示仍在推荐用户否认过的评价角度；彻底撤下这个角度，必要时只输出原话与未知，练习也要换题。`;
+      repair = `\n上次候选被程序拒绝：${errors.join(',')}。重新核对模式、长度、引用和卡片关联，生成合法 JSON。若错误是 STYLE_NO_BLAMING_OPENER，去掉强调“又”或责怪用户的开场，温和地回应具体处境，不复述失败标签。不允许捏造原文。若错误是 REJECTED_INTERPRETATION_REPEATED，表示仍在推荐用户否认过的评价角度；彻底撤下这个角度，必要时只输出原话与未知，练习也要换题。`;
       if (attempt) throw new AppError(errors.some(e => e.includes('EVIDENCE')) ? 'EVIDENCE_MISMATCH' : 'INVALID_MODEL_OUTPUT', 502, true);
     }
     throw new AppError('INVALID_MODEL_OUTPUT', 502, true);

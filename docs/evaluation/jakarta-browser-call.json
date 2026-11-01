@@ -1,0 +1,61 @@
+{
+  "startedAt": "2026-11-01T05:41:44.491Z",
+  "inputs": [
+    {
+      "name": "first",
+      "at": 97067.30000019073,
+      "endsAt": 102013.17500019073,
+      "seconds": 4.945875
+    }
+  ],
+  "outputs": [
+    {
+      "at": 93508.9000005722,
+      "duration": 3.1463125
+    }
+  ],
+  "stops": [],
+  "phases": [
+    {
+      "phase": "connecting",
+      "at": 93128.80000019073
+    },
+    {
+      "phase": "speaking",
+      "at": 93510.19999980927
+    },
+    {
+      "phase": "listening",
+      "at": 96666.5
+    },
+    {
+      "phase": "transcribing",
+      "at": 102637.4000005722
+    },
+    {
+      "phase": "error",
+      "at": 144316.30000019073
+    }
+  ],
+  "network": [
+    {
+      "url": "/api/speech/transcribe",
+      "at": 102635.19999980927,
+      "ms": 41676.20000076294,
+      "error": "TypeError"
+    }
+  ],
+  "tracks": [
+    {
+      "state": "ended",
+      "enabled": false
+    }
+  ],
+  "barge": true,
+  "inputScheduled": true,
+  "fixture": "Synthetic Chinese speech, real browser audio graph and real providers; no physical microphone",
+  "tapAt": 93022.10000038147,
+  "secureContext": true,
+  "overflow": false,
+  "outcome": "ASR fetch failed after 41.7s in desktop browser; not a successful call. User separately confirmed phone function works."
+}

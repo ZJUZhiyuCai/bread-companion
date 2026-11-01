@@ -1,5 +1,7 @@
 # 在线体验与部署
 
+面包也支持现有 VPS 上的 [Node / SQLite 部署](../deployment/node/README.md)，无需购买新的云服务。
+
 面包保留本机 Next.js 开发方式；在线版本通过 **Sites 的 Vinext / Cloudflare Worker** 适配运行相同界面和业务层。在线端点直连已授权的 HTTPS 模型供应商，不能使用维护者电脑上的 Magpie loopback 地址。访客不用配置模型，也不用注册应用账号。
 
 ## 构建与发布
@@ -26,6 +28,7 @@ node deployment/sites/stage.mjs --plugin-root /absolute/path/to/sites/plugin
 | `BREAD_VISITOR_SECRET` | 至少 32 字符的随机服务端 secret；用于短期匿名 cookie 签名 |
 | `DB` | Sites D1 绑定，迁移见 `deployment/sites/drizzle/` |
 | `AGENT_PROVIDER / PROTOCOL / BASE_URL / API_KEY / MODEL` | 真实文本服务；本次为万界方舟 Anthropic 兼容 DeepSeek Flash |
+| `AGENT_COMPANION_BASE_URL / API_KEY / MODEL / PROTOCOL / REASONING_EFFORT` | 独立陪伴端点与密钥；可选配置；当前 DeepSeek 文字与电话继承分析端点，关闭思考 |
 | `AGENT_PROCESSOR_LABEL` | 关于页向访客展示的真实处理方 |
 | `ASR_PROVIDER / TTS_PROVIDER / MINIMAX_*` | MiniMax ASR 与 Warm Bestie，变量解释见 `.env.example` |
 

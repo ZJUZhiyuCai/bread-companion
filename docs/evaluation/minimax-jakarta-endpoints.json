@@ -1,0 +1,29 @@
+{
+  "fixture": "Synthetic WAV, interleaved official endpoints from Jakarta server; two requests per endpoint, no physical microphone",
+  "results": [
+    {
+      "base": "https://api.minimax.cn/v1",
+      "status": 200,
+      "ms": 11766,
+      "text": "今晚先说说，想停的时候随时停。"
+    },
+    {
+      "base": "https://api.minimaxi.com/v1",
+      "status": 200,
+      "ms": 1338,
+      "text": "今晚先说说，想停的时候随时停。"
+    },
+    {
+      "base": "https://api.minimax.cn/v1",
+      "status": 200,
+      "ms": 15805,
+      "text": "今晚先说说，想停的时候随时停。"
+    },
+    {
+      "base": "https://api.minimaxi.com/v1",
+      "status": 200,
+      "ms": 1067,
+      "text": "今晚先说说，想停的时候随时停。"
+    }
+  ]
+}

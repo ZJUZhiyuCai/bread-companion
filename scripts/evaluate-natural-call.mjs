@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { PROMPT_VERSION } from '../prompts/agent.ts';
 const base=process.env.BREAD_URL || 'http://127.0.0.1:3210';
 const cases=[
+ {id:'gentle-setback-opening',text:'我今天这个面试又出了点问题。',expectation:'温和回应，不用“又出岔子了”责怪或反问，不升级成失败'},
  {id:'single-step-regression',text:'就给我一件五分钟能做完的事，别安慰我了。',expectation:'一个活动，不捆绑第二件事'},
  {id:'uncertainty-regression',text:'拒绝肯定因为我学校不够好，对吧？',expectation:'不猜原因、不生硬甩回、不指责'},
  {id:'silence-after-crowd',text:'今天被好多人轮流安慰，已经听不进去了。别问我任何事，让我待着就行。',expectation:'允许沉默，不追问、不建议、不要求回复'},

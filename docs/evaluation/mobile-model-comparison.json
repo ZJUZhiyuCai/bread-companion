@@ -1,0 +1,645 @@
+{
+  "testedAt": "2026-11-01T05:14:42.018Z",
+  "promptVersion": "bread-2026-11-01-v16-gentle-call",
+  "synthetic": true,
+  "interleaved": true,
+  "results": [
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1428,
+      "response": {
+        "assistantText": "又出问题了？这次是哪儿卡住的？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1025,
+        "output_tokens": 32
+      }
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1354,
+      "response": {
+        "assistantText": "面试不太顺啊。愿意说说出了什么状况吗？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1133,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 7906,
+      "response": {
+        "assistantText": "面试不太顺啊，今天卡在哪了？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "input_tokens": 1153,
+        "output_tokens": 627,
+        "cache_read_input_tokens": 0,
+        "output_tokens_details": {
+          "thinking_tokens": 598
+        }
+      }
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 6059,
+      "response": {
+        "assistantText": "今天面试不太顺啊，卡在哪儿了？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1252,
+        "completion_tokens": 262,
+        "total_tokens": 1514
+      }
+    },
+    {
+      "id": "reported",
+      "text": "我今天这个面试又出了点问题。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 5294,
+      "response": {
+        "assistantText": "面试里碰到点岔子了，是哪个环节让你觉得不太顺？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 351,
+        "completion_tokens_details": {
+          "reasoning_tokens": 314
+        },
+        "prompt_tokens": 1243,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 128
+        },
+        "total_tokens": 1594
+      }
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1344,
+      "response": {
+        "assistantText": "两次没过，心里堵得慌吧。不过这两次具体卡在哪儿，现在清楚吗？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1028,
+        "output_tokens": 43
+      }
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1331,
+      "response": {
+        "assistantText": "这周两次都没过，心里挺堵的吧。愿意说说是什么事没过吗？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1024,
+        "input_tokens": 112,
+        "output_tokens": 40
+      }
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 5326,
+      "response": {
+        "assistantText": "两次没过，是挺挫败的。不过这只说明这两回没成，够不上“你很差”这个结论。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "input_tokens": 1156,
+        "output_tokens": 390,
+        "cache_read_input_tokens": 0,
+        "output_tokens_details": {
+          "thinking_tokens": 344
+        }
+      }
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 7307,
+      "response": {
+        "assistantText": "连着来两次，确实很难不受打击。但别这么快把锅全扣在自己头上。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1257,
+        "completion_tokens": 476,
+        "total_tokens": 1733
+      }
+    },
+    {
+      "id": "repeated",
+      "text": "这周已经两次没通过了，感觉自己是不是很差。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 2735,
+      "response": {
+        "assistantText": "这周连着两次没通过，确实挺打击人的，但不能据此说你很差。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 166,
+        "completion_tokens_details": {
+          "reasoning_tokens": 127
+        },
+        "prompt_tokens": 1245,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "total_tokens": 1411
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1387,
+      "response": {
+        "assistantText": "行，不劝也不出主意。今天被拒了，心里堵得慌吧。想骂两句还是就说说经过，我都听着。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1035,
+        "output_tokens": 52
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1325,
+      "response": {
+        "assistantText": "被拒了啊。那我就在这儿听你说，不劝也不出主意。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1024,
+        "input_tokens": 119,
+        "output_tokens": 39
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 8097,
+      "response": {
+        "assistantText": "被拒了，这滋味确实不好受。想说今天的经过就说，不想说咱就随便聊点别的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "input_tokens": 139,
+        "output_tokens": 719,
+        "cache_read_input_tokens": 1024,
+        "output_tokens_details": {
+          "thinking_tokens": 676
+        }
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 9788,
+      "response": {
+        "assistantText": "好，不给建议也不劝你。刚收到这种消息确实很堵，想说什么直接聊。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1263,
+        "completion_tokens": 590,
+        "total_tokens": 1853
+      }
+    },
+    {
+      "id": "no-advice",
+      "text": "今天被拒了，别劝我休息也别给建议，就陪我说两句。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 5790,
+      "response": {
+        "assistantText": "好，不劝你休息，也不给建议。今天被拒了确实挺堵心的，我陪你聊两句。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 395,
+        "completion_tokens_details": {
+          "reasoning_tokens": 351
+        },
+        "prompt_tokens": 1250,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 128
+        },
+        "total_tokens": 1645
+      }
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1276,
+      "response": {
+        "assistantText": "好，收回。是我刚才想当然了，你说的是流程乱。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1044,
+        "output_tokens": 37
+      }
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1254,
+      "response": {
+        "assistantText": "好，是我判断错了。流程乱在哪儿？",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1024,
+        "input_tokens": 128,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 8332,
+      "response": {
+        "assistantText": "好，收回刚才那句。流程乱确实挺磨人的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "input_tokens": 147,
+        "output_tokens": 653,
+        "cache_read_input_tokens": 1024,
+        "output_tokens_details": {
+          "thinking_tokens": 621
+        }
+      }
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 9139,
+      "response": {
+        "assistantText": "是我猜错了。流程乱起来确实很让人无语。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1272,
+        "completion_tokens": 533,
+        "total_tokens": 1805
+      }
+    },
+    {
+      "id": "correction",
+      "text": "不是，我没有难过，我就是觉得他们流程很乱。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 3944,
+      "response": {
+        "assistantText": "明白，刚才是我判断错了。流程乱这种事本身就挺烦人的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 316,
+        "completion_tokens_details": {
+          "reasoning_tokens": 280
+        },
+        "prompt_tokens": 1270,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 128
+        },
+        "total_tokens": 1586
+      }
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1255,
+      "response": {
+        "assistantText": "双蛋豪华版，这碗面有排面。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1029,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1256,
+      "response": {
+        "assistantText": "双蛋豪华版，这碗面有排面。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1024,
+        "input_tokens": 113,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 4721,
+      "response": {
+        "assistantText": "两个蛋打底，这碗面今天够豪华，是真赚到了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "input_tokens": 1157,
+        "output_tokens": 304,
+        "cache_read_input_tokens": 0,
+        "output_tokens_details": {
+          "thinking_tokens": 270
+        }
+      }
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 5119,
+      "response": {
+        "assistantText": "双蛋顶配，今天这碗面直接拉满了。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1257,
+        "completion_tokens": 125,
+        "total_tokens": 1382
+      }
+    },
+    {
+      "id": "joy",
+      "text": "我做的面条里加了两个蛋，今天赚到了。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 6901,
+      "response": {
+        "assistantText": "两个蛋加今天的进账，这碗面挺有排面。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 182,
+        "completion_tokens_details": {
+          "reasoning_tokens": 145
+        },
+        "prompt_tokens": 1245,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 128
+        },
+        "total_tokens": 1427
+      }
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "deepseek-before",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1254,
+      "response": {
+        "assistantText": "信息确实不够，先别急着给自己下结论。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 1030,
+        "output_tokens": 34
+      }
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "deepseek-tuned",
+      "model": "wanjie/deepseek-v4.1-flash-1017",
+      "status": 200,
+      "ms": 1440,
+      "response": {
+        "assistantText": "面试没成，原因还说不准，这种悬着的感觉挺难受的。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 1024,
+        "input_tokens": 114,
+        "output_tokens": 40
+      }
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "glm-flash",
+      "model": "tokendance/glm-5.3-flash",
+      "status": 200,
+      "ms": 10427,
+      "response": "",
+      "usage": {
+        "input_tokens": 135,
+        "output_tokens": 768,
+        "cache_read_input_tokens": 1024,
+        "output_tokens_details": {
+          "thinking_tokens": 768
+        }
+      }
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "gemini-flash",
+      "model": "mfapi/gemini-3.8-flash",
+      "status": 200,
+      "ms": 8159,
+      "response": {
+        "assistantText": "这种不知道到底卡在哪里的感觉，确实挺让人悬着的，两边都有可能。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "prompt_tokens": 1259,
+        "completion_tokens": 438,
+        "total_tokens": 1697
+      }
+    },
+    {
+      "id": "uncertain",
+      "text": "可能是回答没讲清，也可能只是岗位不合适，我不知道。",
+      "variant": "minimax-flash",
+      "model": "workbuddy-ai/minimax-m3.1-flash",
+      "status": 200,
+      "ms": 3404,
+      "response": {
+        "assistantText": "嗯，答案没讲清和岗位不合适，现在都还不能确定。",
+        "findings": [],
+        "warnings": [],
+        "supportGuidance": false
+      },
+      "usage": {
+        "completion_tokens": 252,
+        "completion_tokens_details": {
+          "reasoning_tokens": 215
+        },
+        "prompt_tokens": 1245,
+        "prompt_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 1024
+        },
+        "total_tokens": 1497
+      }
+    }
+  ]
+}

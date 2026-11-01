@@ -1,0 +1,83 @@
+{
+  "at": "2026-11-01T05:50:26.957Z",
+  "origin": "https://bread.163-7-7-42.sslip.io",
+  "fixture": "Operator-selected synthetic WAV; no physical microphone",
+  "steps": [
+    {
+      "path": "/api/capabilities",
+      "status": 200,
+      "expected": 200,
+      "ms": 1651,
+      "bytes": 1011,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 482,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 488,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 403,
+      "expected": 403,
+      "ms": 647,
+      "bytes": 191,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 400,
+      "expected": 400,
+      "ms": 636,
+      "bytes": 190,
+      "serverTiming": null
+    },
+    {
+      "path": "/api/speech/transcribe",
+      "status": 200,
+      "expected": 200,
+      "ms": 32533,
+      "bytes": 125,
+      "serverTiming": "provider;dur=29477.0, total;dur=32094.1"
+    },
+    {
+      "path": "/api/agent/turn",
+      "status": 502,
+      "expected": 200,
+      "ms": 4407,
+      "bytes": 229,
+      "serverTiming": null
+    }
+  ],
+  "providers": {
+    "agent": {
+      "mode": "real",
+      "label": "DeepSeek",
+      "configured": true
+    },
+    "asr": {
+      "available": true,
+      "label": "MiniMax 语音转写"
+    },
+    "tts": {
+      "available": true,
+      "label": "MiniMax · 温暖闺蜜",
+      "greeting": "/companion/hello-warm-bestie.mp3?v=1"
+    }
+  },
+  "fixtureSha256": "dfc5d51b7dba32ce859de67a2b72acb354322099a663d6ef106dccd78d3196d5",
+  "transcript": "今晚先说说，想停的时候随时停。",
+  "completed": false,
+  "error": "Error: /api/agent/turn: HTTP 502; {\"error\":{\"code\":\"PROVIDER_UNAVAILABLE\",\"userMessage\":\"服务暂时没有连接成功。你写的内容仍在，可以稍后重试或结束。\",\"retryable\":true,\"requestId\":\"e39bdaa8-a9e8-487d-8ac1-3c68dd324f03\",\"stage\":\"agent\"}}"
+}

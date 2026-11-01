@@ -1,0 +1,32 @@
+[Unit]
+Description=Bread Companion
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=bread-companion
+Group=bread-companion
+WorkingDirectory=/srv/bread-companion/current
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=NODE_OPTIONS=--max-old-space-size=768
+EnvironmentFile=/etc/bread-companion.env
+ExecStart=/usr/bin/node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3220
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+MemoryMax=1G
+CPUQuota=100%
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/srv/bread-companion/private /srv/bread-companion/current/.next/cache
+
+[Install]
+WantedBy=multi-user.target

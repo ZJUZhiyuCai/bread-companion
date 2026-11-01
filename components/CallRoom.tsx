@@ -150,6 +150,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           {(meta.hint || (phase === 'paused' && call.error)) && (
             <p className="callroom__hint">{phase === 'paused' && call.error ? call.error : meta.hint}</p>
           )}
+          {phase === 'listening' && call.inputWarning && <p className="callroom__hint" role="status">{call.inputWarning}</p>}
           {/* Only while there is something to interrupt; muted or paused, the line would be wrong. */}
           {cue && CUTTABLE.includes(phase) && <p className="callroom__cue">想说就直接开口，也可以点“插话”</p>}
           {phase === 'error' && call.error && (
@@ -224,11 +225,14 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               {showLog ? '回到字幕' : `文字记录${messages.length ? `（${messages.length}）` : ''}`}
             </button>
           )}
-          {phase === 'error' && (
-            <button type="button" className="callroom__link" onClick={onHangup}>
-              挂断，改成打字
+          {phase === 'listening' && !call.heardSpeech && (
+            <button type="button" className="callroom__link" onClick={() => { vm.stop(); void vm.resumeCall(); }}>
+              重新连接麦克风
             </button>
           )}
+          <button type="button" className="callroom__link" onClick={onHangup}>
+            挂断，改成打字
+          </button>
         </div>
       </div>
 

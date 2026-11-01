@@ -42,7 +42,7 @@ export class CallController {
     const generation = ++this.generation;
     let openingTurn = this.turn;
     const valid = () => this.state.active && generation === this.generation;
-    this.patch({ phase: 'connecting', error: '', level: 0, heardSpeech: false });
+    this.patch({ phase: 'connecting', error: '', inputWarning: '', level: 0, heardSpeech: false });
     const opening = new AbortController(); this.opening?.abort(); this.opening = opening;
     // Only a fixed public asset is prepared in parallel; no paid synthesis before mic approval.
     const prepared = greeting && this.deps.prepareGreeting ? Promise.resolve().then(() => this.deps.prepareGreeting!(opening.signal)).catch(() => null) : Promise.resolve(null);
@@ -57,6 +57,7 @@ export class CallController {
         },
         utterance: file => { if (valid() && this.state.phase === 'listening' && !this.state.muted) void this.process(file); },
         failure: message => { if (valid()) this.fail(new Error(message)); },
+        inputWarning: message => { if (valid()) this.patch({ inputWarning: message }); },
         speechStart: () => { if (valid()) this.onSpeechStart(); },
       });
       if (!opened || !valid()) return;

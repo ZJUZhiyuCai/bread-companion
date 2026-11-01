@@ -6,7 +6,7 @@
 
 收到拒信的那个晚上，你可能只想把话说出来，还没有力气分析哪里出了问题。面包是一个中文陪伴与轻复盘工具：先陪你聊，等你愿意了，再一起看看那段回答。
 
-[在线体验](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md)
+[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
@@ -39,7 +39,7 @@
 
 当前是 **0.4.0 预览版**。
 
-- **在线无需配置。** 打开 [面包](https://bread-companion-czy.rosscai.chatgpt.site) 就能开始，模型和语音服务由维护者配置。
+- **在线无需配置。** 打开 [面包](https://bread.163-7-7-42.sslip.io) 就能开始，模型和语音服务由维护者配置。
 - **存档留在当前浏览器。** 没有账号、云同步或跨天关系记忆。真实模式下，回复所需的文字和语音片段会发送给配置的处理服务；“本机保存”不等于“内容从不离开设备”。具体范围见 [数据处理说明](docs/data-handling.md)。
 - **公开体验有配额。** 为控制服务成本，站点限制同时处理的请求和一段时间内的使用量。达到上限会暂时无法发起新请求，当前不承诺全天可用。见 [部署与限额](docs/deployment.md)。
 
@@ -66,7 +66,8 @@ npm run dev
 
 | 能力 | 维护者已验证的配置 |
 | --- | --- |
-| 文字 / 电话回复 / 复盘 | 本机 Magpie 路由 `wanjie/deepseek-v4.1-flash-1017`；在线版直连同一万界方舟上游 `deepseek-v4.1-flash-1017`，Anthropic 兼容协议 |
+| 文字倾听 / 电话 | DeepSeek Flash，关闭思考；使用同理心与简短口语约束 |
+| 整理 / 复盘 / 练习 | 本机 Magpie 路由 `wanjie/deepseek-v4.1-flash-1017`；线上直连万界方舟 DeepSeek，Anthropic 兼容协议 |
 | 语音转写 | MiniMax `asr-1.0` |
 | 语音合成 | MiniMax `speech-2.8-hd`，`Chinese (Mandarin)_Warm_Bestie` |
 
@@ -124,7 +125,7 @@ flowchart LR
 
 | 检查 | 已有结果与测量范围 |
 | --- | --- |
-| 工程回归 | **194 项单元/集成测试、44 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
+| 工程回归 | **209 项单元/集成测试、47 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
 | 核心任务（v15） | 最终一组 **8 个真实模型 API 回合**走完复盘、纠正、练习和保存；其中 **3 回合退回了原话卡或开放问题**，纠正后的训练反馈质量仍不够稳定 |
 | 中文对话（v14） | 8 个合成情境、16 轮接口调用，其中一句明确道别由本机规则回应；完整响应中位 **1.165 s**、p90 **1.477 s**，未测首 token |
 | 公网语音链路（0.4.0） | 两个合成回合中，转写、模型与合成的 HTTP 耗时合计 **7.89 / 9.12 s**；尚未测公网浏览器实际出声时间 |
@@ -165,3 +166,5 @@ npm run eval:companion -- --live --app http://127.0.0.1:3210
 前端由官方 Claude Code 与 DeepSeek 协作打磨，Codex 负责后端、集成与验证，维护者负责项目取舍。设计稿及其接入改动保留在文档中，便于追踪每次设计如何落到产品里。
 
 **[MIT License](LICENSE)** © 2026 Zhiyu Cai and Bread contributors。角色与语音来源见 [素材说明与生成提示词](docs/living-companion-assets.md)，[自托管字体](docs/fonts.md) 遵循 SIL OFL 1.1；依赖及素材权利范围见 [Third-party notices](THIRD_PARTY_NOTICES.md)。
+
+手机收音异常的恢复方式、多模型延迟对比及实测边界，见 [手机通话验证](docs/mobile-call-validation.md)。

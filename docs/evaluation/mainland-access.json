@@ -1,0 +1,325 @@
+[
+  {
+    "label": "old-sites-cn",
+    "measurementId": "2mjkRq70Ugm7kCIve00021QEK",
+    "status": "finished",
+    "results": [
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Guangzhou",
+          "network": "Shenzhen Tencent Computer Systems Company",
+          "asn": 45090
+        },
+        "status": "finished",
+        "statusCode": 403,
+        "timings": {
+          "total": 557,
+          "dns": 60,
+          "tcp": 159,
+          "tls": 167,
+          "firstByte": 170,
+          "download": 1
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Beijing",
+          "network": "Shenzhen Tencent Computer Systems Company",
+          "asn": 45090
+        },
+        "status": "finished",
+        "statusCode": 403,
+        "timings": {
+          "total": 1103,
+          "dns": 95,
+          "tcp": 198,
+          "tls": 207,
+          "firstByte": 602,
+          "download": 1
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Shenzhen",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 403,
+        "timings": {
+          "total": 872,
+          "dns": 122,
+          "tcp": 240,
+          "tls": 248,
+          "firstByte": 261,
+          "download": 1
+        }
+      }
+    ]
+  },
+  {
+    "label": "old-sites-control",
+    "measurementId": "2quSvHefTAzfdACmQ00021QEM",
+    "status": "finished",
+    "results": [
+      {
+        "probe": {
+          "country": "US",
+          "city": "Buffalo",
+          "network": "HostPapa",
+          "asn": 36352
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 883,
+          "dns": 42,
+          "tcp": 14,
+          "tls": 33,
+          "firstByte": 790,
+          "download": 4
+        }
+      },
+      {
+        "probe": {
+          "country": "HK",
+          "city": "Hong Kong",
+          "network": "AkileCloud Network",
+          "asn": 61112
+        },
+        "status": "finished",
+        "statusCode": 403,
+        "timings": {
+          "total": 134,
+          "dns": 11,
+          "tcp": 1,
+          "tls": 32,
+          "firstByte": 10,
+          "download": 80
+        }
+      }
+    ]
+  },
+  {
+    "label": "jakarta-cn",
+    "measurementId": "23vR0H7CizQs4zbed00021QEm",
+    "status": "finished",
+    "results": [
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Shenzhen",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 2934,
+          "dns": 184,
+          "tcp": 377,
+          "tls": 1236,
+          "firstByte": 381,
+          "download": 756
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Wuhan",
+          "network": "CHINA UNICOM China169 Backbone",
+          "asn": 4837
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1962,
+          "dns": 413,
+          "tcp": 481,
+          "tls": 566,
+          "firstByte": 488,
+          "download": 14
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Guangzhou",
+          "network": "Shenzhen Tencent Computer Systems Company",
+          "asn": 45090
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 3924,
+          "dns": 186,
+          "tcp": 365,
+          "tls": 2640,
+          "firstByte": 368,
+          "download": 365
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Chengdu",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1484,
+          "dns": 488,
+          "tcp": 332,
+          "tls": 332,
+          "firstByte": 332,
+          "download": 0
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Shanghai",
+          "network": "China Unicom Shanghai network",
+          "asn": 17621
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1684,
+          "dns": 254,
+          "tcp": 462,
+          "tls": 500,
+          "firstByte": 466,
+          "download": 2
+        }
+      }
+    ]
+  },
+  {
+    "label": "free-api",
+    "measurementId": "2pKxjBY8QbQFcOmOB00021QEo",
+    "status": "finished",
+    "results": [
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Shenzhen",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 3046,
+          "dns": 409,
+          "tcp": 373,
+          "tls": 1886,
+          "firstByte": 377,
+          "download": 1
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Wuhan",
+          "network": "CHINA UNICOM China169 Backbone",
+          "asn": 4837
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1633,
+          "dns": 202,
+          "tcp": 466,
+          "tls": 486,
+          "firstByte": 477,
+          "download": 2
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Chengdu",
+          "network": "Shenzhen Tencent Computer Systems Company",
+          "asn": 45090
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1755,
+          "dns": 488,
+          "tcp": 419,
+          "tls": 423,
+          "firstByte": 424,
+          "download": 1
+        }
+      }
+    ]
+  },
+  {
+    "label": "free-audio",
+    "measurementId": "2K087g2jjxzIXMtn000021QEo",
+    "status": "finished",
+    "results": [
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Shenzhen",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 3617,
+          "dns": 234,
+          "tcp": 388,
+          "tls": 564,
+          "firstByte": 2391,
+          "download": 40
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Chengdu",
+          "network": "Hangzhou Alibaba Advertising",
+          "asn": 37963
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 1521,
+          "dns": 501,
+          "tcp": 338,
+          "tls": 343,
+          "firstByte": 337,
+          "download": 2
+        }
+      },
+      {
+        "probe": {
+          "country": "CN",
+          "city": "Wuhan",
+          "network": "CHINA UNICOM China169 Backbone",
+          "asn": 4837
+        },
+        "status": "finished",
+        "statusCode": 200,
+        "timings": {
+          "total": 2092,
+          "dns": 721,
+          "tcp": 452,
+          "tls": 468,
+          "firstByte": 450,
+          "download": 1
+        }
+      }
+    ]
+  }
+]
