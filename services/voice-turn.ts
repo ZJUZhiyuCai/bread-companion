@@ -16,8 +16,11 @@ export class VoiceTransportUnavailable extends Error {}
 
 /** Raw 32 kHz PCM needs more bandwidth than MP3; decide before any billed request. */
 export function canStreamPcm(connection?: { saveData?: boolean; effectiveType?: string; downlink?: number }): boolean {
-  return !connection?.saveData && !['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
-    && !(typeof connection?.downlink === 'number' && connection.downlink > 0 && connection.downlink < 1);
+  const measured = typeof connection?.downlink === 'number' && Number.isFinite(connection.downlink) && connection.downlink > 0;
+  if (connection?.saveData || ['slow-2g', '2g'].includes(connection?.effectiveType ?? '')) return false;
+  // effectiveType also reflects RTT: a distant but sufficiently fast link can report 3g.
+  if (measured) return connection!.downlink! >= 1;
+  return connection?.effectiveType !== '3g';
 }
 /** The reply may render while the same request is still preparing speech. */
 export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, parent: AbortSignal, timeoutMs = 60000) {

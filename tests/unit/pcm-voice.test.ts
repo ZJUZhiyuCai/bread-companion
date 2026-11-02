@@ -57,6 +57,8 @@ describe('streaming provider validates framing and completion', () => {
 describe('browser stream protocol', () => {
   it('chooses MP3 for known slow links or data saving before any paid generation', async () => {
     for (const connection of [{ saveData: true }, { effectiveType: 'slow-2g' }, { effectiveType: '2g' }, { effectiveType: '3g' }, { downlink: .8 }]) expect(canStreamPcm(connection)).toBe(false);
+    expect(canStreamPcm({ effectiveType: '3g', downlink: 1.25 })).toBe(true);
+    expect(canStreamPcm({ effectiveType: '3g', downlink: .8 })).toBe(false);
     expect(canStreamPcm({ effectiveType: '4g', downlink: 2 })).toBe(true); expect(canStreamPcm()).toBe(true);
     vi.stubGlobal('navigator', { connection: { saveData: true } });
     try {
