@@ -129,11 +129,11 @@ for (const failure of ['provider','network'] as const) test(`a ${failure} failur
     const req=new Request('http://localhost/',{method:'POST',headers:{'Content-Type':r.request().headers()['content-type']},body:new Uint8Array(r.request().postDataBuffer()!)});
     const form=await req.formData();await r.fulfill({json:{requestId:form.get('requestId'),text:'第'+requests+'句，我想接着聊。'}});
   });
-  await speak(page);await phase(page,'speaking');await phase(page,'listening');
-  await speak(page);await expect(page.locator('.callroom').getByRole('status')).toContainText('没转成文字');await phase(page,'listening');
+  await speak(page, 'short');await phase(page,'speaking');await phase(page,'listening');
+  await speak(page, 'short');await expect(page.locator('.callroom').getByRole('status')).toContainText('没转成文字');await phase(page,'listening');
   expect(stats.turns).toHaveLength(1);expect(await page.evaluate(()=>(window as any).__audio.tracks.length)).toBe(1);
   expect(await page.evaluate(()=>(window as any).__audio.tracks[0].readyState)).toBe('live');
-  await speak(page);await phase(page,'speaking');expect(stats.turns).toHaveLength(2);expect(stats.turns[1].userMessage).toContain('第3句');
+  await speak(page, 'short');await phase(page,'speaking');expect(stats.turns).toHaveLength(2);expect(stats.turns[1].userMessage).toContain('第3句');expect(requests).toBe(3);
   await hangup(page);
 });
 
