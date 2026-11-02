@@ -1,7 +1,7 @@
 'use client';
 
 import { BreadBuddy, type BuddyState } from './BreadBuddy';
-import { RedPhone } from './RedPhone';
+import { PhoneStill } from './RedPhone';
 
 interface LampSceneProps {
   /** `false` is the end scene: the lamp turns down to a night light and 面包 says goodnight, eyes open. */
@@ -19,8 +19,10 @@ interface LampSceneProps {
 }
 
 /**
- * A small warm nook: a pool of lamplight, a soft spot on the table, and 面包 sitting in it.
- * The light is CSS, so the scene stays one figure wide and never fights the layout.
+ * 面包's spot in the set: the key light falling on the wall from the upper left (never a disc centred
+ * behind it — that reads as a cut-out's glow), and the pool of light on the floor it sits in. The light
+ * is CSS, so the scene stays one figure wide and never fights the layout. The phone beside it is the
+ * Blender still, the same object as everywhere else.
  */
 export function LampScene({
   lit = true,
@@ -44,7 +46,7 @@ export function LampScene({
         phoneLight={phone || phoneNear}
         className="nook__plush"
       />
-      {phone && <RedPhone pose="rest" className="nook__phone" />}
+      {phone && <PhoneStill className="nook__phone" />}
     </div>
   );
 }

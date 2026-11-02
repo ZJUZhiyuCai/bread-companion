@@ -1,0 +1,84 @@
+{
+  "baseline": "f1a6e5ca7c066460f08dd3d9d383c74b7300936d",
+  "claude": {
+    "task": "20261102-bread-premium-implementation",
+    "session": "da80ed58-a9ba-47b7-8a45-f6cc13d2f1d5",
+    "model": "claude-opus-5-5",
+    "effort": "high",
+    "actualInitVerified": true,
+    "permissionMode": "acceptEdits",
+    "rounds": 2,
+    "rawFiles": {
+      "DESIGN-PLAN.md": "99daf080ecc9e1b9d628697c4180f5baedf08b75d7d709b411e7c38e898ba57f",
+      "CLAUDE-DESIGN-NOTES.md": "872946403af4ef095b6378984912a38e632acd3a5b388582302e7b20143109d5",
+      "app/layout.tsx": "a70282562d7335dcb8a8112781774e4e194cf6547a26f1e2cf728cfedfc77e16",
+      "app/globals.css": "565a8ae652613dc7d5082d284241b86e4c614eea30aecfb138a1ab01daddc774",
+      "components/WorkPanel.tsx": "b81a18630d3b53f81eef9fe0a0ad31ed08349839daa30a16285593db4e393f9a",
+      "components/EntryScreen.tsx": "2bd044bba5309a27b31f9811965ae7d2dc71e4591ffde997cdb7dd3aff0dc5c6",
+      "components/Sources.tsx": "1e026c814e46b94f1a76b4ef16a3ccd077feab3dc6999211c70d8a4882d96df7",
+      "components/Companion.tsx": "5a0b000ebb839f078a13b5ae4372fa672c7a5b0790ca5351848c9bade5069c3b",
+      "components/CallStage.tsx": "dd4515421d4776bf147db49537499e611983cd5c64efc32a0c1ab7463172d771",
+      "components/TopBar.tsx": "555186c3a068dc35776f29c4925bfef4bfcf3702e61a98f0bf9bfa853d0f956e",
+      "components/SavedArchive.tsx": "f378efd424e146d99431458214a09e66374e198736ea6c1597c45292e6d87887",
+      "components/NightWindow.tsx": "e8694ec5c7792b5a1b1107a1f9e01f5cff22e4e0272f8fda674d6a63636e447f",
+      "components/Notices.tsx": "24f69de913f45659bf1ce36711751a1a67c9b460ea9578ce5ec39e6b49f3f502",
+      "components/CallRoom.tsx": "7ef10eeeda09b92d8a9d4718c24268e44531f77e3a8146befc5f1d901ed1fc5f",
+      "components/Findings.tsx": "ba1fea2dc8d52128427c315741b4ef1c63b95f94f95636fbd507e42abd705437",
+      "components/CardView.tsx": "52f668a8fb7aa620efecffe270c23488cf38559938c63fc7076b4d33455d1371",
+      "components/EndView.tsx": "31f6d40b56a28ac8b7bb66ac29d3226e304e627bc913bbfa9666ed8d4ee1c7b2",
+      "components/ModeBar.tsx": "40e80bc052c977aef4f496cc69f3ecdf6fafa537b92973136846f02cba2a4aeb",
+      "components/Conversation.tsx": "3a6ee50d18bd29801305c0991509397ec293da20673f39c8086f607b47562ca3",
+      "components/SavePreview.tsx": "55ff5d2292545b952cca940081aa5c160cc89e3105167b6989d71c3f37246153",
+      "components/Composer.tsx": "eb994c9b29a2bb0244e8150c44f4ce57eca153d5b00d2a020d0a57a5e66cd7d9",
+      "components/PracticeSetup.tsx": "9e879a8e97d8041c8a708c33aa8a2b7581cbf791275abdfd8343639dd4c45285",
+      "components/Dialog.tsx": "fad2968575d1974ce57e2fc768f76992b21a98177be292e256e52664f5d3e8eb",
+      "components/StateAvatar.tsx": "3d0255f46d05d90222e031f6fe7c2ebb1304a23407283631b483022d249aec71",
+      "components/Brand.tsx": "e72defd68be1fe5b71d0f0d78bfadcf4a9292e4747fe57097a703f229b02573b",
+      "components/RedPhone.tsx": "d97c09d95762bb33ed4bbf8fb4eefa264e456b15ce72991036b84838ec5731c0",
+      "components/BreadBuddy.tsx": "1497ec5a29f2e9cae838a23943d1f9997b8195620d6d7e22c63494a944d10d51",
+      "components/Evidence.tsx": "23b7463d2d314ae96202735620025185777e42e2aee98aecb40d6bd1f557e8fa",
+      "components/SessionView.tsx": "a092ddcaef3413e78f5361fe95a7e8411254af67287301dbc894dabf75198ce3",
+      "components/ServiceStatus.tsx": "e3d7ebe11ecc7b868f724ad85ee1a761ed7acb356350479634e76e8097317c28",
+      "public/favicon.svg": "5ded0124d3706c36b2b5e5680ee1464e87fa2df305b0ecd5518495409027b6df",
+      "public/brand/bread-logo-mono.svg": "b4d640b2a582eb27a12b521e81669e2c01110941f8bd092bab2a42fa7f9a0f3a",
+      "public/brand/bread-logo.svg": "6547cd403caf545c2f64bcc19d7ee351ce2c6954c3e995650a6a7ef5091f6f2f",
+      "public/brand/bread-mark.svg": "d7340a96b0456cee98c4383d7281f1949b2927e84495453b8b62d3abf177bebd"
+    }
+  },
+  "codexAdjustments": [
+    "Outlined the independent SVG wordmarks using the existing OFL Bread Voice font.",
+    "Captured matching CALL_PHONE rest/lifted transparent stills from the existing renderer.",
+    "Removed poster crossfade to avoid double handsets during phase changes.",
+    "Repainted a resized drawing buffer in ResizeObserver; settled the first frame to the current phase.",
+    "Added five graphics regressions and the reproducible call-poster export script."
+  ],
+  "assets": {
+    "bread-phone-call-rest.webp": {
+      "sha256": "3dff6038d54688670acde8a8ea5ca254b4ca64553995d0d5b2fe3d8e233b836a",
+      "bytes": 42320
+    },
+    "bread-phone-call-lifted.webp": {
+      "sha256": "a3485a36a632e2c6abf08eac405f1d31eaeef5f21e83a759a1ab88b5c06ddee9",
+      "bytes": 50742
+    }
+  },
+  "checks": {
+    "typecheck": true,
+    "build": true,
+    "unit": 257,
+    "e2e": 61,
+    "e2eDurationMinutes": 4.8
+  },
+  "regressions": {
+    "resize": {
+      "oldBuild": "f1a6e5c + Claude first draft",
+      "result": "fails; drawing buffer not repainted during resize callback",
+      "fixedBuild": "passed"
+    },
+    "initialPose": {
+      "oldBuild": "fails: first paint has 0 raised-handset pixels",
+      "fixedBuild": "passed"
+    }
+  },
+  "screenshots": "Local production build; Mock responses and permission-failure fixture. Not a physical-phone or real-provider test."
+}

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Unified the photo companion, portrait brand, type, shallow-lit room and telephone across home, chat and calls with two official Claude Opus 5.5 / high design rounds. Matching call posters preserve the model while loading; Codex fixed resize blanking and late first-frame handset resets. See [design and verification](docs/premium-frontend.md).
+
 - Claude Opus 5.5 / high continuation: a measured connection strip reserves space instead of covering content; first-screen farewell controls precede the full card. Codex fixed call-header cascade and keyboard focus when a save opener disappears. See [integration evidence](docs/frontend-relay-validation.md).
 - Second review-period frontend pass: a warmer room with a grounded low light, a stronger editorial entry title, a quieter listen strip, a more compact phone pill that keeps 面包's first line whole on phones, a denser call-room composition with a status capsule and larger keys, a clearer call-error row and a service-status bar for in-place connection recovery. Mobile call controls fit at 320px; all primary touch targets remain 44px. No backend, call state machine or media behavior changed.
 - Recover a failed initial service check in place, with one coalesced, cancellable request on retry or network return; preserve drafts, conversation errors and retry state. Invalid capability responses no longer reach the UI.

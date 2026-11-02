@@ -15,7 +15,7 @@ The core flow is low-effort expression → voluntary review → one grounded nex
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/bread-home-light.png)
+![Bread's actual home screen: a plush companion, lively glass eyes and a red rotary phone](docs/assets/premium/home-desktop.jpg)
 
 ## What works
 
@@ -49,11 +49,11 @@ Open **http://127.0.0.1:3210**. Default Mock mode is visibly labeled and support
 
 Text companionship and calls use DeepSeek Flash with thinking disabled and a focused empathy prompt; analysis retains the same Wanjie DeepSeek route. The hosted deployments call HTTPS providers directly. For real services, see [Setup](docs/setup.md). Speech remains MiniMax ASR / Speech 2.8 HD with `Chinese (Mandarin)_Warm_Bestie`. Route IDs are provider-specific. Keys stay server-side; never put them in `NEXT_PUBLIC_*`.
 
-The home telephone keeps the same appearance throughout loading: a matching model still stays visible until the first 3D frame is painted, and remains callable if graphics fail. The call scene uses an animated SVG fallback. See the [model source and rebuild guide](docs/phone-model.md); running Bread does not require Blender.
+The home telephone keeps the same appearance throughout loading: a matching model still stays visible until the first 3D frame is painted, and remains callable if graphics fail. The call scene uses matching cradle/raised-handset stills, with SVG only when the relevant still also fails. See the [latest visual refinement and verification](docs/premium-frontend.md). See the [model source and rebuild guide](docs/phone-model.md); running Bread does not require Blender.
 
 ## Evidence, not an EQ badge
 
-257 unit/integration checks and 56 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle, compressed audio streaming and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+257 unit/integration checks and 61 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle, compressed audio streaming and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening uses bundled audio; subsequent replies need live synthesis. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 

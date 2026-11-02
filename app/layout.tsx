@@ -16,9 +16,9 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
   themeColor: [
-    // the page's --bg in each scheme, so the browser chrome is the same paper
-    { media: '(prefers-color-scheme: light)', color: '#F9F4EB' },
-    { media: '(prefers-color-scheme: dark)', color: '#17150F' },
+    // the top of the set's wall in each scheme, so the browser chrome continues the same light
+    { media: '(prefers-color-scheme: light)', color: '#FBF7F0' },
+    { media: '(prefers-color-scheme: dark)', color: '#211D18' },
   ],
 };
 

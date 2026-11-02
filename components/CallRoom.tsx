@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Check, Hand, LoaderCircle, MessageSquareText, Mic, MicOff, Pause, Phone, PhoneOff, RotateCcw, TriangleAlert } from 'lucide-react';
+import { Check, Hand, LoaderCircle, Mic, MicOff, Phone, PhoneOff, RotateCcw, TriangleAlert } from 'lucide-react';
 import type { CallPhase, Message } from '@/domain/types';
 import { CallStage } from './CallStage';
 import { CALL_RUNNING, IDLE_CALL, callMeta } from './call';
@@ -32,7 +32,10 @@ const CUTTABLE: CallPhase[] = ['transcribing', 'thinking', 'speaking'];
  * the single most useful thing for the current phase. Hang up keeps the text; nothing is faked.
  *
  * Speaking up now interrupts on its own, so this room explains nothing and acknowledges instead:
- * when 面包 gets cut off, its line visibly recedes and the listening rings come up.
+ * when 面包 gets cut off, its line visibly recedes and the light behind it comes up to listen.
+ *
+ * The words are set like film subtitles: 面包's line large and centred, yours small and pale above it.
+ * Who said which stays in the markup for screen readers; on screen the type itself tells them apart.
  */
 export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
   const call = vm.call ?? IDLE_CALL;
@@ -173,7 +176,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
             )}
             {call.caption ? (
               // Cut off while speaking, the backend keeps the caption: the line recedes instead of
-              // vanishing, so it reads as interrupted. Cut off while thinking, there is no line — the rings say it.
+              // vanishing, so it reads as interrupted. Cut off while thinking, there is no line — the light says it.
               <p className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''}`}>
                 <span className="cap__who">面包</span>
                 <span className="cap__text">{call.caption}</span>
@@ -212,7 +215,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
         <div className="callroom__more">
           {running && phase !== 'connecting' && (
             <button type="button" className="callroom__link" onClick={vm.stop} aria-keyshortcuts="Escape">
-              <Pause aria-hidden="true" /> 暂停
+              暂停
             </button>
           )}
           {!wide && (
@@ -222,7 +225,6 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               onClick={() => setShowLog((v) => !v)}
               aria-expanded={showLog}
             >
-              <MessageSquareText aria-hidden="true" />
               {showLog ? '回到字幕' : `文字记录${messages.length ? `（${messages.length}）` : ''}`}
             </button>
           )}

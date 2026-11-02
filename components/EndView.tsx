@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Archive, ArrowDown, HardDrive, MessageCircle } from 'lucide-react';
 import { CardView } from './CardView';
 import { LampScene } from './NightWindow';
-import { PhoneGlyph } from './RedPhone';
+import { PhoneStill } from './RedPhone';
 import { SavePreview } from './SavePreview';
 import { CARD_TYPE_LABEL, cardEvidence, isCardSaved, type EvidenceContext } from './labels';
 import type { BreadVM } from './vm';
@@ -173,7 +173,7 @@ export function EndView({ vm, onOpenArchive, onReset, onAgain, onCall }: EndView
                 <MessageCircle aria-hidden="true" /> 再说一会儿
               </button>
               <button type="button" className="btn btn--ghost" data-leave="call" onClick={() => leave('call')}>
-                <PhoneGlyph /> 打个电话
+                <PhoneStill className="btn__phone" /> 打个电话
               </button>
               <button type="button" className="btn btn--ghost" data-leave="reset" onClick={() => leave('reset')}>
                 回到开始

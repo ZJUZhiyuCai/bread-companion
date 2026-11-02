@@ -51,7 +51,7 @@ npm run check:models
 
 首页先显示 `bread-phone-rest.webp`：从同一模型、运行时相机和灯光导出的透明静帧。它与 Canvas 共用 `HERO_PHONE.overlay`，不先展示轮廓不同的 SVG；服务检查期间保留红色，按钮仍不可拨号。模型首次成功绘制后，两层在同一次界面更新中交接，不叠加淡入淡出。不要将解析成功当成首帧完成。
 
-按钮和 SVG 命中区独立于 Canvas。首页加载、解析或 WebGL 失败时保留同一静帧，通话画面仍用可动画的 SVG；软件渲染器也走静态路径，避免冷着色器编译冻结输入和通话控制。静帧文件本身损坏时才退回 SVG。服务能力未就绪时不初始化 3D；`?phone=svg` 供开发时禁用 WebGL 对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。
+按钮和 SVG 命中区独立于 Canvas。首页加载、解析或 WebGL 失败时保留同一静帧；通话画面也保留当前姿势的模型静帧，下一姿势解码前保留已有画面。对应静帧损坏时才使用可动画的 SVG；软件渲染器也走静态路径，避免冷着色器编译冻结输入和通话控制。静帧文件本身损坏时才退回 SVG。服务能力未就绪时不初始化 3D；`?phone=svg` 供开发时禁用 WebGL 对照。声音开始前不会让首次 3D 初始化阻塞通话。生命周期和故障注入结果见[功能审查](phone3d-audit.md)。
 
 修改模型、相机、灯光或材质后，需要同时更新静帧；它是实际渲染产物，不是另一套手绘外观。用运行新代码的本机页面和 Playwright CLI 执行 `scripts/3d/capture-phone-poster.js`，导出不含页面纹理、滤镜的透明 PNG，然后以 632×484 像素保存为无损 WebP。截图导出会临时保留测试浏览器的 WebGL 缓冲区，生产渲染器不启用该选项。
 
@@ -63,3 +63,18 @@ playwright-cli -s=phone-poster close
 ```
 
 [本轮加载验收记录](phone-loading-validation.json)保留桌面与手机尺寸下的四阶段边界、颜色和首帧交接检查，以及电话故障回归结果。
+
+## 通话静帧
+
+`bread-phone-call-rest.webp` 与 `bread-phone-call-lifted.webp` 使用 `CALL_PHONE` 的相机、材质、灯光与 1000×820 画幅。静帧和 Canvas 占据同一位置；首次 3D 绘制直接采用当前姿势，尺寸变更在同一次回调中重画。两张图只随通话画面加载，不等待它们才申请麦克风或播放开场。
+
+导出脚本使用合成静音媒体，并阻断云端语音接口；先导出倾听姿势，再以权限失败状态导出完整落座姿势。需要本机硬件 WebGL 和运行中的 3210 页面，不会打开实体麦克风。
+
+```sh
+playwright-cli -s=call-posters open http://127.0.0.1:3210/ --browser chrome --headed
+playwright-cli -s=call-posters run-code --filename scripts/3d/capture-call-posters.js
+node --input-type=module -e "import sharp from 'sharp'; for (const pose of ['rest','lifted']) await sharp('output/playwright/bread-phone-call-'+pose+'.png').webp({lossless:true,effort:6}).toFile('public/companion/3d/bread-phone-call-'+pose+'.webp');"
+playwright-cli -s=call-posters close
+```
+
+画面尺寸和输出哈希见 [本轮资产来源](premium-frontend-provenance.json)。GPU、浏览器或渲染器版本变化可能改变像素；更新模型或相机后，应复核两种姿势与实时画面的交接。

@@ -1,17 +1,23 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import type { CallPhase } from '@/domain/types';
-import { BUN, BUN_EYES } from './Brand';
 import { useDomId } from './hooks';
+import { HERO_PHONE, overlayBox } from './phone3d/layouts';
 
 /**
+ * The drawn phone is the fallback and the hit outline. What people normally see is the Blender model —
+ * live (Phone3D) or as its stills (PhoneStill and the home page's poster; in a call, the engine's own
+ * cradle and cheek frames). The drawing shows in full only when the still for that pose has failed and
+ * the live model isn't up.
+ *
  * The red rotary phone, in a 260×220 space, seen three-quarters from a little above with the same lamp
  * as 面包: warm key light from the upper left, shade and a long soft shadow toward the lower right.
  *
  * Built like the object: a plinth (top, front, lit chamfer), a lacquered body (sloped face, lit left
  * wall, dark right wall with a rim light, a top deck), a recessed dial — ivory number plate, a red
  * finger wheel with real thickness whose holes keep their inner wall on the far side as it turns, a
- * brass finger stop, a domed cap with the brand mark — cradle posts and plungers, a handset with its
+ * brass finger stop, a plain domed ivory cap — cradle posts and plungers, a handset with its
  * own light for each pose, and a coiled cord that keeps its turns and opens up when stretched.
  *
  * Poses only ever come from the real call phase:
@@ -325,14 +331,9 @@ export function PhoneFigure({ pose, id }: { pose: PhonePose; id: string }) {
           <path className="rp-wheel__gloss rp-wheel__gloss--low" d="M35.2 12.8 A37.5 37.5 0 0 1 12.8 35.2" />
           <path className="rp-stop" d="M27 14.5 Q35 12.8 42 16.8" stroke={`url(#${id}-brass)`} />
           <path className="rp-stop__shine" d="M28 13.4 Q34 12.2 39 14" />
+          {/* a plain ivory cap, as on the Blender model: the fallback never prints a second 面包 */}
           <circle r="13.5" fill={`url(#${id}-cap)`} />
           <circle className="rp-cap__ring" r="13.5" stroke={`url(#${id}-brass)`} />
-          <g className="rp-cap__mark" transform="translate(-6.4 -7.6) scale(0.2)">
-            <path d={BUN} />
-            {BUN_EYES.map(([x, y]) => (
-              <ellipse key={x} className="rp-cap__eye" cx={x} cy={y} rx="4" ry="4.4" />
-            ))}
-          </g>
         </g>
 
         {/* cradle */}
@@ -396,7 +397,45 @@ export function RedPhone({ pose = 'rest', className = '' }: { pose?: PhonePose; 
   );
 }
 
-/** A small, still version for pills and inline buttons: same phone and light, flat tones. */
+/** The Blender model at rest, rendered once. Every ordinary picture of the phone is this one file. */
+export const PHONE_STILL = '/companion/3d/bread-phone-rest.webp';
+
+/**
+ * The phone everywhere outside the home hero and the call: the same still as the home page's poster,
+ * laid into RedPhone's own 260×220 box with the same overlay, so it is a drop-in for <RedPhone>. The
+ * drawing stays underneath for its floor shadow and red glow (the room's, not the drawing's); if the
+ * still can't load, the whole drawn phone simply comes back. Always decorative.
+ */
+export function PhoneStill({ pose = 'rest', className = '' }: { pose?: 'rest' | 'down'; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    // A cached failure can land before hydration attaches onError.
+    const img = ref.current;
+    if (img?.complete && img.naturalWidth === 0) setFailed(true);
+  }, []);
+  return (
+    <span className={`phone-still ${failed ? '' : 'has-poster'} ${className}`} data-pose={pose} aria-hidden="true">
+      <RedPhone pose={pose} />
+      {!failed && (
+        <img
+          ref={ref}
+          className="phone-still__img"
+          src={PHONE_STILL}
+          width={632}
+          height={484}
+          style={overlayBox(HERO_PHONE)}
+          alt=""
+          draggable={false}
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
+  );
+}
+
+/** The old flat glyph. No longer used on screen — PhoneStill replaced it — but kept for anything outside this set. */
 export function PhoneGlyph({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 260 220" className={`rp-glyph ${className}`} aria-hidden="true" focusable="false">

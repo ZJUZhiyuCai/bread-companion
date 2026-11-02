@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { ArrowRight, Archive, Headphones, ScanText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
 import { BrandLogo } from './Brand';
 import { CallLauncher } from './Companion';
@@ -27,6 +27,11 @@ interface EntryScreenProps {
  * and sorting things out waits at the foot of the page until you are ready for it.
  *
  * There is no hello animation: no wave, no hop, no bubble popping in. Nothing moves until you do.
+ *
+ * It is one set, not a page of parts: a warm wall that curves down into a floor, one soft key light from
+ * the upper left and a little window light on the wall. 面包 and its phone sit on that floor in that
+ * light; the words are set straight onto the wall and the floor — no bubble, no plate, no pad of paper.
+ * The night is said once, small, above the title; the bar at the top only carries the name.
  */
 export function EntryScreen(props: EntryScreenProps) {
   const { caps, savedCount, onTalk, onCall, onWelcome, onReview, onOpenArchive, onOpenAbout } = props;
@@ -65,7 +70,6 @@ export function EntryScreen(props: EntryScreenProps) {
         <p className="wordmark">
           <BrandLogo className="wordmark__logo" />
           <span className="sr-only">面包</span>
-          <span className="wordmark__sub">收到拒信的那个晚上</span>
         </p>
         <AiStamp caps={caps} onClick={onOpenAbout} />
       </div>
@@ -73,7 +77,7 @@ export function EntryScreen(props: EntryScreenProps) {
       <div className="entry__stage">
         {/* 面包 and its red phone share one table and one low lamp; the phone is the call button itself. */}
         <div className="entry__hero">
-          {/* Says it is an AI once, in its own words, and asks for nothing. */}
+          {/* Says it is an AI once, in its own words, and asks for nothing — a subtitle by its head, not a bubble. */}
           <p className="hello-bubble">
             <span className="hello-bubble__big">我是面包，一个 AI。</span>
             <span className="hello-bubble__small">陪你待一会儿，不说话也行。</span>
@@ -83,26 +87,27 @@ export function EntryScreen(props: EntryScreenProps) {
         </div>
 
         <div className="entry__content">
-          <h1 className="entry__title">
-            先在这儿<span className="entry__title-mark">待一会儿</span>。
-          </h1>
+          {/* The night, said once and small: an opening line, not a label on every page. */}
+          <p className="entry__eyebrow">收到拒信的那个晚上</p>
+          <h1 className="entry__title">先在这儿待一会儿。</h1>
           <p className="entry__lede">不想说话也没关系。想开口的时候，再开口。</p>
 
           {/* The lightest thing to do here: listen. No voice from you, no microphone. */}
           <button type="button" className="rest-listen" onClick={onWelcome}>
-            <Headphones aria-hidden="true" className="rest-listen__icon" />
+            {/* What pressing does, shown rather than said: something plays — or, with no voice, there is text. */}
+            <span className={`rest-listen__play ${caps && !caps.tts.available ? 'is-text' : ''}`} aria-hidden="true">
+              {caps && !caps.tts.available ? (
+                '文'
+              ) : (
+                <svg viewBox="0 0 12 12" focusable="false">
+                  <path d="M2.5 1.6 C2.5 0.9 3.2 0.5 3.8 0.9 L10.6 5.2 C11.1 5.6 11.1 6.4 10.6 6.8 L3.8 11.1 C3.2 11.5 2.5 11.1 2.5 10.4 Z" />
+                </svg>
+              )}
+            </span>
             <span className="rest-listen__text">
               <span className="rest-listen__title">先听面包说一小段</span>
               <span className="rest-listen__sub">{listenSub}</span>
             </span>
-            {/* What pressing does, shown rather than said: something plays. Not shown when there is no voice. */}
-            {!(caps && !caps.tts.available) && (
-              <span className="rest-listen__play" aria-hidden="true">
-                <svg viewBox="0 0 12 12" focusable="false">
-                  <path d="M2.5 1.6 C2.5 0.9 3.2 0.5 3.8 0.9 L10.6 5.2 C11.1 5.6 11.1 6.4 10.6 6.8 L3.8 11.1 C3.2 11.5 2.5 11.1 2.5 10.4 Z" />
-                </svg>
-              </span>
-            )}
           </button>
 
           <form className="first-note" onSubmit={submit}>
@@ -135,16 +140,14 @@ export function EntryScreen(props: EntryScreenProps) {
           {/* For later: sorting it out, and what was kept before. Always reachable, never first. */}
           <footer className="entry__later">
             <button type="button" className="later-link" onClick={onReview}>
-              <ScanText aria-hidden="true" />
-              <span>
-                想整理的时候，一起复盘这次面试
+              <span className="later-link__text">
+                <span className="later-link__title">想整理的时候，一起复盘这次面试</span>
                 <span className="sr-only">：不用填表，面包先问你一个问题</span>
               </span>
             </button>
             <button type="button" className="later-link" onClick={onOpenArchive} aria-haspopup="dialog">
-              <Archive aria-hidden="true" />
-              <span>
-                以前留下的{savedCount > 0 ? `（${savedCount}）` : ''}
+              <span className="later-link__text">
+                <span className="later-link__title">以前留下的{savedCount > 0 ? `（${savedCount}）` : ''}</span>
                 <small>只在这台设备的这个浏览器里</small>
               </span>
             </button>

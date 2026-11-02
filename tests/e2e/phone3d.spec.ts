@@ -138,6 +138,72 @@ test('a slow model cannot block a call, repeated taps or hangup; a late response
   expect(await page.locator('.phone3d canvas').count()).toBe(0);
 });
 
+test('resizing a ready phone repaints before the cleared buffer can be presented', async ({ page }) => {
+  await instrument(page);
+  await page.addInitScript(() => {
+    const w = window as any;
+    w.__resizePaints = [];
+    const Observer = window.ResizeObserver;
+    window.ResizeObserver = class extends Observer {
+      constructor(callback: ResizeObserverCallback) {
+        super((entries, observer) => {
+          const phone = entries.some(e => e.target.matches('.phone3d canvas') && e.contentRect.width > 0);
+          const before = w.__phoneDraws;
+          callback(entries, observer);
+          if (phone && w.__probeResize) w.__resizePaints.push(w.__phoneDraws - before);
+        });
+      }
+    };
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await home(page);
+  await expect(canvas(page)).toBeVisible({ timeout: 15_000 });
+  await page.evaluate(() => { (window as any).__probeResize = true; });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => (window as any).__resizePaints.length)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => (window as any).__resizePaints.every((draws: number) => draws > 0))).toBe(true);
+  await expect(phone(page)).toBeInViewport();
+});
+
+test('a late renderer starts with the raised handset already shown during the call', async ({ page }) => {
+  await instrument(page);
+  await page.addInitScript(() => {
+    const w = window as any;
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = callback => raf(time => {
+      const before = w.__phoneDraws;
+      callback(time);
+      if (w.__firstHandsetPixels !== undefined || w.__phoneDraws <= before) return;
+      const canvas = document.querySelector<HTMLCanvasElement>('.cstage[data-pose="lifted"] .phone3d canvas');
+      if (!canvas) return;
+      const gl = canvas.getContext('webgl2')!;
+      const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+      gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      // The phone base lives below the middle of the picture. Only a raised
+      // handset occupies this upper region in the transparent render buffer.
+      let opaque = 0;
+      for (let y = Math.floor(canvas.height * .45); y < Math.floor(canvas.height * .75); y++) {
+        for (let x = Math.floor(canvas.width * .5); x < Math.floor(canvas.width * .7); x++) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 160) opaque++;
+        }
+      }
+      w.__firstHandsetPixels = opaque;
+    });
+  });
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/bread-phone.glb', async route => {
+    await held;
+    await route.fulfill({ body: readFileSync('public/companion/3d/bread-phone.glb'), contentType: 'model/gltf-binary' }).catch(() => {});
+  });
+  await home(page);
+  await phone(page).click();
+  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  release();
+  await expect.poll(() => page.evaluate(() => (window as any).__firstHandsetPixels), { timeout: 15_000 }).toBeGreaterThan(30);
+  await hangup(page);
+});
+
 test('rest, reduced motion and a hidden call stop drawing; hangup releases all graphics and audio', async ({ page }) => {
   // Two real renderer initializations plus animation and cleanup checks on the software CI GPU.
   test.setTimeout(45_000);
@@ -233,6 +299,62 @@ test('static comparison skips the model and WebGL while retaining keyboard calli
   expect((await audit(page)).greetings).toBe(1);
   await hangup(page);
 });
+
+test('call posters keep one phone while the next pose loads without delaying microphone or greeting', async ({ page }) => {
+  await instrument(page);
+  let release!: () => void;
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/bread-phone-call-lifted.webp', async route => {
+    await waiting;
+    await route.fulfill({ body: readFileSync('public/companion/3d/bread-phone-call-lifted.webp'), contentType: 'image/webp' }).catch(() => {});
+  });
+  await home(page, '?phone=svg');
+  await page.evaluate(() => {
+    const w = window as any;
+    w.__micGate = new Promise<void>(resolve => { w.__releaseMic = resolve; });
+  });
+  await phone(page).click();
+  const stage = page.locator('.cstage');
+  const rest = page.locator('.cstage__still[data-still="rest"]');
+  const lifted = page.locator('.cstage__still[data-still="lifted"]');
+  await expect(stage).toHaveAttribute('data-pose', 'dialing');
+  await expect(rest).toHaveClass(/is-on/);
+  await page.evaluate(() => (window as any).__releaseMic());
+  await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+  expect((await audit(page)).greetings).toBe(1);
+  expect((await audit(page)).micCalls).toBe(1);
+  await expect(rest).toHaveClass(/is-on/);
+  await expect(lifted).not.toHaveClass(/is-on/);
+  await expect(stage).not.toHaveClass(/is-drawn/);
+  await expect(page.locator('.cstage__phone')).toHaveCSS('visibility', 'hidden');
+  release();
+  await expect(lifted).toHaveClass(/is-on/);
+  await expect(rest).not.toHaveClass(/is-on/);
+  await page.getByRole('button', { name: '暂停', exact: true }).click();
+  await expect(rest).toHaveClass(/is-on/);
+  await hangup(page);
+});
+
+for (const failedPose of ['rest', 'lifted'] as const) {
+  test(`a failed ${failedPose} call poster does not disable the other pose or call controls`, async ({ page }) => {
+    await instrument(page);
+    await page.route(`**/bread-phone-call-${failedPose}.webp`, route => route.fulfill({ status: 404, body: 'Missing poster fixture' }));
+    await home(page, '?phone=svg');
+    await phone(page).click();
+    await expect(page.locator('.callroom')).toHaveAttribute('data-phase', 'speaking');
+    const stage = page.locator('.cstage');
+    if (failedPose === 'lifted') await expect(stage).toHaveClass(/is-drawn/);
+    else await expect(page.locator('.cstage__still[data-still="lifted"]')).toHaveClass(/is-on/);
+    await page.getByRole('button', { name: '暂停', exact: true }).click();
+    if (failedPose === 'rest') await expect(stage).toHaveClass(/is-drawn/);
+    else {
+      await expect(page.locator('.cstage__still[data-still="rest"]')).toHaveClass(/is-on/);
+      await expect(stage).not.toHaveClass(/is-drawn/);
+    }
+    await hangup(page);
+    expect((await audit(page)).contexts).toBe(0);
+  });
+}
 
 test('a stalled download expires; the next stage retries only after the welcome starts', async ({ page }) => {
   // Includes the actual 10-second download deadline, shader setup and resource-release assertions.
