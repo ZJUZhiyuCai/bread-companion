@@ -24,7 +24,7 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
       w.__audio.tracks.push(...dest.stream.getTracks());
       const bytes = Uint8Array.from(atob(voice), n => n.charCodeAt(0));
       const speech = await c.decodeAudioData(bytes.buffer);
-      w.__emit = (kind: 'speech' | 'noise' | 'echo') => {
+      w.__emit = (kind: 'speech' | 'short' | 'noise' | 'echo') => {
         const src = c.createBufferSource(); (src as any).__input = true;
         const gain = c.createGain(); gain.connect(dest); src.connect(gain); let offset = 0;
         if (kind === 'echo') {
@@ -35,7 +35,10 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
           const a = src.buffer.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = i % 2 ? .1 : -.1;
         } else {
           // Distinct 80 ms onset marker: it disappears if capture restarts at the 160 ms decision.
-          src.buffer = c.createBuffer(1, speech.length, speech.sampleRate); src.buffer.copyToChannel(speech.getChannelData(0).map(v => v * .2), 0);
+          // Failure recovery can finish before the long fixture's next phrase begins.
+          // A single short phrase isolates that case from intentional speech interruption.
+          const length = kind === 'short' ? Math.min(speech.length, Math.round(speech.sampleRate * .7)) : speech.length;
+          src.buffer = c.createBuffer(1, length, speech.sampleRate); src.buffer.copyToChannel(speech.getChannelData(0).subarray(0, length).map(v => v * .2), 0);
           const a = src.buffer.getChannelData(0); for (let i = 0; i < speech.sampleRate * .08; i++) a[i] = .7 * Math.sin(i * 2 * Math.PI * 800 / speech.sampleRate);
         }
         const at = c.currentTime + .02; src.start(at, offset); w.__audio.inputs.push({ kind, at: performance.now() + 20, duration: src.buffer!.duration });
@@ -104,12 +107,12 @@ test('hanging up a combined turn prevents late text and audio from entering the 
 });
 
 test('a combined speech error retains the checked reply and keeps the microphone for the next turn', async({ page }) => {
-  const stats = await setup(page, '', 'fail-tts'); await speak(page);
+  const stats = await setup(page, '', 'fail-tts'); await speak(page, 'short');
   await expect(page.locator('.callroom').getByRole('status')).toContainText('声音没播完');await phase(page, 'listening');
   await expect(page.getByRole('log')).toContainText(mockCandidate(stats.turns[0]).assistantText);
   expect(stats.voices).toBe(1); expect(stats.tts).toBe(1);
   expect(await page.evaluate(() => (window as any).__audio.tracks.every((t: MediaStreamTrack) => t.readyState === 'live'))).toBe(true);
-  await speak(page);await expect.poll(()=>stats.voices,{timeout:12000}).toBe(2);await phase(page,'listening');
+  await speak(page, 'short');await expect.poll(()=>stats.voices,{timeout:12000}).toBe(2);await expect(page.locator('.callroom').getByRole('status')).toContainText('声音没播完');await phase(page,'listening');
   await hangup(page);
 });
 
