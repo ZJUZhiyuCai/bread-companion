@@ -159,6 +159,25 @@ export class BrowserCallAudio implements CallAudioPort {
     const sources = new Set<AudioBufferSourceNode>();
     const iterator = stream[Symbol.asyncIterator]();
     let tail = Promise.resolve(), nextAt = context.currentTime + .06, started = false, samples = 0;
+    const network = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: { effectiveType?: string; downlink?: number; rtt?: number } }).connection;
+    // The first MP3 fragment can contain only 252 ms. On a high-RTT link, starting
+    // it immediately may exhaust playback before the next fragment arrives.
+    const weakLink = network?.effectiveType === '3g' || (network?.rtt ?? 0) >= 250 || ((network?.downlink ?? 0) > 0 && network!.downlink! < 1);
+    const startupSamples = decoder ? stream.sampleRate * (weakLink ? .5 : .2) : 0;
+    let buffered: Float32Array[] = [], bufferedSamples = 0;
+    const schedule = (pcm: Float32Array) => {
+      const buffer = context.createBuffer(1, pcm.length, stream.sampleRate);
+      buffer.getChannelData(0).set(pcm);
+      const source = context.createBufferSource(); source.buffer = buffer; source.connect(context.destination); sources.add(source);
+      const start = Math.max(nextAt, context.currentTime + .06); nextAt = start + buffer.duration;
+      const reference = resampleMono(pcm, stream.sampleRate, context.sampleRate);
+      if (!started) this.echo.attach(reference, context.sampleRate, start);
+      else this.echo.append(reference, context.sampleRate, start);
+      tail = new Promise<void>(resolve => { source.onended = () => { source.disconnect(); sources.delete(source); resolve(); }; });
+      source.start(start);
+      if (!started) { started = true; onStart(); }
+    };
+    const flush = () => { for (const pcm of buffered) schedule(pcm); buffered = []; bufferedSamples = 0; };
     try {
       if (context.state !== 'running') await withAbort(context.resume(), signal);
       for (;;) {
@@ -179,18 +198,14 @@ export class BrowserCallAudio implements CallAudioPort {
         }
         samples += pcm.length;
         if (samples > stream.sampleRate * 65) throw new Error('声音片段过长。');
-        const buffer = context.createBuffer(1, pcm.length, stream.sampleRate);
-        buffer.getChannelData(0).set(pcm);
-        const source = context.createBufferSource(); source.buffer = buffer; source.connect(context.destination); sources.add(source);
-        // A small scheduling cushion absorbs transport jitter, without waiting for the whole reply.
-        const start = Math.max(nextAt, context.currentTime + .06); nextAt = start + buffer.duration;
-        const reference = resampleMono(pcm, stream.sampleRate, context.sampleRate);
-        if (!started) this.echo.attach(reference, context.sampleRate, start);
-        else this.echo.append(reference, context.sampleRate, start);
-        tail = new Promise<void>(resolve => { source.onended = () => { source.disconnect(); sources.delete(source); resolve(); }; });
-        source.start(start);
-        if (!started) { started = true; onStart(); }
+        if (started) schedule(pcm);
+        else {
+          buffered.push(pcm); bufferedSamples += pcm.length;
+          if (bufferedSamples >= startupSamples) flush();
+        }
       }
+      // A short utterance can finish below the threshold; never wait for nonexistent bytes.
+      signal.throwIfAborted(); flush();
       if (!started) throw new Error('声音数据没有完整接上。');
       await withAbort(tail, signal);
     } finally {

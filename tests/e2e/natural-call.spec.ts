@@ -206,3 +206,36 @@ test('mobile compressed MP3 stream decodes in the browser and stops on natural s
   await expect.poll(() => stats.voices, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
   expect(stats.tts).toBe(1); await hangup(page); expect(errors).toEqual([]);
 });
+
+test('a high-RTT call holds a short MP3 fragment until delayed audio can play continuously', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    const w = window as any; w.__schedule = [];
+    Object.defineProperty(navigator, 'connection', { configurable: true, value: { effectiveType: '3g', rtt: 400, downlink: 1.25 } });
+    const start = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function(...args) {
+      if (!(this as any).__input) w.__schedule.push({ at: args[0] ?? this.context.currentTime, duration: this.buffer?.duration ?? 0 });
+      return start.apply(this, args);
+    };
+    const original = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const response = await original(...args);
+      if (!String(args[0]).endsWith('/api/agent/voice')) return response;
+      const lines = (await response.text()).trim().split('\n'), encoder = new TextEncoder();
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(encoder.encode(lines.slice(0, 3).join('\n') + '\n')); w.__firstFragment = true;
+        w.__releaseSecondFragment = () => { try { controller.enqueue(encoder.encode(lines.slice(3).join('\n') + '\n')); controller.close(); } catch { /* canceled */ } };
+      } }), { headers: response.headers });
+    };
+  });
+  const stats = await setup(page, '', 'mp3'); await speak(page);
+  await page.waitForFunction(() => !!(window as any).__firstFragment);
+  await page.waitForTimeout(650);
+  await phase(page, 'thinking'); expect(await page.evaluate(() => (window as any).__audio.plays.length)).toBe(1);
+  await page.evaluate(() => (window as any).__releaseSecondFragment());
+  await phase(page, 'speaking');
+  const schedule = await page.evaluate(() => (window as any).__schedule.slice(1));
+  expect(schedule).toHaveLength(2);
+  expect(schedule[1].at).toBeCloseTo(schedule[0].at + schedule[0].duration, 3);
+  await phase(page, 'listening'); expect(stats.voices).toBe(1); expect(stats.tts).toBe(1); await hangup(page);
+});
