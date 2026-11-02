@@ -1,9 +1,11 @@
 import { withAbort } from '@/lib/abort';
 import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
+import { providerFetch } from '@/server/provider-fetch';
+import { retryAfterSeconds } from './response';
 
 /** MiniMax HTTP SSE: signed 16-bit little-endian mono PCM at 32 kHz. */
-export async function* synthesizeStream(text: string, signal: AbortSignal, fetcher: typeof fetch = fetch, format: 'pcm' | 'mp3' = 'pcm'): AsyncGenerator<Uint8Array> {
+export async function* synthesizeStream(text: string, signal: AbortSignal, fetcher: typeof fetch = providerFetch, format: 'pcm' | 'mp3' = 'pcm'): AsyncGenerator<Uint8Array> {
   const c = config();
   if (!c.tts || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
   const invalid = () => new AppError('PROVIDER_UNAVAILABLE', 502, true);
@@ -14,7 +16,7 @@ export async function* synthesizeStream(text: string, signal: AbortSignal, fetch
       audio_setting: { sample_rate: 32000, bitrate: 128000, format, channel: 1 }, language_boost: 'Chinese' }),
     signal, redirect: 'manual', cache: 'no-store',
   }), signal);
-  if (!res.ok) { void res.body?.cancel().catch(() => {}); throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true); }
+  if (!res.ok) { void res.body?.cancel().catch(() => {}); throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true, retryAfterSeconds(res)); }
   if (!res.body || !res.headers.get('content-type')?.includes('text/event-stream')) { void res.body?.cancel().catch(() => {}); throw invalid(); }
   const reader = res.body.getReader(), decoder = new TextDecoder('utf-8', { fatal: true });
   let buffer = '', wireBytes = 0, audioBytes = 0, count = 0, data = '';

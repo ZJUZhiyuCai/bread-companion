@@ -10,9 +10,10 @@ import type { AgentProvider } from './agent';
 import { readProviderJson } from './response';
 import { REJECTION_REVIEW_PROMPT, correctionFallback } from './rejection-review';
 import { responseStyleErrors } from '@/domain/response-style';
+import { providerFetch } from '@/server/provider-fetch';
 
 export class RealProvider implements AgentProvider {
-  constructor(private fetcher: typeof fetch = fetch) {}
+  constructor(private fetcher: typeof fetch = providerFetch) {}
   async generate(input: TurnRequest, signal: AbortSignal): Promise<TurnCandidate> {
     const cfg = config();
     // Worker fetch is receiver-sensitive; do not invoke a stored function as this.fetcher().
@@ -55,7 +56,7 @@ export class RealProvider implements AgentProvider {
       const body = anthropic ? { model, max_tokens: maxTokens, temperature: 0.4, system, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: data }] }
         : { model, max_tokens: maxTokens, temperature: 0.4, response_format: { type: 'json_object' }, thinking: { type: effort ? 'enabled' : 'disabled' }, ...(effort ? { reasoning_effort: effort } : {}), messages: [{ role: 'system', content: system }, { role: 'user', content: data }] };
       const response = await fetcher(`${baseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, ...(anthropic ? { 'anthropic-version': '2023-06-01' } : {}) }, body: JSON.stringify(body), signal, redirect: 'manual', cache: 'no-store' });
-      if (!response.ok) throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429);
+      if (!response.ok) { void response.body?.cancel().catch(() => {}); throw new AppError(response.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', response.status === 429 ? 429 : 502, response.status >= 500 || response.status === 429); }
       const payload = await readProviderJson(response, 160000, signal) as { content?: { type: string; text?: string }[]; choices?: { message?: { content?: string } }[] };
       let content: unknown;
       try {
@@ -89,7 +90,7 @@ export class RealProvider implements AgentProvider {
             ? {model, max_tokens:128, temperature:0, system:REJECTION_REVIEW_PROMPT, thinking:{type:'disabled'}, messages:[{role:'user',content:auditData}]}
             : {model, max_tokens:128, temperature:0, response_format:{type:'json_object'}, thinking:{type:'disabled'}, messages:[{role:'system',content:REJECTION_REVIEW_PROMPT},{role:'user',content:auditData}]};
           const auditResponse = await fetcher(`${baseUrl.replace(/\/$/, '')}/${anthropic ? 'messages' : 'chat/completions'}`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${apiKey}`,...(anthropic?{'anthropic-version':'2023-06-01'}:{})},body:JSON.stringify(auditBody),signal,redirect:'manual',cache:'no-store'});
-          if (!auditResponse.ok) throw new AppError(auditResponse.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', auditResponse.status === 429 ? 429 : 502);
+          if (!auditResponse.ok) { void auditResponse.body?.cancel().catch(() => {}); throw new AppError(auditResponse.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', auditResponse.status === 429 ? 429 : 502); }
           const auditPayload = await readProviderJson(auditResponse,16000,signal) as {content?:{type:string;text?:string}[];choices?:{message?:{content?:string}}[]};
           const auditText = anthropic ? auditPayload.content?.filter(b=>b.type==='text').map(b=>b.text??'').join('') : auditPayload.choices?.[0]?.message?.content;
           try { const verdict = JSON.parse(auditText ?? ''); consistent = verdict.consistent === true && Object.keys(verdict).length === 1; } catch { /* Invalid audit cannot approve a candidate. */ }

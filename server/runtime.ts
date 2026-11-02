@@ -13,6 +13,7 @@ export interface ServerRuntime {
   env: Record<string, unknown>;
   db?: SqlDatabase;
   nodeInternalOrigin?: string;
+  providerFetch?: typeof fetch;
   defer?: (promise: Promise<unknown>) => void;
 }
 const runtime = new AsyncLocalStorage<ServerRuntime>();

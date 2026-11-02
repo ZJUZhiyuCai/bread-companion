@@ -1,12 +1,13 @@
 import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
-import { readProviderJson } from './response';
+import { readProviderJson, retryAfterSeconds } from './response';
 import { withAbort } from '@/lib/abort';
-export async function synthesize(text: string, signal: AbortSignal, fetcher: typeof fetch = fetch): Promise<Uint8Array> {
+import { providerFetch } from '@/server/provider-fetch';
+export async function synthesize(text: string, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<Uint8Array> {
   const c = config();
   if (!c.tts || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
   const res = await fetcher(`${c.miniBaseUrl.replace(/\/$/, '')}/t2a_v2`, { method: 'POST', headers: { Authorization: `Bearer ${c.miniKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: c.speechModel, text, stream: false, output_format: 'hex', voice_setting: { voice_id: c.voice, speed: c.speechSpeed, vol: 1, pitch: 0 }, audio_setting: { sample_rate: 32000, bitrate: 128000, format: 'mp3', channel: 1 }, language_boost: 'Chinese' }), signal, redirect: 'manual', cache: 'no-store' });
-  if (!res.ok) throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true);
+  if (!res.ok) { void res.body?.cancel().catch(() => {}); throw new AppError(res.status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', res.status === 429 ? 429 : 502, true, retryAfterSeconds(res)); }
   const data = await readProviderJson(res, 21 * 1024 * 1024, signal) as { data?: { audio?: unknown; status?: number }; base_resp?: { status_code?: number } };
   const hex = data.data?.audio;
   if (data.base_resp?.status_code !== 0 || data.data?.status !== 2 || typeof hex !== 'string' || !hex.length || hex.length % 2 || !/^[\da-fA-F]+$/.test(hex) || hex.length > 20 * 1024 * 1024) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
@@ -34,7 +35,7 @@ export async function validateWav(file: File) {
   }
   if (!format || duration <= 0 || duration > 65) throw new AppError('UNSUPPORTED_MEDIA',415);
 }
-export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = fetch): Promise<string> {
+export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<string> {
   const c = config();
   if (!c.asr || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
   await validateWav(file);
@@ -49,9 +50,8 @@ export async function transcribe(file: File, signal: AbortSignal, fetcher: typeo
       status = res.status;
       if (!res.ok) {
         void res.body?.cancel().catch(() => {});
-        const seconds = Number(res.headers.get('retry-after'));
         throw new AppError(status === 429 ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', status === 429 ? 429 : 502, status >= 500 || status === 429,
-          Number.isFinite(seconds) && seconds > 0 ? Math.min(86400, Math.ceil(seconds)) : undefined);
+          retryAfterSeconds(res));
       }
       const payload = await readProviderJson(res, 64 * 1024, signal) as { text?: unknown; duration?: number; base_resp?: { status_code?: number } };
       providerCode = typeof payload?.base_resp?.status_code === 'number' && Number.isFinite(payload.base_resp.status_code) ? payload.base_resp.status_code : undefined;

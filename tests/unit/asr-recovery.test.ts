@@ -43,6 +43,11 @@ describe('bounded ASR recovery',()=>{
     const fetcher=vi.fn(async()=>new Response(null,{status:503,headers:{'Retry-After':'20'}}));
     await expect(transcribe(clip(),new AbortController().signal,fetcher)).rejects.toMatchObject({retryAfterSeconds:20});expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it('honors a dated provider cooldown without a second billed attempt',async()=>{
+    const fetcher=vi.fn(async()=>new Response(null,{status:503,headers:{'Retry-After':new Date(Date.now()+60000).toUTCString()}}));
+    await expect(transcribe(clip(),new AbortController().signal,fetcher)).rejects.toMatchObject({code:'PROVIDER_UNAVAILABLE'});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
   it('treats an empty successful transcript as silence, not an outage to retry',async()=>{
     const fetcher=vi.fn(async()=>Response.json({text:'',duration:1}));
     expect(await transcribe(clip(),new AbortController().signal,fetcher)).toBe('');expect(fetcher).toHaveBeenCalledTimes(1);
