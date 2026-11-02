@@ -40,7 +40,7 @@ try {
         const audio = await post('/api/speech/synthesize', { requestId: randomUUID(), sessionId: request.sessionId, runId: request.runId, epoch: 0, contextRevision: 0, text: candidate.assistantText });
         bytes = new Uint8Array(await audio.arrayBuffer()); row.speechTiming = audio.headers.get('server-timing');
       } else {
-        const response = await post('/api/agent/voice', request), decoder = new TextDecoder(); let buffer = '', done = false, chunks = []; 
+        const response = await post('/api/agent/voice', request), decoder = new TextDecoder(); let buffer = '', done = false, chunks = [];
         for await (const chunk of response.body) {
           buffer += decoder.decode(chunk, { stream: true }); let line;
           while ((line = buffer.indexOf('\n')) >= 0) {
