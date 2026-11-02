@@ -1,7 +1,8 @@
 import type { CallSpeech } from '@/services/speech-stream';
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CallController, type CallDeps } from '@/services/call-controller';
+import { CallController, CALL_IDLE_MS, type CallDeps } from '@/services/call-controller';
+import { callServiceError } from '@/services/call-error';
 import { BrowserCallAudio, type CallAudioEvents, type CallAudioPort } from '@/services/call-audio';
 import { VoiceActivity, resampleMono } from '@/services/voice-activity';
 import { BreadController } from '@/services/bread-controller';
@@ -79,9 +80,29 @@ describe('continuous call ownership',()=>{
     const late=deferred<Blob>();const {call,audio,deps}=harness({synthesize:vi.fn(()=>late.promise)});await call.start();call.toggleMute();audio.say();await tick();expect(deps.transcribe).not.toHaveBeenCalled();
     call.toggleMute();audio.say();await tick();call.toggleMute();late.resolve(new Blob(['audio']));await tick();expect(call.snapshot.phase).toBe('muted');expect(call.snapshot.muted).toBe(true);expect(audio.listen).toHaveBeenLastCalledWith(false);
   });
-  it('failure closes mic and waits for an explicit resume, with no automatic retry',async()=>{
-    const {call,audio,deps}=harness({transcribe:vi.fn(async()=>{throw new Error('转写没接好');})});await call.start();audio.say();await tick();expect(call.snapshot.phase).toBe('error');expect(audio.close).toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(120000);expect(deps.transcribe).toHaveBeenCalledTimes(1);await call.resume();expect(call.snapshot.phase).toBe('listening');expect(audio.open).toHaveBeenCalledTimes(2);
+  it('keeps the microphone after a failed turn and accepts the next sentence without redialling',async()=>{
+    const transcribe=vi.fn().mockRejectedValueOnce(callServiceError({code:'PROVIDER_UNAVAILABLE',retryable:false},502)).mockResolvedValue('再说一句。');
+    const {call,audio,deps}=harness({transcribe});await call.start();audio.say();await tick();
+    expect(call.snapshot.phase).toBe('listening');expect(call.snapshot.inputWarning).toContain('没转成文字');expect(audio.close).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(120000);expect(deps.transcribe).toHaveBeenCalledTimes(1);expect(call.snapshot.phase).toBe('listening');
+    audio.say();await tick();expect(deps.reply).toHaveBeenCalledTimes(1);expect(call.snapshot.lastHeard).toBe('再说一句。');expect(call.snapshot.inputWarning).toBe('');expect(audio.open).toHaveBeenCalledTimes(1);
+  });
+  it.each([403,429])('does not automatically work around HTTP %i permission or quota failures',async status=>{
+    const {call,audio,deps}=harness({transcribe:vi.fn(async()=>{throw callServiceError({code:status===429?'RATE_LIMITED':'PERMISSION_DENIED',userMessage:'稍后再试。'},status);})});
+    await call.start();audio.say();await tick();expect(call.snapshot.phase).toBe('error');expect(audio.close).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(120000);expect(deps.transcribe).toHaveBeenCalledTimes(1);expect(deps.reply).not.toHaveBeenCalled();
+  });
+  it('survives 120 turns over forty simulated minutes, including ASR, reply and playback failures',async()=>{
+    let turn=0;
+    const {call,audio,deps}=harness({
+      transcribe:vi.fn(async()=>{if(++turn%13===0)throw new TypeError('network');return '第'+turn+'句。';}),
+      reply:vi.fn(async()=>{if(turn%17===0)throw new Error('upstream');return '第'+turn+'句的回复。';}),
+      synthesize:vi.fn(async()=>{if(turn%19===0)throw new Error('audio stream');return new Blob(['audio']);}),
+    });
+    await call.start();
+    for(let i=0;i<120;i++){audio.say();await tick();await vi.advanceTimersByTimeAsync(20000);expect(call.snapshot.active).toBe(true);expect(call.snapshot.phase).toBe('listening');}
+    expect(call.snapshot.elapsedSeconds).toBe(2400);expect(audio.open).toHaveBeenCalledTimes(1);expect(audio.close).not.toHaveBeenCalled();expect(deps.transcribe).toHaveBeenCalledTimes(120);
+    call.hangup();expect(audio.close).toHaveBeenCalledTimes(1);
   });
   it('keeps listening after empty ASR without billing a reply or closing the microphone', async()=>{
     const transcribe=vi.fn().mockResolvedValueOnce('  ').mockResolvedValueOnce('我刚面试完。');
@@ -91,8 +112,8 @@ describe('continuous call ownership',()=>{
     audio.say();await tick();expect(deps.reply).toHaveBeenCalledWith('我刚面试完。',expect.any(AbortSignal));
     expect(call.snapshot.phase).toBe('listening');expect(call.snapshot.inputWarning).toBe('');
   });
-  it('a minute of silence pauses and releases the microphone without billing ASR',async()=>{
-    const {call,audio,deps}=harness();await call.start();await vi.advanceTimersByTimeAsync(60000);
+  it('allows a quiet pause, then releases the microphone after five idle minutes without billing ASR',async()=>{
+    const {call,audio,deps}=harness();await call.start();await vi.advanceTimersByTimeAsync(60000);expect(call.snapshot.phase).toBe('listening');await vi.advanceTimersByTimeAsync(CALL_IDLE_MS-60000);
     expect(call.snapshot.phase).toBe('paused');expect(audio.close).toHaveBeenCalledTimes(1);expect(deps.transcribe).not.toHaveBeenCalled();
   });
   it('only a listening turn with actual voiced sound can be manually submitted',async()=>{
@@ -125,6 +146,17 @@ describe('local speech boundaries',()=>{
   });
 });
 describe('call and text continuity',()=>{
+  it.each([403,429])('preserves HTTP %i from combined voice admission through the call controller',async status=>{
+    vi.useRealTimers();const audio=new AudioFake();let voices=0;
+    const c=new BreadController(async(url,init)=>{
+      if(String(url).endsWith('/capabilities')){const caps=getCapabilities();caps.asr.available=caps.tts.available=caps.tts.turnStream=true;return Response.json(caps);}
+      if(String(url).endsWith('/transcribe'))return Response.json({requestId:(init!.body as FormData).get('requestId'),text:'我想接着聊。'});
+      if(String(url).endsWith('/synthesize'))return new Response(new Blob(['greeting']));
+      voices++;return Response.json({error:{code:status===429?'RATE_LIMITED':'PERMISSION_DENIED',userMessage:'请稍后再试。'}},{status});
+    },undefined,audio);
+    try{await c.initialize();await c.startCall();audio.say();await vi.waitFor(()=>expect(c.getSnapshot().call.phase).toBe('error'));expect(voices).toBe(1);expect(audio.close).toHaveBeenCalled();}
+    finally{c.dispose();}
+  });
   it('uses the call style channel, keeps completed text on hangup and closes for background',async()=>{
     vi.useRealTimers();
     const audio=new AudioFake();let request:TurnRequest|undefined;

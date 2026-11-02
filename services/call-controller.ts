@@ -1,6 +1,9 @@
 import type { CallSpeech } from './speech-stream';
 import type { CallState } from '@/domain/types';
 import { BrowserCallAudio, joinCallUtterances, type CallAudioPort } from './call-audio';
+import { CallServiceError } from './call-error';
+
+export const CALL_IDLE_MS = 5 * 60000;
 
 export const idleCall = (): CallState => ({ active: false, phase: 'idle', muted: false, elapsedSeconds: 0, level: 0, heardSpeech: false, lastHeard: '', caption: '', error: '' });
 export interface CallDeps {
@@ -25,6 +28,7 @@ export class CallController {
   private lastMeterAt = -Infinity;
   private untranscribed: Promise<File> | null = null;
   private continuation: Promise<File> | null = null;
+  private turnWarning = '';
   constructor(private deps: CallDeps, private audio: CallAudioPort = new BrowserCallAudio()) {}
   get snapshot() { return this.state; }
   private patch(patch: Partial<CallState>) { this.state = { ...this.state, ...patch }; this.deps.update(this.state); }
@@ -40,6 +44,7 @@ export class CallController {
     await this.connect(greeting);
   }
   private async connect(greeting = '') {
+    this.turnWarning = '';
     const generation = ++this.generation;
     let openingTurn = this.turn;
     const valid = () => this.state.active && generation === this.generation;
@@ -58,7 +63,7 @@ export class CallController {
         },
         utterance: file => { if (valid() && this.state.phase === 'listening' && !this.state.muted) void this.process(file); },
         failure: message => { if (valid()) this.fail(new Error(message)); },
-        inputWarning: message => { if (valid()) this.patch({ inputWarning: message }); },
+        inputWarning: message => { if (valid()) this.patch({ inputWarning: message || this.turnWarning }); },
         speechStart: () => { if (valid()) this.onSpeechStart(); },
       });
       if (!opened || !valid()) return;
@@ -80,22 +85,25 @@ export class CallController {
   }
   private listen(preserveCapture = false) {
     if (!this.state.active) return;
+    this.turnWarning = '';
     this.clearIdle();
     this.audio.stopDialTone?.();
     this.patch({ phase: this.state.muted ? 'muted' : 'listening', level: 0, heardSpeech: false, error: '', inputWarning: '' });
     if (this.state.muted) this.audio.listen(false);
     else if (preserveCapture) this.audio.listen(true, { preserve: true });
     else this.audio.listen(true);
-    if (!this.state.muted) this.idle = setTimeout(() => this.pause('先歇一会儿，麦克风已暂停。想说时再继续。'), 60000);
+    if (!this.state.muted) this.idle = setTimeout(() => this.pause('有一会儿没说话了，麦克风已暂停。想说时再继续。'), CALL_IDLE_MS);
   }
   private async process(file: File) {
     this.clearIdle();
+    this.turnWarning = '';
+    let stage: 'transcribe' | 'reply' | 'speech' = 'transcribe';
     const generation = this.generation, turn = ++this.turn;
     this.pending?.abort(); const pending = new AbortController(); this.pending = pending;
     const valid = () => this.state.active && this.generation === generation && this.turn === turn && !pending.signal.aborted;
     const audio = this.continuation ? joinCallUtterances(this.continuation, file) : Promise.resolve(file);
     this.continuation = null; this.untranscribed = audio;
-    this.patch({ phase: 'transcribing', level: 0, heardSpeech: false, error: '' }); this.monitor();
+    this.patch({ phase: 'transcribing', level: 0, heardSpeech: false, error: '', inputWarning: '' }); this.monitor();
     try {
       const utterance = await audio; if (!valid()) return;
       const text = (await this.deps.transcribe(utterance, pending.signal)).trim(); if (!valid()) return;
@@ -106,12 +114,29 @@ export class CallController {
       }
       if (text.length > 4000) throw new Error('这句话太长了，可以分两句说，或改用文字。');
       this.untranscribed = null;
+      stage = 'reply';
       this.patch({ lastHeard: text, phase: 'thinking' });
       const reply = await this.deps.reply(text, pending.signal); if (!valid()) return;
-      if (reply) { this.patch({ caption: reply }); await this.say(reply, pending.signal, valid); }
+      if (reply) { stage = 'speech'; this.patch({ caption: reply }); await this.say(reply, pending.signal, valid); }
       if (valid()) this.listen(true);
-    } catch (e) { if (valid()) this.fail(e); }
+    } catch (e) {
+      if (valid()) {
+        if (e instanceof CallServiceError && e.requiresReconnect) this.fail(e);
+        else this.recoverTurn(stage);
+      }
+    }
     finally { if (this.pending === pending) this.pending = null; }
+  }
+  private recoverTurn(stage: 'transcribe' | 'reply' | 'speech') {
+    // Retire the failed request and all queued output, not the healthy microphone.
+    // A newly started utterance invalidates this path through the turn guard above.
+    this.cancelTurn(true); this.clearAudio(); this.listen(true);
+    this.turnWarning = stage === 'transcribe'
+      ? '刚才这句没转成文字，可以再说一遍。电话还在。'
+      : stage === 'reply'
+        ? '刚才的回复没接上，你说的话还在，可以继续说。'
+        : '这句声音没播完，文字回复还在，可以继续说。';
+    this.patch({ inputWarning: this.turnWarning });
   }
   private async say(text: string, signal: AbortSignal, valid: () => boolean) {
     const blob = await this.deps.synthesize(text, signal); if (!valid()) return;
@@ -145,7 +170,7 @@ export class CallController {
   };
   private onSpeechStart() {
     if (!this.state.active || this.state.muted) return;
-    if (this.state.phase === 'listening') { this.clearIdle(); return; }
+    if (this.state.phase === 'listening') { this.clearIdle(); this.turnWarning = ''; this.patch({ inputWarning: '' }); return; }
     if (!['transcribing', 'thinking', 'speaking'].includes(this.state.phase) && !(this.state.phase === 'connecting' && this.pending)) return;
     const caption = this.state.phase === 'speaking' ? this.state.caption : '';
     // A natural mid-sentence pause can beat ASR. Retain that prefix, but never replay a stale reply.

@@ -17,6 +17,7 @@ import { requestVoiceTurn, VoiceTransportUnavailable } from './voice-turn';
 import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
+import { callServiceError } from './call-error';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -41,16 +42,13 @@ export class BreadController {
     this.fetcher = (input, init) => fetchComplete(fetcher, input, init, String(input).includes('/capabilities') ? 8000 : 60000);
     this.callController = new CallController({
       update: call => { this.call = call; this.publish(); },
-      cancelReply: () => this.stopWork(),
+      cancelReply: () => { this.stopWork(); if (this.call.active) { this.error = ''; this.publish(); } },
       transcribe: async (file, signal) => {
         const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
         const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
         const json = await response.json(); signal.throwIfAborted();
         if (!response.ok) {
-          const message = ['PROVIDER_UNAVAILABLE', 'TIMEOUT'].includes(json.error?.code)
-            ? '语音转写暂时没接通。重新连接后，请再说一次，或改用文字。'
-            : json.error?.userMessage;
-          throw new Error(message || '这句没听清，可以再说一次，或改用文字。');
+          throw callServiceError(json.error, response.status);
         }
         if (json.requestId !== requestId || typeof json.text !== 'string') throw new Error('语音结果没有对应上这次说话，请再说一次。');
         return json.text;
@@ -77,7 +75,7 @@ export class BreadController {
         }
         const token = { sessionId: this.state.sessionId, runId: uid('call'), epoch: this.state.epoch, contextRevision: this.state.contextRevision };
         const response = await this.fetcher('/api/speech/synthesize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...token, requestId: uid('request'), text }), signal });
-        if (!response.ok) { const json = await response.json(); throw new Error(json.error?.userMessage || '声音暂时没出来，文字回复还在。'); }
+        if (!response.ok) { const json = await response.json(); throw callServiceError(json.error, response.status); }
         return response.blob();
       },
     }, callAudio);
@@ -186,7 +184,7 @@ export class BreadController {
         signal.throwIfAborted();
         const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });
         const body = await res.json();
-        if (!res.ok) { retryable = body.error?.retryable !== false; throw new Error(body.error?.userMessage || '回复没有接上，再试一次？'); }
+        if (!res.ok) { retryable = body.error?.retryable !== false; throw callServiceError(body.error, res.status); }
         return body;
       };
       if (channel === 'call' && request.mode === 'listen' && this.capabilities?.tts.turnStream) {
@@ -213,6 +211,8 @@ export class BreadController {
       if (channel === 'text' && retryable) this.failedTurn = { text, sessionId: token.sessionId, epoch: token.epoch, contextRevision: token.contextRevision, mode: request.mode };
       this.dispatch({ type: 'FINISH', token, activity: 'error' });
       this.fail(e instanceof TypeError ? new Error('刚才没连上，你的话还在。') : e, '回复没有完成，请重试。', true);
+      // Preserve structured quota/permission errors for the call controller.
+      if (channel === 'call') throw e;
     } }
   }
   addMaterial = (text: string) => {

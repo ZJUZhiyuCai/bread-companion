@@ -32,6 +32,8 @@ The core flow is low-effort expression → voluntary review → one grounded nex
 
 **Version 0.4.0 preview, available locally and as an HTTPS online trial.** Both deployments use signed anonymous visit cookies and shared admission budgets: SQLite on the primary Node host, D1 on the Worker backup. Chats and saved cards remain browser-local. There are no accounts, cross-device sync or persistent relationship memories; the trial is capacity-limited, not an availability guarantee. See [deployment](docs/deployment.md), [data handling](docs/data-handling.md) and [hosting dependency review](docs/hosting-dependencies.md). Calls use ASR → text generation → TTS. On the primary host, one response delivers the validated text and streams MP3 for incremental decoding, avoiding a separate browser synthesis request and the wait for a complete audio file. The voice, sample rate and bitrate are unchanged; native complete-MP3 playback remains available when incremental decoding is unsupported. See the [streaming implementation and measured limits](docs/call-streaming.md). It is not a native full-duplex speech model.
 
+See [call continuity and recovery](docs/call-continuity.md) for bounded ASR recovery and long-session validation.
+
 ## Run without API keys
 
 Use the Node version in `.nvmrc` (`nvm use` is optional if it is already installed).
@@ -53,7 +55,7 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 ## Evidence, not an EQ badge
 
-257 unit/integration checks and 61 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle, compressed audio streaming and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
+272 unit/integration checks and 63 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle, compressed audio streaming and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening uses bundled audio; subsequent replies need live synthesis. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 

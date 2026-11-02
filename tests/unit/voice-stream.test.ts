@@ -255,12 +255,13 @@ describe('call controller owns the combined response', () => {
     } finally { h.c.dispose(); }
   });
 
-  it('a speech failure keeps the reply, releases the microphone and waits for explicit reconnect', async () => {
+  it('a speech failure keeps the reply and microphone without a duplicate synthesis', async () => {
     const h = await callHarness();
     try {
-      h.fail(); await vi.waitFor(() => expect(h.c.getSnapshot().call.phase).toBe('error'));
+      h.fail(); await vi.waitFor(() => expect(h.c.getSnapshot().call.inputWarning).toContain('声音没播完'));
+      expect(h.c.getSnapshot().call.phase).toBe('listening');
       expect(h.c.getSnapshot().state.messages.at(-1)?.text).toBe(h.reply.assistantText);
-      expect(h.audio.close).toHaveBeenCalled(); expect(h.audio.play).not.toHaveBeenCalled();
+      expect(h.audio.close).not.toHaveBeenCalled(); expect(h.audio.play).not.toHaveBeenCalled();
       expect(h.fetcher.mock.calls.filter(([url]) => String(url).endsWith('/voice'))).toHaveLength(1);
     } finally { h.c.dispose(); }
   });

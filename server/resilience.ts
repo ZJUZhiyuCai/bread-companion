@@ -3,7 +3,7 @@ import { AppError, asAppError } from './errors';
 export type ServiceLane = 'call' | 'companion' | 'analysis' | 'asr' | 'tts';
 interface Circuit { failures: number; openedUntil: number; probe: boolean; generation: number }
 const circuits = new Map<ServiceLane, Circuit>();
-/** Isolate outages by capability. No speculative duplicate paid model calls or hidden retries. */
+/** Isolate outages by capability. No model hedging; ASR owns its single bounded retry. */
 export async function withCircuit<T>(lane: ServiceLane, task: () => Promise<T>, now = () => Date.now()): Promise<T> {
   const state = circuits.get(lane) ?? { failures: 0, openedUntil: 0, probe: false, generation: 0 };
   circuits.set(lane, state);

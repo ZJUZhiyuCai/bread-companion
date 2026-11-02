@@ -103,12 +103,34 @@ test('hanging up a combined turn prevents late text and audio from entering the 
   await expect(page.getByRole('textbox', { name: '写给面包', exact: true })).toBeVisible();
 });
 
-test('a combined speech error retains the checked reply and offers a usable reconnect', async({ page }) => {
-  const stats = await setup(page, '', 'fail-tts'); await speak(page); await phase(page, 'error');
-  await expect(page.locator('.callroom').getByRole('alert')).toContainText('声音暂时没接上');
+test('a combined speech error retains the checked reply and keeps the microphone for the next turn', async({ page }) => {
+  const stats = await setup(page, '', 'fail-tts'); await speak(page);
+  await expect(page.locator('.callroom').getByRole('status')).toContainText('声音没播完');await phase(page, 'listening');
   await expect(page.getByRole('log')).toContainText(mockCandidate(stats.turns[0]).assistantText);
   expect(stats.voices).toBe(1); expect(stats.tts).toBe(1);
-  await page.getByRole('button', { name: '再试一次', exact: true }).click(); await phase(page, 'listening');
+  expect(await page.evaluate(() => (window as any).__audio.tracks.every((t: MediaStreamTrack) => t.readyState === 'live'))).toBe(true);
+  await speak(page);await expect.poll(()=>stats.voices,{timeout:12000}).toBe(2);await phase(page,'listening');
+  await hangup(page);
+});
+
+for (const failure of ['provider','network'] as const) test(`a ${failure} failure on the second sentence does not disconnect the third sentence`,async({page})=>{
+  test.setTimeout(65000);
+  const stats=await setup(page);let requests=0;
+  await page.route('**/api/speech/transcribe',async r=>{
+    requests++;
+    if(requests===2){
+      if(failure==='network')await r.abort('internetdisconnected');
+      else await r.fulfill({status:502,json:{error:{code:'PROVIDER_UNAVAILABLE',retryable:true}}});
+      return;
+    }
+    const req=new Request('http://localhost/',{method:'POST',headers:{'Content-Type':r.request().headers()['content-type']},body:new Uint8Array(r.request().postDataBuffer()!)});
+    const form=await req.formData();await r.fulfill({json:{requestId:form.get('requestId'),text:'第'+requests+'句，我想接着聊。'}});
+  });
+  await speak(page);await phase(page,'speaking');await phase(page,'listening');
+  await speak(page);await expect(page.locator('.callroom').getByRole('status')).toContainText('没转成文字');await phase(page,'listening');
+  expect(stats.turns).toHaveLength(1);expect(await page.evaluate(()=>(window as any).__audio.tracks.length)).toBe(1);
+  expect(await page.evaluate(()=>(window as any).__audio.tracks[0].readyState)).toBe('live');
+  await speak(page);await phase(page,'speaking');expect(stats.turns).toHaveLength(2);expect(stats.turns[1].userMessage).toContain('第3句');
   await hangup(page);
 });
 
