@@ -14,9 +14,17 @@ function deferred<T>() {
 /** Only an absent route permits using the older, unbilled transport. */
 export class VoiceTransportUnavailable extends Error {}
 
+/** Raw 32 kHz PCM needs more bandwidth than MP3; decide before any billed request. */
+export function canStreamPcm(connection?: { saveData?: boolean; effectiveType?: string; downlink?: number }): boolean {
+  return !connection?.saveData && !['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
+    && !(typeof connection?.downlink === 'number' && connection.downlink > 0 && connection.downlink < 1);
+}
 /** The reply may render while the same request is still preparing speech. */
 export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, parent: AbortSignal, timeoutMs = 60000) {
   const candidate = deferred<TurnCandidate>(), audio = deferred<CallSpeech>();
+  const connection = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string; downlink?: number } }).connection;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (canStreamPcm(connection)) headers['X-Bread-Audio'] = 'pcm-s16le-v1';
   const deadline = new AbortController();
   const timer = setTimeout(() => deadline.abort(new DOMException('这次连接等得有点久，可以再试一次。', 'TimeoutError')), timeoutMs);
   const signal = AbortSignal.any([parent, deadline.signal]);
@@ -26,7 +34,7 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
   void (async () => {
     try {
       signal.throwIfAborted();
-      const res = await withAbort(fetcher('/api/agent/voice', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Bread-Audio': 'pcm-s16le-v1' }, body: JSON.stringify(input), signal }), signal);
+      const res = await withAbort(fetcher('/api/agent/voice', { method: 'POST', headers, body: JSON.stringify(input), signal }), signal);
       if (res.status === 404 || res.status === 405) { void res.body?.cancel().catch(() => {}); throw new VoiceTransportUnavailable(); }
       if (!res.body) throw invalid();
       reader = res.body.getReader();

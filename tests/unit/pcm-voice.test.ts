@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { synthesizeStream } from '@/server/providers/speech-stream';
-import { requestVoiceTurn } from '@/services/voice-turn';
+import { requestVoiceTurn, canStreamPcm } from '@/services/voice-turn';
 import { PcmSpeech } from '@/services/speech-stream';
 import { BrowserCallAudio } from '@/services/call-audio';
 import { PlaybackEchoGuard } from '@/services/playback-echo';
@@ -55,6 +55,18 @@ describe('streaming provider validates framing and completion', () => {
 });
 
 describe('browser stream protocol', () => {
+  it('chooses MP3 for known slow links or data saving before any paid generation', async () => {
+    for (const connection of [{ saveData: true }, { effectiveType: 'slow-2g' }, { effectiveType: '2g' }, { effectiveType: '3g' }, { downlink: .8 }]) expect(canStreamPcm(connection)).toBe(false);
+    expect(canStreamPcm({ effectiveType: '4g', downlink: 2 })).toBe(true); expect(canStreamPcm()).toBe(true);
+    vi.stubGlobal('navigator', { connection: { saveData: true } });
+    try {
+      const h = transport(), turn = requestVoiceTurn(h.fetcher, input, new AbortController().signal);
+      h.send(candidate); h.send({ type: 'audio', requestId: input.requestId, mime: 'audio/mpeg', audio: 'SUQzAA==' }); h.send(done); h.close();
+      expect(await turn.audio).toBeInstanceOf(Blob);
+      expect(new Headers((h.fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].headers).has('X-Bread-Audio')).toBe(false);
+      expect(h.fetcher).toHaveBeenCalledTimes(1);
+    } finally { vi.unstubAllGlobals(); }
+  });
   it('plays validated chunks before done but does not accept EOF as successful completion', async () => {
     const h = transport(), turn = requestVoiceTurn(h.fetcher, input, new AbortController().signal);
     h.send(candidate); h.send(begin); h.send(chunk);
