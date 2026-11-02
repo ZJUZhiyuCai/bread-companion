@@ -888,5 +888,275 @@
       },
       "content": "{\"assistantText\":\"是我理解错了，准备不足这句话收回。\",\"supportGuidance\":false}"
     }
-  ]
+  ],
+  "protocolComparison": {
+    "source": "https://docs.wjark.com/maas/getAPIKEY%26URL.html",
+    "note": "The first route probe appended chat/completions to the configured Anthropic base, causing 404. It does not establish that OpenAI compatibility is unsupported. The following comparison uses the documented /api/v1/chat/completions endpoint on the same existing provider. Eight paired cases show mixed ordering; no production protocol change.",
+    "rows": [
+      {
+        "case": 0,
+        "input": "准备了两周还是被拒了，今晚不想听建议。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 4066,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 34,
+          "output_tokens": 31
+        },
+        "content": "{\"assistantText\":\"准备了两周还是被拒，这落差确实不好受。今晚就不说建议了。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "准备了两周还是被拒了，今晚不想听建议。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 2226,
+        "usage": {
+          "completion_tokens": 33,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 825,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 858
+        },
+        "content": "{\"assistantText\":\"准备了两周还是被拒，这落差搁着确实不好受。今晚就不说建议了。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "我今天这个面试又出了点问题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1858,
+        "usage": {
+          "completion_tokens": 23,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 820,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 843
+        },
+        "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "我今天这个面试又出了点问题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1737,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 29,
+          "output_tokens": 23
+        },
+        "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "不是我没准备，是对方临时换了题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2717,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 31,
+          "output_tokens": 29
+        },
+        "content": "{\"assistantText\":\"是我理解错了，准备不足这话我收回。临时换题确实不好接。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "不是我没准备，是对方临时换了题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1338,
+        "usage": {
+          "completion_tokens": 28,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 822,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 850
+        },
+        "content": "{\"assistantText\":\"是我理解错了，准备不足这句话收回。临时换题确实不好接。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "昨天熬夜准备到两点，还是被拒了。我真的觉得自己挺没用的。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 3801,
+        "usage": {
+          "completion_tokens": 31,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 829,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 860
+        },
+        "content": "{\"assistantText\":\"熬到两点还是被拒，心里堵得慌。觉得自己没用这句话，我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "昨天熬夜准备到两点，还是被拒了。我真的觉得自己挺没用的。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2380,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 806,
+          "output_tokens": 34
+        },
+        "content": "{\"assistantText\":\"熬到两点准备，结果还是被拒，心里堵得慌。觉得自己没用这句话，我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "别安慰我说下次一定行，我现在就是难受。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1418,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 800,
+          "output_tokens": 26
+        },
+        "content": "{\"assistantText\":\"好，不说下次。你现在难受就是难受，我不绕过去。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "别安慰我说下次一定行，我现在就是难受。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1628,
+        "usage": {
+          "completion_tokens": 27,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 850
+        },
+        "content": "{\"assistantText\":\"好，不说下次。你现在难受就是难受，我不绕开它。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "我不是焦虑，我是生气。你刚才理解错了。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1443,
+        "usage": {
+          "completion_tokens": 26,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 849
+        },
+        "content": "{\"assistantText\":\"是我理解错了，把生气说成焦虑，这句话我收回。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "我不是焦虑，我是生气。你刚才理解错了。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2651,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 640,
+          "input_tokens": 160,
+          "output_tokens": 26
+        },
+        "content": "{\"assistantText\":\"是我理解错了，把生气说成焦虑，这句话我收回。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 3,
+        "input": "今天不复盘，别问问题，让我安静讲一会儿。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1508,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 802,
+          "output_tokens": 29
+        },
+        "content": "{\"assistantText\":\"好，我不问，也不复盘。你想讲就讲，我安静听着。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 3,
+        "input": "今天不复盘，别问问题，让我安静讲一会儿。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1945,
+        "usage": {
+          "completion_tokens": 26,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 825,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 851
+        },
+        "content": "{\"assistantText\":\"好，我不问，也不复盘。你讲，我听着。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 4,
+        "input": "是不是只要我更努力一点，就不会被拒了？",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1915,
+        "usage": {
+          "completion_tokens": 25,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 848
+        },
+        "content": "{\"assistantText\":\"被拒不一定是因为你不够努力，这个说法我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 4,
+        "input": "是不是只要我更努力一点，就不会被拒了？",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1690,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 800,
+          "output_tokens": 35
+        },
+        "content": "{\"assistantText\":\"被拒不一定是因为你不够努力，把原因都归到自己努力不够上，反而容易忽略别的因素。\",\"supportGuidance\":false}"
+      }
+    ]
+  }
 }
