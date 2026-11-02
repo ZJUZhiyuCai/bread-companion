@@ -42,11 +42,13 @@ export async function POST(req: Request) {
             release = await admit(req, 'tts', requestId, speechSignal);
             const speechStart = performance.now();
             let firstAudioMs: number | undefined;
-            if (req.headers.get('X-Bread-Audio') === 'pcm-s16le-v1' && process.env.BREAD_PCM_STREAM !== 'off') {
+            const format = req.headers.get('X-Bread-Audio') === 'mp3-chunks-v1' ? 'mp3' : 'pcm';
+            const streamed = (format === 'mp3' && process.env.BREAD_MP3_STREAM !== 'off') || (req.headers.get('X-Bread-Audio') === 'pcm-s16le-v1' && process.env.BREAD_PCM_STREAM !== 'off');
+            if (streamed) {
               await withCircuit('tts', async () => {
                 let sequence = 0;
-                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal)) {
-                  if (!sequence) { firstAudioMs = performance.now() - speechStart; send({ type: 'audio_start', requestId, format: 'pcm-s16le', sampleRate: 32000, channels: 1 }); }
+                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal, fetch, format)) {
+                  if (!sequence) { firstAudioMs = performance.now() - speechStart; send({ type: 'audio_start', requestId, format: format === 'pcm' ? 'pcm-s16le' : 'mp3', sampleRate: 32000, channels: 1 }); }
                   send({ type: 'audio_chunk', requestId, sequence: sequence++, audio: Buffer.from(audio).toString('base64') });
                 }
               });

@@ -2,7 +2,7 @@ import type { TurnCandidate, TurnRequest } from '@/domain/types';
 import { candidateSchema } from '@/domain/schemas';
 import { validateCandidate } from '@/domain/evidence';
 import { withAbort } from '@/lib/abort';
-import { PcmSpeech, type CallSpeech } from './speech-stream';
+import { PcmSpeech, Mp3Speech, type SpeechChunks, type CallSpeech } from './speech-stream';
 
 function deferred<T>() {
   let resolve!: (value: T) => void, reject!: (error: unknown) => void;
@@ -19,17 +19,22 @@ export function canStreamPcm(connection?: { saveData?: boolean; effectiveType?: 
   return !connection?.saveData && !['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '')
     && !(typeof connection?.downlink === 'number' && connection.downlink > 0 && connection.downlink < 1);
 }
+/** Compressed audio is also suitable for ordinary 3G/high-RTT links. */
+export function canStreamMp3(connection?: { saveData?: boolean; effectiveType?: string; downlink?: number }): boolean {
+  return !connection?.saveData && !['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
+    && !(typeof connection?.downlink === 'number' && connection.downlink > 0 && connection.downlink < .3);
+}
 /** The reply may render while the same request is still preparing speech. */
 export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, parent: AbortSignal, timeoutMs = 60000) {
   const candidate = deferred<TurnCandidate>(), audio = deferred<CallSpeech>();
   const connection = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string; downlink?: number } }).connection;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (canStreamPcm(connection)) headers['X-Bread-Audio'] = 'pcm-s16le-v1';
+  if (canStreamMp3(connection)) headers['X-Bread-Audio'] = 'mp3-chunks-v1';
   const deadline = new AbortController();
   const timer = setTimeout(() => deadline.abort(new DOMException('这次连接等得有点久，可以再试一次。', 'TimeoutError')), timeoutMs);
   const signal = AbortSignal.any([parent, deadline.signal]);
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
-  let pcm: PcmSpeech | undefined;
+  let pcm: SpeechChunks | undefined;
   const invalid = () => new Error('声音连接中断了，已经收到的文字还在。');
   void (async () => {
     try {
@@ -56,8 +61,8 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
           const raw = atob(event.audio), bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
           if (bytes.byteLength > 4 * 1024 * 1024) throw invalid();
           clip = new Blob([bytes], { type: 'audio/mpeg' });
-        } else if (event.type === 'audio_start' && gotCandidate && !clip && !pcm && event.requestId === input.requestId && event.format === 'pcm-s16le' && event.sampleRate === 32000 && event.channels === 1) {
-          pcm = new PcmSpeech();
+        } else if (event.type === 'audio_start' && gotCandidate && !clip && !pcm && event.requestId === input.requestId && ['pcm-s16le', 'mp3'].includes(event.format) && event.sampleRate === 32000 && event.channels === 1) {
+          pcm = event.format === 'mp3' ? new Mp3Speech() : new PcmSpeech();
         } else if (event.type === 'audio_chunk' && pcm && !clip && event.requestId === input.requestId && event.sequence === sequence) {
           if (sequence >= 512 || typeof event.audio !== 'string' || !event.audio.length || event.audio.length > 699052 || event.audio.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(event.audio)) throw invalid();
           const raw = atob(event.audio);

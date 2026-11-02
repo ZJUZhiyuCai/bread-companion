@@ -8,6 +8,8 @@ Bread's original source, documentation, embedded SVG character illustrations and
 | React / React DOM | [facebook/react](https://github.com/facebook/react) | MIT |
 | Lucide icons | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) | ISC; includes inherited Feather icons under MIT |
 | Three.js | [mrdoob/three.js](https://github.com/mrdoob/three.js) | MIT |
+| mpg123-decoder 1.0.3 / @wasm-audio-decoders/common | [eshaz/wasm-audio-decoders](https://github.com/eshaz/wasm-audio-decoders) by Ethan Halsall | MIT wrapper; embedded libmpg123 retains LGPL-2.1, see below |
+| @eshaz/web-worker / simple-yenc | [web-worker](https://github.com/eshaz/web-worker), [simple-yenc](https://github.com/eshaz/simple-yenc) | Apache-2.0 / MIT |
 | Bread Voice font subsets | [LXGW WenKai Screen v1.530](https://github.com/lxgw/LxgwWenKai-Screen/releases/tag/v1.530) by LXGW | [SIL OFL 1.1](public/design/fonts/OFL-LXGW.txt); modified family renamed Bread Voice |
 | Vinext / Vite / Drizzle ORM | [Vinext](https://github.com/cloudflare/vinext), [Vite](https://github.com/vitejs/vite), [Drizzle](https://github.com/drizzle-team/drizzle-orm) | MIT; deployment adapter only |
 | Zod | [colinhacks/zod](https://github.com/colinhacks/zod) | MIT |
@@ -17,6 +19,8 @@ Bread's original source, documentation, embedded SVG character illustrations and
 | fake-indexeddb | [dumbmatter/fakeIndexedDB](https://github.com/dumbmatter/fakeIndexedDB) | Apache-2.0 |
 
 Exact versions and package license metadata are in `package-lock.json`; upstream distributions include their license texts. No vendored dependency tree or provider model weights are distributed here.
+
+The optional browser MP3 decoder contains WebAssembly built from **libmpg123**, copyright Michael Hipp and the mpg123 contributors, under the [GNU LGPL 2.1](docs/licenses/mpg123-COPYING.txt). The MIT label on the JavaScript wrapper does not replace that library's license. Decoder source and build instructions are available in [wasm-audio-decoders](https://github.com/eshaz/wasm-audio-decoders), with the library source in [mpg123](https://github.com/madebr/mpg123). Bread uses the unmodified `mpg123-decoder` package pinned in its lockfile; the decoder is loaded separately, and can be replaced by changing that dependency and rebuilding. The fallback uses native browser decoding of the same MP3 response.
 
 The small [voice test fixture](tests/fixtures/README.md) is synthetic MiniMax output of an original test phrase, not a human recording. It is supplied as test data; this repository does not license MiniMax's voice model, voice identity, or hosted synthesis service. API users must follow their own provider agreement. The [MiniMax platform terms](https://platform.minimax.io/protocol/terms-of-service) are separate from the software license.
 

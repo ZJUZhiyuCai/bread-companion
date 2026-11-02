@@ -4,7 +4,9 @@ import { PlaybackEchoGuard, speechLikeFrame } from './playback-echo';
 import { startDialTone } from './dial-tone';
 import { CaptureHealth } from './capture-health';
 import { withAbort } from '@/lib/abort';
-import { PcmSpeech, type CallSpeech } from './speech-stream';
+import type { MPEGDecoder } from 'mpg123-decoder';
+import { createSpeechDecoder, warmSpeechDecoder } from './speech-decoder';
+import { SpeechChunks, type CallSpeech } from './speech-stream';
 
 export function microphoneRecoveryHint(userAgent = navigator.userAgent): string {
   return /MicroMessenger/i.test(userAgent)
@@ -55,6 +57,7 @@ export class BrowserCallAudio implements CallAudioPort {
     if (!globalThis.isSecureContext || !navigator.mediaDevices?.getUserMedia || typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') throw new Error('这个浏览器暂时不能接通语音。' + microphoneRecoveryHint());
     // Created/resumed synchronously inside the user's click, before permission/network awaits.
     const context = new AudioContext(); this.context = context;
+    warmSpeechDecoder();
     const resumed = context.resume(); void resumed.catch(() => {});
     this.stopRingback = startDialTone(context);
     let stream: MediaStream;
@@ -121,7 +124,21 @@ export class BrowserCallAudio implements CallAudioPort {
   async play(blob: CallSpeech, signal: AbortSignal, onStart: () => void): Promise<void> {
     const context = this.context; if (!context) throw new Error('声音连接已暂停，请继续通话。');
     this.stopPlayback(); signal.throwIfAborted();
-    if (blob instanceof PcmSpeech) return this.playPcm(blob, signal, onStart);
+    if (blob instanceof SpeechChunks) {
+      const preparing = new AbortController(), cancel = () => preparing.abort();
+      this.cancelStream = cancel; signal = AbortSignal.any([signal, preparing.signal]);
+      try {
+        const decoder = blob.kind === 'mp3' ? await createSpeechDecoder(signal) : null;
+        if (context !== this.context) { decoder?.free(); return; }
+        if (blob.kind !== 'mp3' || decoder) return this.playPcm(blob, signal, onStart, decoder);
+        // No second synthesis if the optional decoder cannot initialize.
+        const chunks: Uint8Array<ArrayBuffer>[] = [], iterator = blob[Symbol.asyncIterator]();
+        try {
+          for (;;) { const item = await withAbort(iterator.next(), signal); if (item.done) break; chunks.push(new Uint8Array(item.value)); }
+        } finally { if (signal.aborted) blob.fail(signal.reason); void iterator.return?.().catch(() => {}); }
+        blob = new Blob(chunks, { type: 'audio/mpeg' });
+      } finally { if (this.cancelStream === cancel) this.cancelStream = null; }
+    }
     const decoded = await context.decodeAudioData(await blob.arrayBuffer()); signal.throwIfAborted();
     if (context !== this.context) return;
     if (context.state !== 'running') await context.resume(); signal.throwIfAborted();
@@ -135,23 +152,35 @@ export class BrowserCallAudio implements CallAudioPort {
     });
     signal.throwIfAborted();
   }
-  private async playPcm(stream: PcmSpeech, parent: AbortSignal, onStart: () => void) {
+  private async playPcm(stream: SpeechChunks, parent: AbortSignal, onStart: () => void, decoder: MPEGDecoder | null) {
     const context = this.context!;
     const canceled = new AbortController(), signal = AbortSignal.any([parent, canceled.signal]);
     const cancel = () => canceled.abort(); this.cancelStream = cancel;
     const sources = new Set<AudioBufferSourceNode>();
     const iterator = stream[Symbol.asyncIterator]();
-    let tail = Promise.resolve(), nextAt = context.currentTime + .06, started = false;
+    let tail = Promise.resolve(), nextAt = context.currentTime + .06, started = false, samples = 0;
     try {
       if (context.state !== 'running') await withAbort(context.resume(), signal);
       for (;;) {
         const item = await withAbort(iterator.next(), signal); signal.throwIfAborted();
         if (item.done) break;
         if (context !== this.context) throw new DOMException('Call closed', 'AbortError');
-        const bytes = item.value, view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-        const buffer = context.createBuffer(1, bytes.length / 2, stream.sampleRate);
-        const pcm = buffer.getChannelData(0);
-        for (let i = 0; i < pcm.length; i++) pcm[i] = view.getInt16(i * 2, true) / 32768;
+        let pcm: Float32Array;
+        if (decoder) {
+          const decoded = decoder.decode(item.value);
+          if (decoded.errors.length) throw new Error('声音数据没有完整接上。');
+          if (!decoded.samplesDecoded) continue;
+          if (decoded.sampleRate !== stream.sampleRate || !decoded.channelData[0]) throw new Error('声音格式没有对应上。');
+          pcm = decoded.channelData[0];
+        } else {
+          const bytes = item.value, view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          pcm = new Float32Array(bytes.length / 2);
+          for (let i = 0; i < pcm.length; i++) pcm[i] = view.getInt16(i * 2, true) / 32768;
+        }
+        samples += pcm.length;
+        if (samples > stream.sampleRate * 65) throw new Error('声音片段过长。');
+        const buffer = context.createBuffer(1, pcm.length, stream.sampleRate);
+        buffer.getChannelData(0).set(pcm);
         const source = context.createBufferSource(); source.buffer = buffer; source.connect(context.destination); sources.add(source);
         // A small scheduling cushion absorbs transport jitter, without waiting for the whole reply.
         const start = Math.max(nextAt, context.currentTime + .06); nextAt = start + buffer.duration;
@@ -173,6 +202,7 @@ export class BrowserCallAudio implements CallAudioPort {
       // Wake the iterator too; no pending queue/listener may outlive this turn.
       if (signal.aborted) stream.fail(signal.reason);
       void iterator.return?.().catch(() => {});
+      decoder?.free();
     }
   }
   stopPlayback() {

@@ -4,12 +4,12 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 const args = process.argv.slice(2), option = name => args[args.indexOf(name) + 1];
 if (!args.includes('--live')) {
-  console.log('node scripts/benchmark-call-latency.mjs --live --origin https://your-host --transport legacy|combined|pcm --output .local/call-latency');
+  console.log('node scripts/benchmark-call-latency.mjs --live --origin https://your-host --transport legacy|combined|pcm|mp3 --output .local/call-latency');
   process.exit(0);
 }
 for (const name of ['--origin', '--transport', '--output']) if (!args.includes(name) || !option(name)) throw Error(`Missing ${name}`);
 const origin = new URL(option('--origin')), transport = option('--transport'), destination = resolve(option('--output'));
-if (origin.protocol !== 'https:' || origin.origin !== option('--origin') || !['legacy', 'combined', 'pcm'].includes(transport)) throw Error('Expected an exact HTTPS origin and legacy|combined|pcm transport');
+if (origin.protocol !== 'https:' || origin.origin !== option('--origin') || !['legacy', 'combined', 'pcm', 'mp3'].includes(transport)) throw Error('Expected an exact HTTPS origin and legacy|combined|pcm|mp3 transport');
 await mkdir(destination, { recursive: true });
 const capsResponse = await fetch(origin.origin + '/api/capabilities', { signal: AbortSignal.timeout(10000), redirect: 'error' });
 const cookie = (capsResponse.headers.get('set-cookie') || '').split(';')[0], caps = await capsResponse.json();
@@ -22,7 +22,7 @@ const cases = [
 ];
 const report = { at: new Date().toISOString(), origin: origin.origin, transport, synthetic: true, scope: 'Text-to-reply-and-audio HTTP latency; excludes endpoint detection, ASR, audio decoding and physical device playback. Four samples are not a long-term SLA.', cases: [] };
 async function post(path, body) {
-  const response = await fetch(origin.origin + path, { method: 'POST', redirect: 'error', headers: { Origin: origin.origin, Cookie: cookie, 'Content-Type': 'application/json', ...(transport === 'pcm' ? { 'X-Bread-Audio': 'pcm-s16le-v1' } : {}) }, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
+  const response = await fetch(origin.origin + path, { method: 'POST', redirect: 'error', headers: { Origin: origin.origin, Cookie: cookie, 'Content-Type': 'application/json', ...(['pcm', 'mp3'].includes(transport) ? { 'X-Bread-Audio': transport === 'mp3' ? 'mp3-chunks-v1' : 'pcm-s16le-v1' } : {}) }, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw Error(`HTTP ${response.status} at ${path}`);
   return response;
 }
@@ -50,9 +50,12 @@ try {
               if (event.candidate.requestId !== request.requestId) throw Error('Mismatched reply');
               row.replyMs = Math.round(performance.now() - started); row.reply = event.candidate.assistantText;
             }
-            if (event.type === 'audio_start' && (event.format !== 'pcm-s16le' || event.sampleRate !== 32000 || event.channels !== 1)) throw Error('Unsupported audio format');
+            if (event.type === 'audio_start') {
+              if (!['pcm-s16le', 'mp3'].includes(event.format) || event.sampleRate !== 32000 || event.channels !== 1 || row.format) throw Error('Unsupported audio format');
+              row.format = event.format;
+            }
             if (event.type === 'audio_chunk') {
-              if (event.requestId !== request.requestId || event.sequence !== chunks.length) throw Error('Mismatched audio sequence');
+              if (!row.format || event.requestId !== request.requestId || event.sequence !== chunks.length) throw Error('Mismatched audio sequence');
               row.firstAudioMs ??= Math.round(performance.now() - started);
               chunks.push(Buffer.from(event.audio, 'base64'));
             }
@@ -65,7 +68,7 @@ try {
       }
       if (!bytes || bytes.length < 1000) throw Error('No synthesized speech');
       row.audioMs = Math.round(performance.now() - started); row.bytes = bytes.length; row.status = 'ok';
-      if (row.chunks) {
+      if (row.chunks && row.format === 'pcm-s16le') {
         const header = Buffer.alloc(44); header.write('RIFF'); header.writeUInt32LE(36 + bytes.length, 4); header.write('WAVEfmt ', 8); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(32000, 24); header.writeUInt32LE(64000, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write('data', 36); header.writeUInt32LE(bytes.length, 40);
         await writeFile(resolve(destination, `case-${index + 1}.wav`), Buffer.concat([header, bytes]));
       } else await writeFile(resolve(destination, `case-${index + 1}.mp3`), bytes);
