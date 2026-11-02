@@ -1,3 +1,4 @@
+import type { CallSpeech } from '@/services/speech-stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CallController, type CallDeps } from '@/services/call-controller';
 import { joinCallUtterances, type CallAudioEvents, type CallAudioPort } from '@/services/call-audio';
@@ -12,7 +13,7 @@ const calls: CallController[] = [];
 afterEach(() => { calls.splice(0).forEach(c => c.hangup()); });
 function setup(overrides: Partial<CallDeps> = {}) {
   let events!: CallAudioEvents;
-  const audio = { open: vi.fn(async(e: CallAudioEvents) => { events = e; return true; }), listen: vi.fn(), finish: vi.fn(), close: vi.fn(), stopPlayback: vi.fn(), play: vi.fn(async(_blob: Blob, _signal: AbortSignal, started: () => void) => { started(); }) } satisfies CallAudioPort;
+  const audio = { open: vi.fn(async(e: CallAudioEvents) => { events = e; return true; }), listen: vi.fn(), finish: vi.fn(), close: vi.fn(), stopPlayback: vi.fn(), play: vi.fn(async(_blob: CallSpeech, _signal: AbortSignal, started: () => void) => { started(); }) } satisfies CallAudioPort;
   const deps = { update: vi.fn(), cancelReply: vi.fn(), transcribe: vi.fn(async() => '前一句。'), reply: vi.fn(async() => '接住这一句。'), synthesize: vi.fn(async() => new Blob(['audio'])), ...overrides };
   const call = new CallController(deps, audio); calls.push(call);
   return { call, audio, deps, get events() { return events; } };

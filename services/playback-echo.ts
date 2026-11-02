@@ -2,6 +2,16 @@
 export class PlaybackEchoGuard {
   private reference: { pcm: Float32Array; rate: number; start: number; stop: number } | null = null;
   attach(pcm: Float32Array, rate: number, start: number) { this.reference = { pcm, rate, start, stop: start + pcm.length / rate }; }
+  /** Keep one continuous, capture-rate reference across independently scheduled PCM chunks. */
+  append(pcm: Float32Array, rate: number, start: number) {
+    const ref = this.reference;
+    if (!ref || ref.rate !== rate) { this.attach(pcm, rate, start); return; }
+    const at = Math.max(0, Math.round((start - ref.start) * rate));
+    if (at + pcm.length > rate * 90) throw new Error('声音片段过长。');
+    const joined = new Float32Array(Math.max(ref.pcm.length, at + pcm.length));
+    joined.set(ref.pcm); joined.set(pcm, at);
+    this.reference = { pcm: joined, rate, start: ref.start, stop: start + pcm.length / rate };
+  }
   stop(at: number) { if (this.reference) this.reference.stop = Math.min(this.reference.stop, at); }
   clear() { this.reference = null; }
   isEcho(frame: Float32Array, frameAt: number): boolean {

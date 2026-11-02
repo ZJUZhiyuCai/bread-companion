@@ -8,7 +8,7 @@ export class VoiceActivity {
   private floor = 0.0005;
   private started = false;
   private announced = false;
-  constructor(readonly sampleRate: number, private gapSeconds = 0.85, private maxSeconds = 55) {}
+  constructor(readonly sampleRate: number, private gapSeconds = 0.65, private maxSeconds = 55) {}
   reset() { this.pre = []; this.frames = []; this.duration = this.voiced = this.silence = 0; this.started = this.announced = false; }
   push(frame: Float32Array, allowVoice = true): { level: number; heardSpeech: boolean; speechStarted: boolean; utterance: Float32Array | null } {
     const dt = frame.length / this.sampleRate;

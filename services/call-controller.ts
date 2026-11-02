@@ -1,3 +1,4 @@
+import type { CallSpeech } from './speech-stream';
 import type { CallState } from '@/domain/types';
 import { BrowserCallAudio, joinCallUtterances, type CallAudioPort } from './call-audio';
 
@@ -6,7 +7,7 @@ export interface CallDeps {
   update: (state: CallState) => void;
   transcribe: (file: File, signal: AbortSignal) => Promise<string>;
   reply: (text: string, signal: AbortSignal) => Promise<string | null>;
-  synthesize: (text: string, signal: AbortSignal) => Promise<Blob>;
+  synthesize: (text: string, signal: AbortSignal) => Promise<CallSpeech>;
   prepareGreeting?: (signal: AbortSignal) => Promise<Blob | null>;
   cancelReply: () => void;
 }

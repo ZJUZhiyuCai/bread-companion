@@ -12,6 +12,7 @@ import { RunController } from './run-controller';
 import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
+import type { CallSpeech } from './speech-stream';
 import { requestVoiceTurn, VoiceTransportUnavailable } from './voice-turn';
 import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
@@ -34,7 +35,7 @@ export class BreadController {
   private call = idleCall();
   private callController: CallController;
   private voiceFetcher: typeof fetch;
-  private preparedCallSpeech: { text: string; token: RunToken; signal: AbortSignal; audio: Promise<Blob> } | null = null;
+  private preparedCallSpeech: { text: string; token: RunToken; signal: AbortSignal; audio: Promise<CallSpeech> } | null = null;
   constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController(), callAudio?: CallAudioPort) {
     this.voiceFetcher = fetcher;
     this.fetcher = (input, init) => fetchComplete(fetcher, input, init, String(input).includes('/capabilities') ? 8000 : 60000);
@@ -180,7 +181,7 @@ export class BreadController {
     try {
       const validated = turnRequestSchema.safeParse(request); if (!validated.success) { retryable = false; throw new Error('这段内容有点长，可以分几段发送。'); }
       let json: unknown;
-      let speech: Promise<Blob> | undefined;
+      let speech: Promise<CallSpeech> | undefined;
       const legacy = async () => {
         signal.throwIfAborted();
         const res = await this.fetcher('/api/agent/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal });

@@ -5,7 +5,7 @@ import { mockCandidate } from '../../server/providers/mock-agent';
 
 // A controllable microphone connected to the actual browser AudioWorklet. Provider I/O is mocked
 // here; the separate opt-in live check measures MiniMax + the configured model end to end.
-async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' = false) {
+async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' = false) {
   const stats = { asr: [] as ArrayBuffer[], turns: [] as any[], tts: 0, voices: 0, release: () => {} };
   const held = new Promise<void>(r => { stats.release = r; });
   await page.addInitScript(({ voice }) => {
@@ -50,7 +50,13 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
     if (hold === 'model' && stats.voices === 1) await held;
     const text = { type: 'candidate', candidate: mockCandidate(input) };
     const audio = Buffer.from(encodeWav(new Float32Array(16000 * 8))).toString('base64');
-    const events = combined === 'fail-tts'
+    const pcm = Buffer.alloc(32000 * 4 * 2);
+    for (let i = 0; i < pcm.length / 2; i++) pcm.writeInt16LE(Math.round(1500 * Math.sin(i * 2 * Math.PI * 213 / 32000)), i * 2);
+    const events = combined === 'pcm' ? [text,
+      { type: 'audio_start', requestId: input.requestId, format: 'pcm-s16le', sampleRate: 32000, channels: 1 },
+      ...[0, 1].map(sequence => ({ type: 'audio_chunk', requestId: input.requestId, sequence, audio: pcm.toString('base64') })),
+      { type: 'done', requestId: input.requestId },
+    ] : combined === 'fail-tts'
       ? [text, { type: 'error', error: { requestId: input.requestId, userMessage: '声音暂时没接上。' } }]
       : [text, { type: 'audio', requestId: input.requestId, mime: 'audio/mpeg', audio }, { type: 'done', requestId: input.requestId }];
     await r.fulfill({ body: events.map(e => JSON.stringify(e) + '\n').join(''), contentType: 'application/x-ndjson' }).catch(() => {});
@@ -170,4 +176,16 @@ test('mobile detects a stalled worklet instead of silently waiting forever', asy
   await page.evaluate(()=>{(window as any).__capture.port.onmessage=null;});
   await phase(page,'error');await expect(page.locator('.callroom').getByRole('alert')).toContainText('没有收到麦克风声音');
   expect(stats.asr).toHaveLength(0);await hangup(page);
+});
+
+
+test('mobile PCM audio plays, stops all queued chunks on speech, and reconnects without duplicate TTS', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  const stats = await setup(page, '', 'pcm'); await speak(page); await phase(page, 'speaking');
+  const before = await page.evaluate(() => (window as any).__audio.stops.length);
+  await speak(page); await phase(page, 'listening');
+  expect(await page.evaluate(() => (window as any).__audio.stops.length)).toBeGreaterThanOrEqual(before + 2);
+  await expect.poll(() => stats.voices, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
+  expect(stats.tts).toBe(1); await hangup(page); expect(errors).toEqual([]);
 });

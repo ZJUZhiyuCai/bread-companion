@@ -6,6 +6,7 @@ import { config } from '@/server/config';
 import { AppError, asAppError } from '@/server/errors';
 import { assertAppRequest, errorResponse, NO_STORE, readJson } from '@/server/http';
 import { timeoutSignal } from '@/server/limits';
+import { synthesizeStream } from '@/server/providers/speech-stream';
 import { synthesize } from '@/server/providers/speech';
 import { withCircuit } from '@/server/resilience';
 
@@ -40,10 +41,21 @@ export async function POST(req: Request) {
             const speechSignal = timeoutSignal(signal, c.speechTimeout);
             release = await admit(req, 'tts', requestId, speechSignal);
             const speechStart = performance.now();
-            const audio = await withCircuit('tts', () => withAbort(synthesize(candidate.assistantText, speechSignal), speechSignal));
-            if (!audio.length || audio.length > 4 * 1024 * 1024) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
-            send({ type: 'audio', requestId, mime: 'audio/mpeg', audio: Buffer.from(audio).toString('base64') });
-            send({ type: 'done', requestId, timing: { agentMs: providerMs, ttsMs: performance.now() - speechStart, totalMs: performance.now() - started } });
+            let firstAudioMs: number | undefined;
+            if (req.headers.get('X-Bread-Audio') === 'pcm-s16le-v1' && process.env.BREAD_PCM_STREAM !== 'off') {
+              await withCircuit('tts', async () => {
+                let sequence = 0;
+                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal)) {
+                  if (!sequence) { firstAudioMs = performance.now() - speechStart; send({ type: 'audio_start', requestId, format: 'pcm-s16le', sampleRate: 32000, channels: 1 }); }
+                  send({ type: 'audio_chunk', requestId, sequence: sequence++, audio: Buffer.from(audio).toString('base64') });
+                }
+              });
+            } else {
+              const audio = await withCircuit('tts', () => withAbort(synthesize(candidate.assistantText, speechSignal), speechSignal));
+              if (!audio.length || audio.length > 4 * 1024 * 1024) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
+              send({ type: 'audio', requestId, mime: 'audio/mpeg', audio: Buffer.from(audio).toString('base64') });
+            }
+            send({ type: 'done', requestId, timing: { agentMs: providerMs, firstAudioMs, ttsMs: performance.now() - speechStart, totalMs: performance.now() - started } });
           } catch (error) {
             if (!signal.aborted) {
               const err = asAppError(error);
