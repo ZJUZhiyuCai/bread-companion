@@ -153,7 +153,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           {(meta.hint || (phase === 'paused' && call.error)) && (
             <p className="callroom__hint">{phase === 'paused' && call.error ? call.error : meta.hint}</p>
           )}
-          {phase === 'listening' && call.inputWarning && <p className="callroom__hint" role="status">{call.inputWarning}</p>}
+          {['listening', 'muted'].includes(phase) && call.inputWarning && <p className="callroom__hint" role="status">{call.inputWarning}</p>}
           {/* Only while there is something to interrupt; muted or paused, the line would be wrong. */}
           {cue && CUTTABLE.includes(phase) && <p className="callroom__cue">想说就直接开口，也可以点“插话”</p>}
           {phase === 'error' && call.error && (

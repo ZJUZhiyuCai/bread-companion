@@ -3,6 +3,7 @@ import { candidateSchema } from '@/domain/schemas';
 import { validateCandidate } from '@/domain/evidence';
 import { withAbort } from '@/lib/abort';
 import { PcmSpeech, Mp3Speech, type SpeechChunks, type CallSpeech } from './speech-stream';
+import { callServiceError } from './call-error';
 
 function deferred<T>() {
   let resolve!: (value: T) => void, reject!: (error: unknown) => void;
@@ -49,7 +50,7 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
         let event;
         try { event = JSON.parse(line); } catch { throw invalid(); }
         if (!event || typeof event !== 'object') throw invalid();
-        if (event.type === 'error' && event.error?.requestId === input.requestId) throw new Error(typeof event.error.userMessage === 'string' ? event.error.userMessage.slice(0, 400) : '声音暂时没接上，文字回复还在。');
+        if (event.type === 'error' && event.error?.requestId === input.requestId) throw callServiceError(event.error);
         if (event.type === 'candidate' && !gotCandidate && !clip && !pcm) {
           const parsedResult = candidateSchema.safeParse(event.candidate);
           if (!parsedResult.success) throw invalid();
@@ -91,7 +92,7 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
       if (!res.ok) {
         let error;
         try { error = JSON.parse(buffer + decoder.decode())?.error; } catch { throw invalid(); }
-        throw new Error(typeof error?.userMessage === 'string' ? error.userMessage.slice(0, 400) : '回复没有接上，再试一次？');
+        throw callServiceError(error, res.status);
       }
       // EOF without an explicit done event is a broken response, never success.
       throw invalid();

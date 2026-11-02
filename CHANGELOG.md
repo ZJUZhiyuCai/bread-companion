@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep a healthy microphone alive after a failed call turn. Retry a transient ASR failure at most once inside the existing deadline; preserve text after reply/audio failures without duplicate model or synthesis requests. Honor quota, permission and device failures; allow five idle foreground minutes before pausing. See [continuity validation](docs/call-continuity.md).
+
 - Unified the photo companion, portrait brand, type, shallow-lit room and telephone across home, chat and calls with two official Claude Opus 5.5 / high design rounds. Matching call posters preserve the model while loading; Codex fixed resize blanking and late first-frame handset resets. See [design and verification](docs/premium-frontend.md).
 
 - Claude Opus 5.5 / high continuation: a measured connection strip reserves space instead of covering content; first-screen farewell controls precede the full card. Codex fixed call-header cascade and keyboard focus when a save opener disappears. See [integration evidence](docs/frontend-relay-validation.md).
