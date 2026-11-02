@@ -57,6 +57,8 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening uses bundled audio; subsequent replies need live synthesis. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
 
+The subsequent compressed-streaming test alternated three complete-MP3 and three streaming turns on the same public path. Median synthesis first-audio time fell from **0.871 to 0.297 s**, but complete-call medians were **5.684 / 5.743 s**: model-interface variability outweighed that gain. All six plays were continuous, and a separate live interruption recovered in **458 ms**. The [full report](docs/call-streaming.md) retains slow cases and does not claim consistently sub-five-second calls.
+
 On November 2, the primary public host's three-turn median fell from **9.475 to 5.108 s**, measured from the end of the same synthetic utterance to browser playback start. One new turn still took **10.412 s**; three additional diagnostic turns took **5.062–5.801 s**. A real-provider interruption recovered in **419 ms** and completed the next turn. These are desktop Chrome AudioWorklet tests at a mobile viewport, not physical-phone measurements. The [latency report and raw results](docs/call-latency.md) retain the slow sample and distinguish browser timing from HTTP timing.
 
 ```sh
