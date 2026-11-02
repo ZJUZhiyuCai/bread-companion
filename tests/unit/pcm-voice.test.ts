@@ -187,6 +187,36 @@ describe('compressed streaming avoids the PCM bandwidth penalty', () => {
     expect(new Uint8Array(decode.mock.calls[0][0] as ArrayBuffer)).toEqual(mp3);
     h.nodes[0].onended?.(); await played;
   });
+  it('buffers a short first fragment on a high-RTT link and schedules the delayed next fragment without a gap', async () => {
+    vi.stubGlobal('navigator', { connection: { effectiveType: '3g', rtt: 400, downlink: 1.25 } });
+    try {
+      const h = player(), stream = new Mp3Speech(), abort = new AbortController(), start = vi.fn();
+      const decoder = new MPEGDecoder(); await decoder.ready;
+      const decode = vi.spyOn(decoder, 'decode'); vi.spyOn(decoderFactory, 'createSpeechDecoder').mockResolvedValue(decoder);
+      const played = h.audio.play(stream, abort.signal, start); const rejected = expect(played).rejects.toThrow();
+      stream.push(mp3.slice(0, 4096)); await vi.waitFor(() => expect(decode).toHaveBeenCalledTimes(1));
+      expect(start).not.toHaveBeenCalled(); expect(h.nodes).toHaveLength(0);
+      h.context.currentTime = 10.55; stream.push(mp3.slice(4096, 16384));
+      await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1)); expect(h.nodes).toHaveLength(2);
+      const firstAt = h.nodes[0].start.mock.calls[0][0];
+      expect(firstAt).toBeCloseTo(10.61);
+      expect(h.nodes[1].start.mock.calls[0][0]).toBeCloseTo(firstAt + h.nodes[0].buffer!.duration);
+      abort.abort(); await rejected; h.nodes.forEach(node => expect(node.stop).toHaveBeenCalledTimes(1));
+    } finally { vi.unstubAllGlobals(); }
+  });
+  it.each(['complete', 'interrupt'])('does not strand a short buffered utterance when it must %s', async mode => {
+    vi.stubGlobal('navigator', { connection: { effectiveType: '3g', rtt: 400 } });
+    try {
+      const h = player(), stream = new Mp3Speech(), abort = new AbortController(), start = vi.fn();
+      const decoder = new MPEGDecoder(); await decoder.ready;
+      const decode = vi.spyOn(decoder, 'decode'); vi.spyOn(decoderFactory, 'createSpeechDecoder').mockResolvedValue(decoder);
+      const played = h.audio.play(stream, abort.signal, start); void played.catch(() => {});
+      stream.push(mp3.slice(0, 4096)); await vi.waitFor(() => expect(decode).toHaveBeenCalledTimes(1));
+      expect(start).not.toHaveBeenCalled();
+      if (mode === 'interrupt') { abort.abort(); await expect(played).rejects.toThrow(); expect(h.nodes).toHaveLength(0); }
+      else { stream.end(); await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1)); h.nodes[0].onended?.(); await played; }
+    } finally { vi.unstubAllGlobals(); }
+  });
   it('rejects an empty decoded stream rather than claiming a successful silent reply', async () => {
     const h = player(), stream = new Mp3Speech(), start = vi.fn();
     const played = h.audio.play(stream, new AbortController().signal, start);

@@ -1158,5 +1158,357 @@
         "content": "{\"assistantText\":\"被拒不一定是因为你不够努力，把原因都归到自己努力不够上，反而容易忽略别的因素。\",\"supportGuidance\":false}"
       }
     ]
+  },
+  "publicMp3WithSystemProxy": {
+    "at": "2026-11-02T02:13:36.972Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Primary public HTTPS site with real provider APIs. Three diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply scheduled first AudioBufferSource playback (including its 60ms cushion); includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 7070,
+            "serverTiming": "provider;dur=1027.7, total;dur=6815.1"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 7689,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            54816.400000572205,
+            74616.60000038147,
+            75078.80000019073,
+            75947.5,
+            77245.03333409627,
+            78971.53333409627
+          ],
+          "inputStart": 58007.800000190735,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 4304.084167999972,
+              "firstAudioMs": 428.0705949999974,
+              "ttsMs": 821.8072440000251,
+              "totalMs": 5140.121832999983
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 54816.400000572205,
+              "clockAt": 9.365333333333334,
+              "duration": 3.1463125
+            },
+            {
+              "at": 74616.60000038147,
+              "clockAt": 29.148,
+              "duration": 0.252
+            },
+            {
+              "at": 75078.80000019073,
+              "clockAt": 29.612,
+              "duration": 0.756
+            },
+            {
+              "at": 75947.5,
+              "clockAt": 30.481333333333332,
+              "duration": 1.296
+            },
+            {
+              "at": 77245.03333409627,
+              "clockAt": 31.77733333333333,
+              "duration": 1.728
+            },
+            {
+              "at": 78971.53333409627,
+              "clockAt": 33.50533333333333,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声就行。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 212,
+        "waitMs": 12603,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [],
+        "errors": [],
+        "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /给面包打个电话/ })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"还在检查语音能力\" data-phone=\"true\" aria-disabled=\"true\" aria-label=\"给面包打个电话\" class=\"phone-door__btn\" aria-describedby=\"call-_R_1m9btb_-pre\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    56 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      },
+      {
+        "turn": 3,
+        "requests": [],
+        "errors": [],
+        "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /给面包打个电话/ })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" title=\"还在检查语音能力\" data-phone=\"true\" aria-disabled=\"true\" aria-label=\"给面包打个电话\" class=\"phone-door__btn\" aria-describedby=\"call-_R_1m9btb_-pre\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    56 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+      }
+    ],
+    "summary": {
+      "completed": 1,
+      "medianWaitMs": 12603,
+      "maxWaitMs": 12603
+    }
+  },
+  "publicMp3Direct": {
+    "at": "2026-11-02T02:31:28.708Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Primary public HTTPS site with real provider APIs, Chrome explicitly bypasses the system HTTP proxy (--no-proxy-server). Three diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply scheduled first AudioBufferSource playback (including its 60ms cushion); includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1337,
+            "serverTiming": "provider;dur=1009.8, total;dur=1132.3"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4134,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            2081.300000190735,
+            15032.5,
+            15287.466666857401,
+            16041.866666475931,
+            17336.633333524067,
+            17912.933333714805
+          ],
+          "inputStart": 5274.199999809265,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3415.5102309999056,
+              "firstAudioMs": 319.8723100000061,
+              "ttsMs": 581.6892550000921,
+              "totalMs": 4004.750641999999
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 2081.300000190735,
+              "clockAt": 0.144,
+              "duration": 3.1463125
+            },
+            {
+              "at": 15032.5,
+              "clockAt": 13.084,
+              "duration": 0.252
+            },
+            {
+              "at": 15287.466666857401,
+              "clockAt": 13.336,
+              "duration": 0.756
+            },
+            {
+              "at": 16041.866666475931,
+              "clockAt": 14.092,
+              "duration": 1.296
+            },
+            {
+              "at": 17336.633333524067,
+              "clockAt": 15.388,
+              "duration": 0.576
+            },
+            {
+              "at": 17912.933333714805,
+              "clockAt": 15.964,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，今晚听你说，想停就停。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 5753,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1604,
+            "serverTiming": "provider;dur=1344.9, total;dur=1473.5"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 2945,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            2122.3999996185303,
+            14144.599999427795,
+            14397.099999427797,
+            15152.433332761131,
+            16449.266666094463,
+            17920.13333352407
+          ],
+          "inputStart": 5317.199999809265,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2247.5078910000157,
+              "firstAudioMs": 283.3449940001592,
+              "ttsMs": 565.7932170000859,
+              "totalMs": 2819.463020999916
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 2122.3999996185303,
+              "clockAt": 0.464,
+              "duration": 3.1463125
+            },
+            {
+              "at": 14144.599999427795,
+              "clockAt": 12.476,
+              "duration": 0.252
+            },
+            {
+              "at": 14397.099999427797,
+              "clockAt": 12.728000000000002,
+              "duration": 0.756
+            },
+            {
+              "at": 15152.433332761131,
+              "clockAt": 13.484000000000002,
+              "duration": 1.296
+            },
+            {
+              "at": 16449.266666094463,
+              "clockAt": 14.780000000000001,
+              "duration": 1.476
+            },
+            {
+              "at": 17920.13333352407,
+              "clockAt": 16.256,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，那就先听你说。想停的时候说一声就行。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 4822,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 3,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1317,
+            "serverTiming": "provider;dur=983.5, total;dur=1187.4"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 3069,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            2373.9000005722046,
+            14203.10000038147,
+            14452.266667048138,
+            15206.13333352407,
+            16503.933333714805,
+            17908.533334096275
+          ],
+          "inputStart": 5570.10000038147,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2330.8282440002076,
+              "firstAudioMs": 285.34686699998565,
+              "ttsMs": 605.0591029999778,
+              "totalMs": 2941.5223719999194
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 2373.9000005722046,
+              "clockAt": 0.416,
+              "duration": 3.1463125
+            },
+            {
+              "at": 14203.10000038147,
+              "clockAt": 12.230666666666668,
+              "duration": 0.252
+            },
+            {
+              "at": 14452.266667048138,
+              "clockAt": 12.482666666666669,
+              "duration": 0.756
+            },
+            {
+              "at": 15206.13333352407,
+              "clockAt": 13.238666666666669,
+              "duration": 1.296
+            },
+            {
+              "at": 16503.933333714805,
+              "clockAt": 14.534666666666668,
+              "duration": 1.404
+            },
+            {
+              "at": 17908.533334096275,
+              "clockAt": 15.938666666666668,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声就行。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 4628,
+        "microphoneReleased": true
+      }
+    ],
+    "summary": {
+      "completed": 3,
+      "medianWaitMs": 4822,
+      "maxWaitMs": 5753
+    }
   }
 }
