@@ -4,16 +4,16 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 const args = process.argv.slice(2), option = name => args[args.indexOf(name) + 1];
 if (!args.includes('--live')) {
-  console.log('node scripts/benchmark-call-latency.mjs --live --origin https://your-host --transport legacy|combined --output .local/call-latency');
+  console.log('node scripts/benchmark-call-latency.mjs --live --origin https://your-host --transport legacy|combined|pcm --output .local/call-latency');
   process.exit(0);
 }
 for (const name of ['--origin', '--transport', '--output']) if (!args.includes(name) || !option(name)) throw Error(`Missing ${name}`);
 const origin = new URL(option('--origin')), transport = option('--transport'), destination = resolve(option('--output'));
-if (origin.protocol !== 'https:' || origin.origin !== option('--origin') || !['legacy', 'combined'].includes(transport)) throw Error('Expected an exact HTTPS origin and legacy|combined transport');
+if (origin.protocol !== 'https:' || origin.origin !== option('--origin') || !['legacy', 'combined', 'pcm'].includes(transport)) throw Error('Expected an exact HTTPS origin and legacy|combined|pcm transport');
 await mkdir(destination, { recursive: true });
 const capsResponse = await fetch(origin.origin + '/api/capabilities', { signal: AbortSignal.timeout(10000), redirect: 'error' });
 const cookie = (capsResponse.headers.get('set-cookie') || '').split(';')[0], caps = await capsResponse.json();
-if (!cookie.startsWith('__Host-bread-visitor=') || caps.agent.mode !== 'real' || !caps.tts.available || (transport === 'combined' && !caps.tts.turnStream)) throw Error('Expected a signed visit with real configured services');
+if (!cookie.startsWith('__Host-bread-visitor=') || caps.agent.mode !== 'real' || !caps.tts.available || (transport !== 'legacy' && !caps.tts.turnStream)) throw Error('Expected a signed visit with real configured services');
 const cases = [
   '准备了一周的面试，最后还是被拒了。我现在什么建议都不想听。',
   '我今天这个面试又出了点问题。',
@@ -22,7 +22,7 @@ const cases = [
 ];
 const report = { at: new Date().toISOString(), origin: origin.origin, transport, synthetic: true, scope: 'Text-to-reply-and-audio HTTP latency; excludes endpoint detection, ASR, audio decoding and physical device playback. Four samples are not a long-term SLA.', cases: [] };
 async function post(path, body) {
-  const response = await fetch(origin.origin + path, { method: 'POST', redirect: 'error', headers: { Origin: origin.origin, Cookie: cookie, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
+  const response = await fetch(origin.origin + path, { method: 'POST', redirect: 'error', headers: { Origin: origin.origin, Cookie: cookie, 'Content-Type': 'application/json', ...(transport === 'pcm' ? { 'X-Bread-Audio': 'pcm-s16le-v1' } : {}) }, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw Error(`HTTP ${response.status} at ${path}`);
   return response;
 }
@@ -40,7 +40,7 @@ try {
         const audio = await post('/api/speech/synthesize', { requestId: randomUUID(), sessionId: request.sessionId, runId: request.runId, epoch: 0, contextRevision: 0, text: candidate.assistantText });
         bytes = new Uint8Array(await audio.arrayBuffer()); row.speechTiming = audio.headers.get('server-timing');
       } else {
-        const response = await post('/api/agent/voice', request), decoder = new TextDecoder(); let buffer = '', done = false;
+        const response = await post('/api/agent/voice', request), decoder = new TextDecoder(); let buffer = '', done = false, chunks = []; 
         for await (const chunk of response.body) {
           buffer += decoder.decode(chunk, { stream: true }); let line;
           while ((line = buffer.indexOf('\n')) >= 0) {
@@ -50,15 +50,25 @@ try {
               if (event.candidate.requestId !== request.requestId) throw Error('Mismatched reply');
               row.replyMs = Math.round(performance.now() - started); row.reply = event.candidate.assistantText;
             }
+            if (event.type === 'audio_start' && (event.format !== 'pcm-s16le' || event.sampleRate !== 32000 || event.channels !== 1)) throw Error('Unsupported audio format');
+            if (event.type === 'audio_chunk') {
+              if (event.requestId !== request.requestId || event.sequence !== chunks.length) throw Error('Mismatched audio sequence');
+              row.firstAudioMs ??= Math.round(performance.now() - started);
+              chunks.push(Buffer.from(event.audio, 'base64'));
+            }
             if (event.type === 'audio') bytes = Buffer.from(event.audio, 'base64');
             if (event.type === 'done') { row.timing = event.timing; done = true; }
           }
         }
         if (!done) throw Error('Incomplete stream');
+        if (chunks.length) { bytes = Buffer.concat(chunks); row.chunks = chunks.length; }
       }
       if (!bytes || bytes.length < 1000) throw Error('No synthesized speech');
       row.audioMs = Math.round(performance.now() - started); row.bytes = bytes.length; row.status = 'ok';
-      await writeFile(resolve(destination, `case-${index + 1}.mp3`), bytes);
+      if (row.chunks) {
+        const header = Buffer.alloc(44); header.write('RIFF'); header.writeUInt32LE(36 + bytes.length, 4); header.write('WAVEfmt ', 8); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22); header.writeUInt32LE(32000, 24); header.writeUInt32LE(64000, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34); header.write('data', 36); header.writeUInt32LE(bytes.length, 40);
+        await writeFile(resolve(destination, `case-${index + 1}.wav`), Buffer.concat([header, bytes]));
+      } else await writeFile(resolve(destination, `case-${index + 1}.mp3`), bytes);
     } catch (error) { row.status = 'failed'; row.error = String(error); row.totalMs = Math.round(performance.now() - started); process.exitCode = 1; }
     report.cases.push(row);
     await writeFile(resolve(destination, 'report.json'), JSON.stringify(report, null, 2) + '\n');

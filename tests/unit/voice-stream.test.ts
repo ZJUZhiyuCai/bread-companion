@@ -4,6 +4,7 @@ import { POST } from '@/app/api/agent/voice/route';
 import { POST as textTurn } from '@/app/api/agent/turn/route';
 import * as generation from '@/server/agent-turn';
 import * as speech from '@/server/providers/speech';
+import * as pcmSpeech from '@/server/providers/speech-stream';
 import { resetLimitsForTest, acquireBudget } from '@/server/limits';
 import { resetCircuitsForTest } from '@/server/resilience';
 import { AppError } from '@/server/errors';
@@ -39,6 +40,22 @@ beforeEach(() => {
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.useRealTimers(); });
 
 describe('checked reply and speech share one request', () => {
+  it('negotiates PCM once, preserving sequence, validation and the legacy kill switch', async () => {
+    vi.spyOn(generation, 'generateTurn').mockResolvedValue({ candidate: mockCandidate(input()), providerMs: 1 });
+    const pcm = vi.spyOn(pcmSpeech, 'synthesizeStream').mockImplementation(async function* () { yield new Uint8Array([0, 0]); yield new Uint8Array([1, 0]); });
+    const mp3 = vi.spyOn(speech, 'synthesize').mockResolvedValue(new Uint8Array([73, 68, 51]));
+    const req = request(); req.headers.set('X-Bread-Audio', 'pcm-s16le-v1');
+    const events = (await (await POST(req)).text()).trim().split('\n').map(s => JSON.parse(s));
+    expect(events.map(e => e.type)).toEqual(['candidate', 'audio_start', 'audio_chunk', 'audio_chunk', 'done']);
+    expect(events.filter(e => e.type === 'audio_chunk').map(e => e.sequence)).toEqual([0, 1]);
+    expect(pcm).toHaveBeenCalledTimes(1); expect(mp3).not.toHaveBeenCalled();
+    resetLimitsForTest(); vi.stubEnv('BREAD_PCM_STREAM', 'off');
+    const legacyReq = request(); legacyReq.headers.set('X-Bread-Audio', 'pcm-s16le-v1');
+    const fallback = (await (await POST(legacyReq)).text()).trim().split('\n').map(s => JSON.parse(s));
+    expect(fallback.map(e => e.type)).toEqual(['candidate', 'audio', 'done']);
+    expect(pcm).toHaveBeenCalledTimes(1); expect(mp3).toHaveBeenCalledTimes(1);
+  });
+
   it('emits the checked text while synthesis is still pending, then sends audio exactly once', async () => {
     const clip = deferred<Uint8Array>();
     const generate = vi.spyOn(generation, 'generateTurn').mockResolvedValue({ candidate: mockCandidate(input()), providerMs: 35 });
@@ -125,7 +142,7 @@ describe('bounded browser voice transport', () => {
     let resolved = false; void turn.audio.then(() => { resolved = true; });
     await Promise.resolve(); expect(resolved).toBe(false);
     writer.enqueue(encoded(events[1])); writer.enqueue(encoded(events[2])); writer.close();
-    expect(new Uint8Array(await (await turn.audio).arrayBuffer())).toEqual(new Uint8Array([73, 68, 51, 0]));
+    expect(new Uint8Array(await (await turn.audio as Blob).arrayBuffer())).toEqual(new Uint8Array([73, 68, 51, 0]));
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 

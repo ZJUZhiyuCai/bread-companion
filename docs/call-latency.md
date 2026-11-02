@@ -1,5 +1,7 @@
 # 电话等待时间：2026-11-02
 
+> 后续 PCM 分段播放与最新验证见 [语音流式播放](call-streaming.md)。下文保留第一轮的原始测量。
+
 本轮从真实线上等待拆解入手，保留 DeepSeek Flash（关闭思考）与 MiniMax `Chinese (Mandarin)_Warm_Bestie`。服务端没有保存对话或音频；所有实测均为虚构文本与合成声音。
 
 ## 发现与改动

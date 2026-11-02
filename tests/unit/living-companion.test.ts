@@ -1,3 +1,4 @@
+import type { CallSpeech } from '@/services/speech-stream';
 import 'fake-indexeddb/auto';
 import { readFileSync } from 'node:fs';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
@@ -23,7 +24,7 @@ class AudioFake implements CallAudioPort {
   events!: CallAudioEvents;
   open = vi.fn(async (events: CallAudioEvents) => { this.events = events; return true; });
   listen = vi.fn(); finish = vi.fn(); close = vi.fn(); stopPlayback = vi.fn(); stopDialTone = vi.fn();
-  play = vi.fn(async (_blob: Blob, _signal: AbortSignal, onStart: () => void) => { onStart(); });
+  play = vi.fn(async (_blob: CallSpeech, _signal: AbortSignal, onStart: () => void) => { onStart(); });
 }
 const controllers: BreadController[] = [];
 afterEach(() => { controllers.splice(0).forEach(c => c.dispose()); vi.unstubAllEnvs(); });

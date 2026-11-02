@@ -1,3 +1,4 @@
+import type { CallSpeech } from '@/services/speech-stream';
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CallController, type CallDeps } from '@/services/call-controller';
@@ -16,7 +17,7 @@ class AudioFake implements CallAudioPort {
   events!: CallAudioEvents;
   open = vi.fn(async(events:CallAudioEvents)=>{this.events=events;return true;});
   listen = vi.fn(); finish = vi.fn(); close = vi.fn(); stopPlayback = vi.fn();
-  play = vi.fn(async(_blob:Blob,_signal:AbortSignal,onStart:()=>void)=>{onStart();});
+  play = vi.fn(async(_blob:CallSpeech,_signal:AbortSignal,onStart:()=>void)=>{onStart();});
   say() { this.events.utterance(new File([encodeWav(new Float32Array(16000))],'call.wav',{type:'audio/wav'})); }
 }
 let active: CallController[]=[];
