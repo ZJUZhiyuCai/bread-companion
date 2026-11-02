@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { synthesizeStream } from '@/server/providers/speech-stream';
-import { requestVoiceTurn, canStreamPcm } from '@/services/voice-turn';
-import { PcmSpeech } from '@/services/speech-stream';
+import { requestVoiceTurn, canStreamPcm, canStreamMp3 } from '@/services/voice-turn';
+import { PcmSpeech, Mp3Speech } from '@/services/speech-stream';
 import { BrowserCallAudio } from '@/services/call-audio';
 import { PlaybackEchoGuard } from '@/services/playback-echo';
 import { VoiceActivity } from '@/services/voice-activity';
+import { readFileSync } from 'node:fs';
+import { MPEGDecoder } from 'mpg123-decoder';
+import * as decoderFactory from '@/services/speech-decoder';
 import { requestFixture } from '@/fixtures/scenarios';
 import { mockCandidate } from '@/server/providers/mock-agent';
 const encode = (s: string) => new TextEncoder().encode(s);
@@ -139,5 +142,55 @@ describe('PCM playback and endpointing', () => {
     let result: Float32Array | null = null;
     for (let i = 0; i < 33; i++) result ||= vad.push(silence).utterance;
     expect(result).not.toBeNull(); expect(result!.length / 16000).toBeCloseTo(1.5, 1);
+  });
+});
+
+
+describe('compressed streaming avoids the PCM bandwidth penalty', () => {
+  it('uses compressed streaming on ordinary 3G while protecting save-data and very slow connections', () => {
+    expect(canStreamMp3({ effectiveType: '3g', downlink: 1.25 })).toBe(true);
+    expect(canStreamMp3({ effectiveType: '3g', downlink: .5 })).toBe(true);
+    for (const c of [{ saveData: true }, { effectiveType: '2g' }, { downlink: .2 }]) expect(canStreamMp3(c)).toBe(false);
+  });
+  const mp3 = new Uint8Array(readFileSync('public/companion/hello-warm-bestie.mp3'));
+  it('decodes arbitrary MP3 byte boundaries identically to the complete file', async () => {
+    const whole = new MPEGDecoder(), incremental = new MPEGDecoder();
+    await Promise.all([whole.ready, incremental.ready]);
+    try {
+      const reference = whole.decode(mp3), parts: Float32Array[] = []; let count = 0, firstAt = 0;
+      for (let i = 0; i < mp3.length; i += 997) {
+        const decoded = incremental.decode(mp3.subarray(i, i + 997)); expect(decoded.errors).toEqual([]);
+        if (decoded.samplesDecoded) { parts.push(decoded.channelData[0]); count += decoded.samplesDecoded; firstAt ||= i + 997; }
+      }
+      const joined = new Float32Array(count); let offset = 0;
+      for (const part of parts) { joined.set(part, offset); offset += part.length; }
+      expect(firstAt).toBeLessThan(mp3.length / 4); expect(joined).toEqual(reference.channelData[0]);
+      expect(reference.sampleRate).toBe(32000);
+    } finally { whole.free(); incremental.free(); }
+  });
+  it('starts actual MP3 playback before all bytes arrive and frees future sources on interruption', async () => {
+    const h = player(), stream = new Mp3Speech(), abort = new AbortController(), start = vi.fn();
+    const played = h.audio.play(stream, abort.signal, start); const rejected = expect(played).rejects.toThrow();
+    stream.push(mp3.slice(0, 8192)); await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1));
+    stream.push(mp3.slice(8192)); await vi.waitFor(() => expect(h.nodes.length).toBeGreaterThan(1));
+    abort.abort(); await rejected; h.nodes.forEach(s => expect(s.stop).toHaveBeenCalledTimes(1));
+  });
+  it('uses native decoding of the same response if the optional decoder cannot initialize', async () => {
+    vi.spyOn(decoderFactory, 'createSpeechDecoder').mockResolvedValue(null);
+    const h = player(), stream = new Mp3Speech(), start = vi.fn();
+    const decode = vi.fn(async (_bytes: ArrayBuffer) => h.context.createBuffer(1, 32000, 32000));
+    Object.assign(h.context, { decodeAudioData: decode });
+    const played = h.audio.play(stream, new AbortController().signal, start);
+    stream.push(mp3.slice(0, 8192)); await Promise.resolve(); expect(start).not.toHaveBeenCalled();
+    stream.push(mp3.slice(8192)); stream.end();
+    await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1)); expect(decode).toHaveBeenCalledTimes(1);
+    expect(new Uint8Array(decode.mock.calls[0][0] as ArrayBuffer)).toEqual(mp3);
+    h.nodes[0].onended?.(); await played;
+  });
+  it('rejects an empty decoded stream rather than claiming a successful silent reply', async () => {
+    const h = player(), stream = new Mp3Speech(), start = vi.fn();
+    const played = h.audio.play(stream, new AbortController().signal, start);
+    stream.push(new Uint8Array([0, 1, 2])); stream.end();
+    await expect(played).rejects.toThrow('声音数据'); expect(start).not.toHaveBeenCalled();
   });
 });

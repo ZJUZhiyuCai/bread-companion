@@ -1,6 +1,6 @@
 /** Bounded PCM stream. Completion is explicit; a cut-off connection is never success. */
-export class PcmSpeech implements AsyncIterable<Uint8Array> {
-  readonly kind = 'pcm-s16le' as const;
+export class SpeechChunks implements AsyncIterable<Uint8Array> {
+  constructor(readonly kind: 'pcm-s16le' | 'mp3') {}
   readonly sampleRate = 32000;
   private queue: Uint8Array[] = [];
   private total = 0;
@@ -8,7 +8,7 @@ export class PcmSpeech implements AsyncIterable<Uint8Array> {
   private error: unknown;
   private wake: (() => void) | undefined;
   push(bytes: Uint8Array) {
-    if (this.closed || this.error || !bytes.length || bytes.length % 2 || (this.total += bytes.length) > 4 * 1024 * 1024) throw new Error('声音数据没有完整接上。');
+    if (this.closed || this.error || !bytes.length || (this.kind === 'pcm-s16le' && bytes.length % 2) || (this.total += bytes.length) > 4 * 1024 * 1024) throw new Error('声音数据没有完整接上。');
     this.queue.push(bytes); this.wake?.(); this.wake = undefined;
   }
   end() { this.closed = true; this.wake?.(); this.wake = undefined; }
@@ -23,4 +23,6 @@ export class PcmSpeech implements AsyncIterable<Uint8Array> {
     }
   }
 }
-export type CallSpeech = Blob | PcmSpeech;
+export class PcmSpeech extends SpeechChunks { constructor() { super('pcm-s16le'); } }
+export class Mp3Speech extends SpeechChunks { constructor() { super('mp3'); } }
+export type CallSpeech = Blob | SpeechChunks;

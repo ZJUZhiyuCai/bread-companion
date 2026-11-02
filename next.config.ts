@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   distDir: process.env.BREAD_DIST_DIR || '.next',
   turbopack: { root: process.cwd() },
+  serverExternalPackages: ['mpg123-decoder'],
   agentRules: false,
   poweredByHeader: false,
   async headers() { return [{ source: '/:path*', headers: [

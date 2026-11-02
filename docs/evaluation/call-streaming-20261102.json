@@ -1,0 +1,1162 @@
+{
+  "at": "2026-11-02",
+  "scope": "Synthetic utterances and real provider APIs. Browser timings include audio graph scheduling, not physical hardware. Candidate tunnel results are not public HTTPS results.",
+  "baseline": {
+    "at": "2026-11-02T00:38:03.245Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Three additional diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply AudioBufferSource start; includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1384,
+            "serverTiming": "provider;dur=1026.8, total;dur=1251.1"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4743,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "speaking",
+        "timing": {
+          "plays": [
+            2187.9000005722046,
+            16192.199999809265
+          ],
+          "inputStart": 5371.5,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3652.39422499761,
+              "ttsMs": 842.8704680018127,
+              "totalMs": 4501.707871001214
+            }
+          ]
+        },
+        "waitMs": 6815,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1199,
+            "serverTiming": "provider;dur=914.8, total;dur=1065.2"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 6220,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "speaking",
+        "timing": {
+          "plays": [
+            2498.699999809265,
+            17784.699999809265
+          ],
+          "inputStart": 5685.699999809265,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 4997.528560999781,
+              "ttsMs": 943.1879660002887,
+              "totalMs": 5949.333605002612
+            }
+          ]
+        },
+        "waitMs": 8094,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 3,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1229,
+            "serverTiming": "provider;dur=953.3, total;dur=1094.8"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 3293,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "speaking",
+        "timing": {
+          "plays": [
+            1922,
+            14312.900000572205
+          ],
+          "inputStart": 5104.700000762939,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2144.094266001135,
+              "ttsMs": 856.1693340018392,
+              "totalMs": 3008.6829820014536
+            }
+          ]
+        },
+        "waitMs": 5203,
+        "microphoneReleased": true
+      }
+    ],
+    "summary": {
+      "completed": 3,
+      "medianWaitMs": 6815,
+      "maxWaitMs": 8094
+    }
+  },
+  "publishedPcmWithCompleteMp3Fallback": {
+    "at": "2026-11-02T01:11:21.922Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Three additional diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply scheduled first AudioBufferSource playback (including its 60ms cushion); includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 2462,
+            "serverTiming": "provider;dur=1527.6, total;dur=1922.6"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 3557,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            5022.300000190735,
+            18711.5
+          ],
+          "inputStart": 8196.099999427795,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2201.488685999997,
+              "ttsMs": 841.6724539999996,
+              "totalMs": 3056.5010600000023
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 5022.300000190735,
+              "clockAt": 1.8133333333333332,
+              "duration": 3.1463125
+            },
+            {
+              "at": 18711.5,
+              "clockAt": 15.504,
+              "duration": 3.959020833333333
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声就行。"
+          ]
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 6510,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 2569,
+            "serverTiming": "provider;dur=994.3, total;dur=1834.2"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 5339,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            2122.300000190735,
+            17658.699999809265
+          ],
+          "inputStart": 5310.099999427795,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3423.846307,
+              "ttsMs": 905.8839989999979,
+              "totalMs": 4335.865726999997
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 2122.300000190735,
+              "clockAt": 0.208,
+              "duration": 3.1463125
+            },
+            {
+              "at": 17658.699999809265,
+              "clockAt": 15.733333333333333,
+              "duration": 4.086708333333333
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声就行。"
+          ]
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 8343,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 3,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 2693,
+            "serverTiming": "provider;dur=1005.1, total;dur=1709.9"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4380,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            3639.800000190735,
+            18380.60000038147
+          ],
+          "inputStart": 6818.60000038147,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2109.006496000002,
+              "ttsMs": 1229.7191639999946,
+              "totalMs": 3344.9374189999944
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 3639.800000190735,
+              "clockAt": 0.48533333333333334,
+              "duration": 3.1463125
+            },
+            {
+              "at": 18380.60000038147,
+              "clockAt": 15.221333333333334,
+              "duration": 4.051895833333333
+            }
+          ],
+          "replies": [
+            "好，那就先听你说。想停的时候直接说一声就行。"
+          ]
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 7557,
+        "microphoneReleased": true
+      }
+    ],
+    "summary": {
+      "completed": 3,
+      "medianWaitMs": 7557,
+      "maxWaitMs": 8343
+    }
+  },
+  "rejectedRelaxedPcmClassification": {
+    "at": "2026-11-02T01:14:30.843Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Candidate network-classification correction simulated on current production (only effectiveType changed when measured downlink >= 1Mbps; actual network unchanged). Three diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply scheduled first AudioBufferSource playback (including its 60ms cushion); includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 2001,
+            "serverTiming": "provider;dur=988.4, total;dur=1540.8"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4169,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            3265.199999809265,
+            17125.800000190735
+          ],
+          "inputStart": 6467.900000572205,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2005.08245300001,
+              "ttsMs": 853.9104579999985,
+              "totalMs": 2865.433592000016
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 3265.199999809265,
+              "clockAt": 0.29333333333333333,
+              "duration": 3.1463125
+            },
+            {
+              "at": 17125.800000190735,
+              "clockAt": 14.133333333333333,
+              "duration": 4.179583333333333
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声。"
+          ]
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 6652,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1348,
+            "serverTiming": "provider;dur=941.8, total;dur=1132.0"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4281,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            1891.0999994277954,
+            13493.300000190735,
+            14243.800000190735,
+            15011.314583142599,
+            16301.535416285198,
+            17706.747916857403
+          ],
+          "inputStart": 5089.39999961853,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 1934.957602999988,
+              "firstAudioMs": 300.3407649999717,
+              "ttsMs": 480.56601599999703,
+              "totalMs": 2421.923407000024
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 1891.0999994277954,
+              "clockAt": 0.19733333333333333,
+              "duration": 3.1463125
+            },
+            {
+              "at": 13493.300000190735,
+              "clockAt": 11.777333333333333,
+              "duration": 0.34778125
+            },
+            {
+              "at": 14243.800000190735,
+              "clockAt": 12.529333333333334,
+              "duration": 0.76628125
+            },
+            {
+              "at": 15011.314583142599,
+              "clockAt": 13.295614583333334,
+              "duration": 1.2886875
+            },
+            {
+              "at": 16301.535416285198,
+              "clockAt": 14.584302083333334,
+              "duration": 1.4048125
+            },
+            {
+              "at": 17706.747916857403,
+              "clockAt": 15.989114583333334,
+              "duration": 0.00053125
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候说一声就行。"
+          ]
+        },
+        "maxScheduledGapMs": 404,
+        "waitMs": 4398,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 3,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1532,
+            "serverTiming": "provider;dur=965.4, total;dur=1398.1"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 5105,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            2567.800000190735,
+            15887.900000572205,
+            16234.581250190735,
+            17004.76250076294,
+            18289.650000572205,
+            19903.63125038147
+          ],
+          "inputStart": 5750.400000572205,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3498.1123619999853,
+              "firstAudioMs": 292.7638170000282,
+              "ttsMs": 533.4962640000158,
+              "totalMs": 4037.4298679999774
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 2567.800000190735,
+              "clockAt": 0.5066666666666667,
+              "duration": 3.1463125
+            },
+            {
+              "at": 15887.900000572205,
+              "clockAt": 13.82,
+              "duration": 0.34778125
+            },
+            {
+              "at": 16234.581250190735,
+              "clockAt": 14.16778125,
+              "duration": 0.76628125
+            },
+            {
+              "at": 17004.76250076294,
+              "clockAt": 14.934062500000001,
+              "duration": 1.2886875
+            },
+            {
+              "at": 18289.650000572205,
+              "clockAt": 16.22275,
+              "duration": 1.61378125
+            },
+            {
+              "at": 19903.63125038147,
+              "clockAt": 17.83653125,
+              "duration": 0.00053125
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说。想停的时候说一声就行。"
+          ]
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 6132,
+        "microphoneReleased": true
+      }
+    ],
+    "summary": {
+      "completed": 3,
+      "medianWaitMs": 6132,
+      "maxWaitMs": 6652
+    }
+  },
+  "compressedMp3PrivatePreview": {
+    "at": "2026-11-02T01:32:21.217Z",
+    "origin": "http://127.0.0.1:3229",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "Private candidate over an SSH tunnel and a streaming loopback proxy; real provider APIs, not public HTTPS latency. Three diagnostic 390px browser sessions (response timing metadata captured) with the same synthetic utterance injected into an actual AudioWorklet. Wait measured from input audio end to first reply scheduled first AudioBufferSource playback (including its 60ms cushion); includes VAD, ASR, model, synthesis, network and decode, not hardware output latency.",
+    "turns": [
+      {
+        "turn": 1,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1674,
+            "serverTiming": "provider;dur=980.5, total;dur=1226.7"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 3072,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            9464.300000190735,
+            21629.39999961853,
+            21879.466666857403,
+            22634.800000190735,
+            23930.39999961853,
+            25227.5
+          ],
+          "inputStart": 12663.699999809265,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 2142.682256,
+              "firstAudioMs": 351.26759400000446,
+              "ttsMs": 694.4754149999935,
+              "totalMs": 2850.684110000002
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 9464.300000190735,
+              "clockAt": 0.368,
+              "duration": 3.1463125
+            },
+            {
+              "at": 21629.39999961853,
+              "clockAt": 12.524000000000001,
+              "duration": 0.252
+            },
+            {
+              "at": 21879.466666857403,
+              "clockAt": 12.776000000000002,
+              "duration": 0.756
+            },
+            {
+              "at": 22634.800000190735,
+              "clockAt": 13.532000000000002,
+              "duration": 1.296
+            },
+            {
+              "at": 23930.39999961853,
+              "clockAt": 14.828000000000001,
+              "duration": 1.296
+            },
+            {
+              "at": 25227.5,
+              "clockAt": 16.124000000000002,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候直接停。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 4960,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 2,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 1514,
+            "serverTiming": "provider;dur=948.5, total;dur=1049.1"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 5151,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            7175.699999809265,
+            20826.199999809265,
+            21075.10000038147,
+            21833.933333714802,
+            23127.266667048138,
+            24604.699999809265
+          ],
+          "inputStart": 10377.10000038147,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3826.4085829999967,
+              "firstAudioMs": 380.9212350000016,
+              "ttsMs": 696.5517320000072,
+              "totalMs": 4530.326002000002
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 7175.699999809265,
+              "clockAt": 0.4106666666666667,
+              "duration": 3.1463125
+            },
+            {
+              "at": 20826.199999809265,
+              "clockAt": 14.044,
+              "duration": 0.252
+            },
+            {
+              "at": 21075.10000038147,
+              "clockAt": 14.296000000000001,
+              "duration": 0.756
+            },
+            {
+              "at": 21833.933333714802,
+              "clockAt": 15.052000000000001,
+              "duration": 1.296
+            },
+            {
+              "at": 23127.266667048138,
+              "clockAt": 16.348000000000003,
+              "duration": 1.476
+            },
+            {
+              "at": 24604.699999809265,
+              "clockAt": 17.824,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，今晚就听你说，想停的时候你说一声。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 6444,
+        "microphoneReleased": true
+      },
+      {
+        "turn": 3,
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200,
+            "ms": 2083,
+            "serverTiming": "provider;dur=1479.9, total;dur=1576.7"
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200,
+            "ms": 4271,
+            "serverTiming": null
+          }
+        ],
+        "errors": [],
+        "phase": "listening",
+        "timing": {
+          "plays": [
+            5610.400000572205,
+            19220.199999809265,
+            19473.333333333332,
+            20226.333333333336,
+            21521.73333390554,
+            22820.466666857403,
+            23396.866666475937
+          ],
+          "inputStart": 8806.10000038147,
+          "inputDuration": 4005.4999999999995,
+          "providerTimings": [
+            {
+              "agentMs": 3262.5376460000116,
+              "firstAudioMs": 270.6807689999987,
+              "ttsMs": 591.7735010000033,
+              "totalMs": 3867.8894569999975
+            }
+          ],
+          "scheduled": [
+            {
+              "at": 5610.400000572205,
+              "clockAt": 0.416,
+              "duration": 3.1463125
+            },
+            {
+              "at": 19220.199999809265,
+              "clockAt": 14.012,
+              "duration": 0.252
+            },
+            {
+              "at": 19473.333333333332,
+              "clockAt": 14.264000000000001,
+              "duration": 0.756
+            },
+            {
+              "at": 20226.333333333336,
+              "clockAt": 15.020000000000001,
+              "duration": 1.296
+            },
+            {
+              "at": 21521.73333390554,
+              "clockAt": 16.316000000000003,
+              "duration": 1.296
+            },
+            {
+              "at": 22820.466666857403,
+              "clockAt": 17.612000000000002,
+              "duration": 0.576
+            },
+            {
+              "at": 23396.866666475937,
+              "clockAt": 18.188000000000002,
+              "duration": 0.144
+            }
+          ],
+          "replies": [
+            "好，那就今晚先说说，你想停的时候直接停就行。"
+          ],
+          "format": "mp3"
+        },
+        "maxScheduledGapMs": 0,
+        "waitMs": 6409,
+        "microphoneReleased": true
+      }
+    ],
+    "summary": {
+      "completed": 3,
+      "medianWaitMs": 6409,
+      "maxWaitMs": 6444
+    }
+  },
+  "deepseekComparison": [
+    {
+      "case": 0,
+      "input": "准备了两周还是被拒了，今晚不想听建议。",
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "anthropic",
+      "totalMs": 2434,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 768,
+        "input_tokens": 34,
+        "output_tokens": 30
+      },
+      "content": "{\"assistantText\":\"准备了两周还是这个结果，心里堵得慌。今晚就不说建议了。\",\"supportGuidance\":false}"
+    },
+    {
+      "case": 0,
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 0,
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 0,
+      "input": "准备了两周还是被拒了，今晚不想听建议。",
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "anthropic",
+      "totalMs": 2083,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 801,
+        "output_tokens": 32
+      },
+      "content": "{\"assistantText\":\"准备了两周还是被拒，这份落差确实不好受。今晚就先不聊那些了。\",\"supportGuidance\":false}"
+    },
+    {
+      "case": 1,
+      "input": "我今天这个面试又出了点问题。",
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "anthropic",
+      "totalMs": 2152,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 796,
+        "output_tokens": 23
+      },
+      "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+    },
+    {
+      "case": 1,
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 1,
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 1,
+      "input": "我今天这个面试又出了点问题。",
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "anthropic",
+      "totalMs": 1353,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 768,
+        "input_tokens": 29,
+        "output_tokens": 23
+      },
+      "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+    },
+    {
+      "case": 2,
+      "input": "不是我没准备，是对方临时换了题。",
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "anthropic",
+      "totalMs": 1831,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 768,
+        "input_tokens": 31,
+        "output_tokens": 30
+      },
+      "content": "{\"assistantText\":\"是我理解错了，准备不足这句话收回。临时换题确实让人措手不及。\",\"supportGuidance\":false}"
+    },
+    {
+      "case": 2,
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 2,
+      "model": "deepseek-v4.1-flash-1017",
+      "protocol": "openai",
+      "error": "Error: HTTP 404"
+    },
+    {
+      "case": 2,
+      "input": "不是我没准备，是对方临时换了题。",
+      "model": "deepseek-v4-flash-0731",
+      "protocol": "anthropic",
+      "totalMs": 3653,
+      "usage": {
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "input_tokens": 798,
+        "output_tokens": 21
+      },
+      "content": "{\"assistantText\":\"是我理解错了，准备不足这句话收回。\",\"supportGuidance\":false}"
+    }
+  ],
+  "protocolComparison": {
+    "source": "https://docs.wjark.com/maas/getAPIKEY%26URL.html",
+    "note": "The first route probe appended chat/completions to the configured Anthropic base, causing 404. It does not establish that OpenAI compatibility is unsupported. The following comparison uses the documented /api/v1/chat/completions endpoint on the same existing provider. Eight paired cases show mixed ordering; no production protocol change.",
+    "rows": [
+      {
+        "case": 0,
+        "input": "准备了两周还是被拒了，今晚不想听建议。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 4066,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 34,
+          "output_tokens": 31
+        },
+        "content": "{\"assistantText\":\"准备了两周还是被拒，这落差确实不好受。今晚就不说建议了。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "准备了两周还是被拒了，今晚不想听建议。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 2226,
+        "usage": {
+          "completion_tokens": 33,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 825,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "total_tokens": 858
+        },
+        "content": "{\"assistantText\":\"准备了两周还是被拒，这落差搁着确实不好受。今晚就不说建议了。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "我今天这个面试又出了点问题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1858,
+        "usage": {
+          "completion_tokens": 23,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 820,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 843
+        },
+        "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "我今天这个面试又出了点问题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1737,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 29,
+          "output_tokens": 23
+        },
+        "content": "{\"assistantText\":\"面试里碰上不顺的地方，确实挺烦的。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "不是我没准备，是对方临时换了题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2717,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 768,
+          "input_tokens": 31,
+          "output_tokens": 29
+        },
+        "content": "{\"assistantText\":\"是我理解错了，准备不足这话我收回。临时换题确实不好接。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "不是我没准备，是对方临时换了题。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1338,
+        "usage": {
+          "completion_tokens": 28,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 822,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 850
+        },
+        "content": "{\"assistantText\":\"是我理解错了，准备不足这句话收回。临时换题确实不好接。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "昨天熬夜准备到两点，还是被拒了。我真的觉得自己挺没用的。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 3801,
+        "usage": {
+          "completion_tokens": 31,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 829,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 860
+        },
+        "content": "{\"assistantText\":\"熬到两点还是被拒，心里堵得慌。觉得自己没用这句话，我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 0,
+        "input": "昨天熬夜准备到两点，还是被拒了。我真的觉得自己挺没用的。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2380,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 806,
+          "output_tokens": 34
+        },
+        "content": "{\"assistantText\":\"熬到两点准备，结果还是被拒，心里堵得慌。觉得自己没用这句话，我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "别安慰我说下次一定行，我现在就是难受。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1418,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 800,
+          "output_tokens": 26
+        },
+        "content": "{\"assistantText\":\"好，不说下次。你现在难受就是难受，我不绕过去。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 1,
+        "input": "别安慰我说下次一定行，我现在就是难受。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1628,
+        "usage": {
+          "completion_tokens": 27,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 850
+        },
+        "content": "{\"assistantText\":\"好，不说下次。你现在难受就是难受，我不绕开它。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "我不是焦虑，我是生气。你刚才理解错了。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1443,
+        "usage": {
+          "completion_tokens": 26,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 849
+        },
+        "content": "{\"assistantText\":\"是我理解错了，把生气说成焦虑，这句话我收回。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 2,
+        "input": "我不是焦虑，我是生气。你刚才理解错了。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 2651,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 640,
+          "input_tokens": 160,
+          "output_tokens": 26
+        },
+        "content": "{\"assistantText\":\"是我理解错了，把生气说成焦虑，这句话我收回。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 3,
+        "input": "今天不复盘，别问问题，让我安静讲一会儿。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1508,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 802,
+          "output_tokens": 29
+        },
+        "content": "{\"assistantText\":\"好，我不问，也不复盘。你想讲就讲，我安静听着。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 3,
+        "input": "今天不复盘，别问问题，让我安静讲一会儿。",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1945,
+        "usage": {
+          "completion_tokens": 26,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 825,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 851
+        },
+        "content": "{\"assistantText\":\"好，我不问，也不复盘。你讲，我听着。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 4,
+        "input": "是不是只要我更努力一点，就不会被拒了？",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "openai",
+        "totalMs": 1915,
+        "usage": {
+          "completion_tokens": 25,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens": 823,
+          "prompt_tokens_details": {
+            "cached_tokens": 768
+          },
+          "total_tokens": 848
+        },
+        "content": "{\"assistantText\":\"被拒不一定是因为你不够努力，这个说法我不认同。\",\"supportGuidance\":false}"
+      },
+      {
+        "case": 4,
+        "input": "是不是只要我更努力一点，就不会被拒了？",
+        "model": "deepseek-v4.1-flash-1017",
+        "protocol": "anthropic",
+        "totalMs": 1690,
+        "usage": {
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "input_tokens": 800,
+          "output_tokens": 35
+        },
+        "content": "{\"assistantText\":\"被拒不一定是因为你不够努力，把原因都归到自己努力不够上，反而容易忽略别的因素。\",\"supportGuidance\":false}"
+      }
+    ]
+  }
+}

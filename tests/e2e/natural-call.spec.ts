@@ -5,7 +5,7 @@ import { mockCandidate } from '../../server/providers/mock-agent';
 
 // A controllable microphone connected to the actual browser AudioWorklet. Provider I/O is mocked
 // here; the separate opt-in live check measures MiniMax + the configured model end to end.
-async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' = false) {
+async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' | 'mp3' = false) {
   const stats = { asr: [] as ArrayBuffer[], turns: [] as any[], tts: 0, voices: 0, release: () => {} };
   const held = new Promise<void>(r => { stats.release = r; });
   await page.addInitScript(({ voice }) => {
@@ -52,7 +52,12 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
     const audio = Buffer.from(encodeWav(new Float32Array(16000 * 8))).toString('base64');
     const pcm = Buffer.alloc(32000 * 4 * 2);
     for (let i = 0; i < pcm.length / 2; i++) pcm.writeInt16LE(Math.round(1500 * Math.sin(i * 2 * Math.PI * 213 / 32000)), i * 2);
-    const events = combined === 'pcm' ? [text,
+    const compressed = readFileSync('public/companion/hello-warm-bestie.mp3');
+    const events = combined === 'mp3' ? [text,
+      { type: 'audio_start', requestId: input.requestId, format: 'mp3', sampleRate: 32000, channels: 1 },
+      ...[compressed.subarray(0, 8192), compressed.subarray(8192)].map((bytes, sequence) => ({ type: 'audio_chunk', requestId: input.requestId, sequence, audio: bytes.toString('base64') })),
+      { type: 'done', requestId: input.requestId },
+    ] : combined === 'pcm' ? [text,
       { type: 'audio_start', requestId: input.requestId, format: 'pcm-s16le', sampleRate: 32000, channels: 1 },
       ...[0, 1].map(sequence => ({ type: 'audio_chunk', requestId: input.requestId, sequence, audio: pcm.toString('base64') })),
       { type: 'done', requestId: input.requestId },
@@ -186,6 +191,18 @@ test('mobile PCM audio plays, stops all queued chunks on speech, and reconnects 
   const before = await page.evaluate(() => (window as any).__audio.stops.length);
   await speak(page); await phase(page, 'listening');
   expect(await page.evaluate(() => (window as any).__audio.stops.length)).toBeGreaterThanOrEqual(before + 2);
+  await expect.poll(() => stats.voices, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
+  expect(stats.tts).toBe(1); await hangup(page); expect(errors).toEqual([]);
+});
+
+
+test('mobile compressed MP3 stream decodes in the browser and stops on natural speech', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  const stats = await setup(page, '', 'mp3'); await speak(page); await phase(page, 'speaking');
+  const plays = await page.evaluate(() => (window as any).__audio.plays.length);
+  expect(plays).toBeGreaterThanOrEqual(3); // greeting plus independently decoded compressed chunks
+  await speak(page); await phase(page, 'listening');
   await expect.poll(() => stats.voices, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
   expect(stats.tts).toBe(1); await hangup(page); expect(errors).toEqual([]);
 });
