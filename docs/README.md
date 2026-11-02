@@ -26,6 +26,8 @@
 
 ## 设计与研究
 
+- [整体视觉打磨](premium-frontend.md)：Opus 两轮设计、统一角色与电话、通话静帧、缩放与首帧回归。
+
 - [前端接力与最终验证](frontend-relay-validation.md)：DeepSeek 第二稿、Claude Opus 5.5 / high 接续、Codex 联调；保留最新后端提速。
 - [评审期第二遍打磨](design-review-relay.md)：更深的房间光、更清楚的入口层级、紧凑通话键和连接状态条。
 - [浅色、安静、可触摸的视觉细化](design-light-refinement.md)：暖白表面、哑光按钮、浅色通话页与移动端触控修复。

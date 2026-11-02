@@ -6,12 +6,12 @@
 
 收到拒信的那个晚上，你可能只想把话说出来，还没有力气分析哪里出了问题。面包是一个中文陪伴与轻复盘工具：先陪你聊，等你愿意了，再一起看看那段回答。
 
-[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md) · [最新前端接力](docs/frontend-relay-validation.md)
+[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md) · [最新视觉打磨](docs/premium-frontend.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
 
-![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/bread-home-light.png)
+![面包首页：毛绒伙伴、灵动眼睛和红色座机](docs/assets/premium/home-desktop.jpg)
 
 *本地生产构建的实际界面，截图使用规则演示与合成媒体。在线版连接真实文字和语音服务。*
 
@@ -100,7 +100,7 @@ flowchart LR
 
 互不依赖的准备工作会并行执行，例如读取本地存档与检查服务能力、准备电话开场与请求麦克风许可。付费模型请求不会为了抢速度而重复发起。电话转写后，服务器会在同一连接内返回已校验的文字并继续合成声音，减少一次浏览器往返；挂断或开口打断会取消整条链路。模型 token 不会未经检查就播放，新浏览器会逐段解码和播放 MP3，无需等待整段合成；音色、采样率与码率保持不变。不支持分段解码时，使用同一份音频完整播放。具体实现与测量边界见 [语音流式播放](docs/call-streaming.md)。
 
-前端的 3D 电话由 Blender 建模、Three.js 渲染。加载期间先展示匹配的静态图，第一帧准备好后再切换；WebGL 不可用时，首页保留可拨号的静态电话，通话画面使用 SVG。运行应用无需安装 Blender；需要修改模型时可参考 [模型源码与重建说明](docs/phone-model.md)。
+前端的 3D 电话由 Blender 建模、Three.js 渲染。加载期间先展示匹配的静态图，第一帧准备好后再切换；WebGL 不可用时，首页和通话画面保留对应姿势的模型静帧；静帧本身失败时再使用 SVG。运行应用无需安装 Blender；需要修改模型时可参考 [模型源码与重建说明](docs/phone-model.md)。
 
 <details>
 <summary>代码目录与更多工程文档</summary>
@@ -125,7 +125,7 @@ flowchart LR
 
 | 检查 | 已有结果与测量范围 |
 | --- | --- |
-| 工程回归 | **257 项单元/集成测试、56 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
+| 工程回归 | **257 项单元/集成测试、61 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
 | 核心任务（v15） | 最终一组 **8 个真实模型 API 回合**走完复盘、纠正、练习和保存；其中 **3 回合退回了原话卡或开放问题**，纠正后的训练反馈质量仍不够稳定 |
 | 中文对话（v14） | 8 个合成情境、16 轮接口调用，其中一句明确道别由本机规则回应；完整响应中位 **1.165 s**、p90 **1.477 s**，未测首 token |
 | 本轮语音分段复测（11 月 2 日） | 同路径各三轮，合成服务首音频中位 **0.871 → 0.297 s**；整通等待中位 **5.684 / 5.743 s**，尚未显示稳定改善。六轮播放连续，真实服务开口打断 **458 ms**；模型慢回合仍存在。见 [测量与失败样本](docs/call-streaming.md) |

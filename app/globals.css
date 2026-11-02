@@ -1,13 +1,19 @@
 /* ==========================================================================
-   面包 · 灯下的一张小桌子
+   面包 · 一个有地面、有光的布景
    tokens → base → atoms → characters (loaf, lamp) → views → responsive → prefs
 
-   Craft rules (docs/design-craft-release.md):
-   · Paper is nearly square (--r-paper, --r-sheet); things you press are round (999px).
-   · Three hands, by who is speaking: 面包's own words in --font-voice; the interface and your typed
-     words in --font-sans; printed matter (quotes, materials, document headings) in --font-serif.
-   · Light comes from one low lamp at the upper left. Every shadow falls down and to the right.
-   · Grain, rules and edges are static. Nothing new loops.
+   Craft rules:
+   · One world. 面包 and the red phone are photographed / rendered objects, so the page is the space
+     they were shot in: a warm wall curving down into a floor (--set-*), one large soft key light from
+     the upper left, a little cool fill from the right, window light on the wall. No paper, no grain.
+   · Everything on screen is either in that set (the plush, the Blender phone, their light and contact
+     shadows, a few matte props: ivory keys, one lacquer-red hang-up) or it is type. Nothing pretends
+     to be another material.
+   · One phone: the Blender model, live or as its still. The drawn phone is only a fallback.
+   · Two hands: 面包's own words and a few display lines in --font-voice (one real weight — never a
+     synthesised bold); everything else in --font-sans. --font-serif now points at sans.
+   · Every shadow falls down and to the right. Things you press are round (999px).
+   · Light only changes with a real state. Nothing new loops on the first screen.
    ========================================================================== */
 
 /* Bread Voice is self-hosted in unicode-range subsets; see docs/fonts.md. */
@@ -28,7 +34,39 @@
   --line-strong: #d7c7b3;
   --ink: #352f28;
   --ink-2: #595148;
-  --ink-3: #6d6458;
+  /* a shade deeper than before, so small print still clears 4.5:1 where it sits on the floor */
+  --ink-3: #645a4f;
+
+  /*
+   * The set. A wall lit from the upper left by a large soft source, settling a shade deeper toward the
+   * floor; the cove where it curves into the floor catches a little more light; the floor deepens
+   * toward you. The cool fill is the evening outside, said with temperature, never with darkness.
+   */
+  --set-wall-hi: #fcf8f2;
+  --set-wall: #f6efe5;
+  --set-wall-lo: #f2eadf;
+  --set-cove: #f6efe4;
+  /*
+   * The floor is one even plane a step below the wall, barely deepening toward you. In the first cut it
+   * kept darkening down the page, and on a wide screen that large area read as a tan slab.
+   */
+  --set-floor: #ece2d4;
+  --set-floor-far: #e9dfd0;
+  --set-key: rgba(255, 251, 243, 0.92);
+  --set-fill: rgba(178, 184, 206, 0.18);
+  --set-window: rgba(255, 247, 232, 0.95);
+  --set-pool: rgba(255, 249, 238, 0.75);
+  /* the light 面包 sits in on a call: warmer than the wall, so it can be seen to change */
+  --set-lamp: rgba(255, 228, 192, 0.62);
+
+  /* matte props in the same light: an ivory key, its edge, and a shadow cast down-right */
+  --key-face: linear-gradient(to bottom, #fffefb, #f6efe4);
+  --key-edge: rgba(122, 92, 58, 0.17);
+  --key-shadow: 0 1px 1px rgba(74, 54, 32, 0.08), 2px 9px 18px -10px rgba(74, 54, 32, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  /* the phone's lacquer, for the one control that shares its colour: hanging up */
+  --lacquer: #b8342b;
+  --lacquer-hi: #cf4a3c;
+  --lacquer-deep: #8e2620;
 
   /* paper you write on, and the table it lies on */
   --sheet: #fffefa;
@@ -113,10 +151,11 @@
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Source Han Sans SC',
     'Microsoft YaHei', system-ui, sans-serif;
-  --font-serif: 'Songti SC', 'STSong', 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif', 'SimSun', serif;
-  /* 面包's voice: a screen-tuned kai if present, otherwise the same Song as before */
-  --font-voice: 'Bread Voice', 'LXGW WenKai Screen', 'LXGW WenKai', 'Songti SC', 'STSong', 'Noto Serif SC', 'Source Han Serif SC',
-    'Source Han Serif', 'SimSun', serif;
+  /* Two hands, not three: printed matter and headings are set in the interface's own sans now. The
+     system Song differed on every platform (SimSun on Windows) and was a third voice on the page. */
+  --font-serif: var(--font-sans);
+  /* 面包's voice: the self-hosted, screen-tuned kai, then its system cousins */
+  --font-voice: 'Bread Voice', 'LXGW WenKai Screen', 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'Noto Serif SC', serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --col: 720px;
@@ -130,13 +169,13 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /*
-   * Grain, drawn here rather than shipped as an image: fractal noise tinted the colour of paper fibre.
-   * --grain is the fine tooth of writing paper; --fibre is the long strands in kraft.
+   * Retired: paper grain, kraft fibre and the crayon underline. The tokens stay, as `none`, so every
+   * `background: var(--grain), var(--sheet)` in the file is still a valid declaration — one switch turns
+   * the texture off everywhere. Surfaces get their quality from light and edges, not from noise.
    */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .26 0 0 0 0 .16 .45 0 0 0 -.18'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23g)'/%3E%3C/svg%3E");
-  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .55' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .47 0 0 0 0 .38 0 0 0 0 .25 .42 0 0 0 -.22'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)'/%3E%3C/svg%3E");
-  /* a soft crayon stroke, for the one phrase on the first screen that is worth underlining */
-  --crayon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 16' preserveAspectRatio='none'%3E%3Cpath d='M3 10.5 C40 6.5 92 5.2 140 6.6 C163 7.3 182 8.6 197 7.4' fill='none' stroke='%23e9b98a' stroke-width='7' stroke-linecap='round' opacity='.55'/%3E%3Cpath d='M8 12 C58 9.4 118 8.8 192 10.6' fill='none' stroke='%23e9b98a' stroke-width='3' stroke-linecap='round' opacity='.4'/%3E%3C/svg%3E");
+  --grain: none;
+  --fibre: none;
+  --crayon: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -151,6 +190,26 @@
     --ink: #f3eadc;
     --ink-2: #d6cab8;
     --ink-3: #ab9f8d;
+
+    /* the same set late in the evening: warm dark wall, the floor a step deeper, the window's light low */
+    --set-wall-hi: #27221c;
+    --set-wall: #1e1a15;
+    --set-wall-lo: #1a1611;
+    --set-cove: #211c16;
+    --set-floor: #17130f;
+    --set-floor-far: #13100c;
+    --set-key: rgba(255, 222, 176, 0.075);
+    --set-fill: rgba(118, 128, 176, 0.08);
+    --set-window: rgba(255, 216, 168, 0.07);
+    --set-pool: rgba(255, 214, 160, 0.06);
+    --set-lamp: rgba(255, 204, 146, 0.14);
+
+    --key-face: linear-gradient(to bottom, #2e2822, #241f1a);
+    --key-edge: rgba(255, 232, 204, 0.11);
+    --key-shadow: 0 1px 1px rgba(0, 0, 0, 0.4), 2px 9px 18px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 236, 210, 0.07);
+    --lacquer: #c13c32;
+    --lacquer-hi: #d65446;
+    --lacquer-deep: #8a2520;
 
     --sheet: #241f19;
     --sheet-edge: #3a3227;
@@ -213,14 +272,8 @@
     --shadow-paper: 0 1px 1px rgba(0, 0, 0, 0.3), 0 16px 34px -24px rgba(0, 0, 0, 0.65);
     --shadow-l: 0 1px 0 rgba(255, 236, 210, 0.06) inset, 0 22px 60px -30px rgba(0, 0, 0, 0.7);
     --edge-hi: inset 0 1px 0 rgba(255, 236, 210, 0.07);
-
-    /* the crayon under light lettering: a deeper amber, laid thinner, so the strokes stay crisp above it */
-    --crayon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 16' preserveAspectRatio='none'%3E%3Cpath d='M3 10.5 C40 6.5 92 5.2 140 6.6 C163 7.3 182 8.6 197 7.4' fill='none' stroke='%23b0743c' stroke-width='6' stroke-linecap='round' opacity='.5'/%3E%3Cpath d='M8 12 C58 9.4 118 8.8 192 10.6' fill='none' stroke='%23b0743c' stroke-width='2.5' stroke-linecap='round' opacity='.38'/%3E%3C/svg%3E");
   }
-  /* The night room should not gain a heavy floor just because the paper is darker. */
-  .entry::after {
-    opacity: 0.45;
-  }
+  /* The night room should not gain a heavy floor just because the wall is darker. */
   .callroom__main::after {
     opacity: 0.55;
   }
@@ -262,35 +315,24 @@ body {
   text-autospace: normal;
   text-spacing-trim: normal;
   line-break: strict;
+  /* Bread Voice has one real weight. A synthesised bold smears a kai's strokes, so it is never faked. */
+  font-synthesis-weight: none;
 }
 
 /*
- * The room behind every view: the tooth of the paper, and the corners of the room falling off into the
- * evening. Fixed and under everything (z-index −1 in the root context), so views that paint their own
- * background simply cover it, and nothing here ever takes a pointer.
+ * Behind every view: the set's wall, lit from the upper left, and the lens falling off a little at the
+ * corners. Fixed and under everything (z-index −1 in the root context), so views that paint their own
+ * set simply cover it, and nothing here ever takes a pointer. No grain: the quality is in the light.
  */
-body::before,
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
+  background:
+    radial-gradient(70% 60% at 14% 0%, var(--set-key), transparent 72%),
+    radial-gradient(130% 100% at 32% 38%, transparent 62%, var(--vignette) 100%);
   pointer-events: none;
-}
-body::before {
-  background-image: var(--grain);
-  background-size: 240px 240px;
-  opacity: var(--grain-opacity);
-}
-body::after {
-  background: radial-gradient(130% 100% at 32% 38%, transparent 58%, var(--vignette) 100%);
-}
-@media (prefers-color-scheme: dark) {
-  body::before {
-    /* the same tooth, lifted out of the dark instead of pressed into the light */
-    filter: invert(1);
-    mix-blend-mode: soft-light;
-  }
 }
 
 /* Display lines: balanced, and with proportional CJK punctuation where the face has it. */
@@ -526,20 +568,19 @@ kbd {
 .btn:hover:not(:disabled) .lucide-arrow-right {
   transform: translateX(2px);
 }
-/* Kraft: the same paper as the notes 面包 writes, but with the tooth turned down. */
+/* Quiet: an ivory key from the same set as the call keys — matte, lit from above, shadow down-right. */
 .btn--quiet {
-  background: color-mix(in srgb, var(--kraft) 58%, var(--sheet));
-  color: var(--kraft-ink);
-  border-color: color-mix(in srgb, var(--crust) 20%, var(--line));
-  box-shadow: var(--edge-hi);
+  background: var(--key-face);
+  color: var(--ink);
+  border-color: var(--key-edge);
+  box-shadow: var(--key-shadow);
 }
 .btn--quiet:hover:not(:disabled) {
-  background: var(--kraft);
-  border-color: color-mix(in srgb, var(--crust) 28%, var(--line));
+  border-color: color-mix(in srgb, var(--crust) 32%, var(--key-edge));
 }
 .btn--quiet:active:not(:disabled) {
-  background: var(--kraft-2);
-  box-shadow: inset 0 1px 1.5px rgba(70, 44, 18, 0.08);
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 2px rgba(70, 44, 18, 0.1);
 }
 .btn--ghost {
   border-color: var(--line-strong);
@@ -917,105 +958,102 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-family: var(--font-serif);
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
   color: var(--ink);
 }
-/* the logo: the bun keeps its own colours, the lettering is the page's ink */
+/* the logo: 面包's portrait, and its name in its own hand */
 .brand-logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.18em;
+  gap: 0.46em;
   flex: none;
   color: var(--ink);
 }
-.brand-mark,
-.brand-type {
+/*
+ * A contact photo: the plush's face cut into a circle, the way a phone shows the person you are about
+ * to call. Lit like the page — brighter at the upper left — with a hairline of crust round the rim and
+ * a small shadow falling down-right, so it sits on the bar rather than being printed into it.
+ */
+.brand-mark {
+  position: relative;
   display: block;
   flex: none;
-  height: 1em;
-  width: auto;
-  overflow: visible;
+  width: 1.72em;
+  height: 1.72em;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(120% 120% at 28% 18%, #fffaf2, #ecdcc6);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--crust) 24%, transparent),
+    1px 3px 8px -3px rgba(74, 54, 32, 0.4);
 }
-.brand-logo__mark {
-  height: 1.6em;
-  margin-block: -0.2em;
+/* framed on the eyes and the stitched smile; the tuft and feet fall outside the circle */
+.brand-mark__face {
+  position: absolute;
+  left: -12.5%;
+  top: -12%;
+  width: 125%;
 }
-.brand-logo__type {
-  height: 0.94em;
+.brand-mark .bread-mark {
+  width: 100%;
+}
+.brand-type {
+  display: block;
+  font-family: var(--font-voice);
+  font-size: 1.16em;
+  font-weight: 400;
+  line-height: 1;
+  /* two characters that read as one word: close, but with room for the kai's open strokes */
+  letter-spacing: 0.06em;
+  margin-right: -0.06em;
+  white-space: nowrap;
 }
 .wordmark__logo {
-  font-size: 1.35rem;
+  font-size: 1.28rem;
 }
 .wordmark--sm .wordmark__logo {
-  font-size: 1.12rem;
-}
-.wordmark__sub {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--ink-3);
+  font-size: 1.1rem;
 }
 .wordmark--sm {
-  font-size: 1.18rem;
   letter-spacing: 0.02em;
 }
 
+/* A plain line of type, not a stamp or a dev tag: "AI · 关于". It states a fact and opens the rest. */
 .ai-stamp {
-  display: inline-flex;
-  align-items: stretch;
-  min-height: 28px;
-  padding: 0;
-  overflow: hidden;
-  min-width: 44px;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: transparent;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.03em;
-  box-shadow: none;
   position: relative;
-  transition: border-color 0.16s, background-color 0.16s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: border-color 0.16s, background-color 0.16s, color 0.16s;
 }
-/* A plain label, not a rubber stamp: it states a fact (an AI) and opens the rest. */
 .ai-stamp:hover {
-  border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--sheet) 50%, transparent);
+  border-color: color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--sheet) 55%, transparent);
+  color: var(--ink);
 }
 .ai-stamp__ai {
-  display: grid;
-  place-items: center;
-  padding: 0 8px 0 9px;
-  background: transparent;
-  color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  border-right: 1px solid var(--line);
+  letter-spacing: 0.1em;
 }
-.ai-stamp__mode {
-  display: grid;
-  place-items: center;
-  padding: 0 9px 0 8px;
-  color: var(--ink-3);
-  font-weight: 600;
-}
-.ai-stamp--mock {
-  border-style: solid;
+.ai-stamp__mode::before {
+  content: '·';
+  margin: 0 0.5em;
+  opacity: 0.7;
 }
 .ai-stamp--mock .ai-stamp__mode {
   color: var(--amber);
-}
-.ai-stamp--real .ai-stamp__mode,
-.ai-stamp--checking .ai-stamp__mode {
-  color: var(--ink-3);
 }
 
 /* ==========================================================================
@@ -1446,7 +1484,7 @@ kbd {
 }
 
 /* ==========================================================================
-   The nook: a pool of lamplight and a soft spot on the table
+   面包's spot in the set: key light on the wall, a pool of light on the floor
    ========================================================================== */
 
 .nook {
@@ -1454,33 +1492,27 @@ kbd {
   isolation: isolate;
 }
 /*
- * The lamp behind 面包: a hot, small core where the light is strongest (just above and left of its
- * head, where the key light on the fur comes from) inside a wide, slow falloff. Two layers, so the
- * pool has a centre instead of being one flat disc.
+ * The key light, where it lands on the wall: centred up and to the left of 面包 — toward the source —
+ * and wide enough that its edge is nowhere near the figure. A disc centred behind a cut-out reads as
+ * the cut-out's glow; light that is clearly coming from somewhere reads as a room. Near-white, not peach.
  */
 .nook__glow {
   position: absolute;
-  inset: -8% -12% 0;
+  inset: -22% -24% 6% -38%;
   z-index: -2;
-  border-radius: 50%;
-  background:
-    radial-gradient(34% 30% at 40% 34%, var(--glow-core), transparent 100%),
-    radial-gradient(closest-side, color-mix(in srgb, var(--lamp) 58%, transparent), color-mix(in srgb, var(--lamp) 16%, transparent) 62%, transparent);
-  opacity: 0.8;
+  background: radial-gradient(48% 46% at 30% 26%, var(--set-key), transparent 100%);
   pointer-events: none;
 }
-/* The spot on the table the lamp reaches: lit toward the lamp, falling off into the wood away from it. */
+/* The pool of light on the floor 面包 sits in. The contact shadows are the figure's own (p-ground). */
 .nook__table {
   position: absolute;
-  left: -2%;
-  right: -4%;
-  bottom: -1.5%;
+  left: -16%;
+  right: -22%;
+  bottom: -6%;
   z-index: -1;
-  height: 13%;
+  height: 22%;
   border-radius: 50%;
-  background:
-    radial-gradient(48% 60% at 40% 46%, color-mix(in srgb, var(--lamp) 34%, transparent), transparent 100%),
-    radial-gradient(closest-side, color-mix(in srgb, var(--wood) 46%, transparent), color-mix(in srgb, var(--wood) 12%, transparent) 70%, transparent);
+  background: radial-gradient(48% 50% at 42% 46%, var(--set-pool), transparent 100%);
   pointer-events: none;
 }
 .nook .nook__phone {
@@ -1489,16 +1521,12 @@ kbd {
   bottom: -1%;
   width: 40%;
 }
-.nook.is-lit .nook__glow {
-  /* the lamp breathes slower than a resting person does, and barely — felt more than seen */
-  animation: lamp-warm 13s ease-in-out infinite;
-}
-/* Goodnight: the lamp turns down once to a small night light; 面包 and the phone stay in it. */
+/* Goodnight: the key light turns down once; 面包 and the phone stay in what is left of it. */
 .nook.is-out .nook__glow {
   animation: lights-out 1.8s 0.5s ease-in both;
 }
 .nook.is-out .nook__phone {
-  filter: brightness(0.92);
+  filter: brightness(0.94);
 }
 
 /* ==========================================================================
@@ -1530,11 +1558,64 @@ kbd {
   display: block;
   width: 100%;
 }
-.phone-door__poster {
+.phone-door__poster,
+.phone-still__img {
   position: absolute;
   display: block;
   max-width: none;
   pointer-events: none;
+}
+/* PhoneStill: RedPhone's own box, so it drops in wherever the drawn phone used to stand. */
+.phone-still {
+  position: relative;
+  display: block;
+}
+.phone-still .rp-svg {
+  width: 100%;
+}
+/*
+ * In a call: the engine's own frames for each pose, laid over the whole picture (see CallStage). The
+ * decoded frame replaces the old one in one paint. Fading the old handset beneath a transparent new
+ * frame would leave two handsets visible. The live model uses the same atomic hand-off after painting.
+ */
+.cstage__still {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+.cstage__still.is-on {
+  z-index: 2;
+  opacity: 1;
+  transition: none;
+}
+.cstage.is-3d .cstage__still {
+  opacity: 0;
+  transition: none;
+}
+.cstage .phone3d {
+  z-index: 3;
+  opacity: 0;
+  transition: none;
+}
+.cstage.is-3d .phone3d[data-state='ready'] {
+  opacity: 1;
+}
+/* The drawing is the last resort, pose by pose; otherwise none of it shows — not even its floor or bell. */
+.cstage:not(.is-drawn) .cstage__phone {
+  visibility: hidden;
+}
+.cstage.is-3d .cstage__phone {
+  visibility: hidden;
+}
+.cstage .rp > * {
+  transition: none;
 }
 /* The server-rendered still and the live render share camera, lighting and bounds.
  * Swap in one paint; a crossfade would briefly double their translucent shadows. */
@@ -1558,13 +1639,13 @@ kbd {
 .rp > * {
   transition: opacity 0.4s var(--ease);
 }
-:is(.phone-door__art, .cstage).is-3d .rp > :not(.rp-bell, .rp-floor),
-.phone-door__art.has-poster .rp > :not(.rp-bell, .rp-floor) {
+.phone-door__art.is-3d .rp > :not(.rp-bell, .rp-floor),
+:is(.phone-door__art, .phone-still).has-poster .rp > :not(.rp-bell, .rp-floor) {
   opacity: 0;
 }
 /* the 3D phone's own contact shade sits in the drawn one; keep the pair from doubling up */
-:is(.phone-door__art, .cstage).is-3d .rp-floor > ellipse:last-child,
-.phone-door__art.has-poster .rp-floor > ellipse:last-child {
+.phone-door__art.is-3d .rp-floor > ellipse:last-child,
+:is(.phone-door__art, .phone-still).has-poster .rp-floor > ellipse:last-child {
   opacity: 0.45;
 }
 .phone-door.is-blocked .phone3d[data-state='ready'] {
@@ -1575,8 +1656,13 @@ kbd {
   opacity: 0.8;
   filter: saturate(0.3);
 }
-.cstage[data-pose='down'] .phone3d {
-  filter: saturate(0.3) brightness(0.9);
+/*
+ * A call that didn't go through: the phone is still the red phone, only quieter. Taking most of the
+ * colour out turned the lacquer a muddy brown — a different object. Still, live model and drawing all
+ * take the same grade, so nothing changes face when one hands over to another.
+ */
+.cstage[data-pose='down'] :is(.phone3d, .cstage__still, .cstage__phone) {
+  filter: saturate(0.62) brightness(0.97);
 }
 
 /* ==========================================================================
@@ -1942,6 +2028,12 @@ kbd {
   flex: none;
   width: 1.5em;
 }
+/* the Blender still on a key: a little larger than an icon, so the object reads, without growing the key */
+.btn .phone-still {
+  flex: none;
+  width: 2.1em;
+  margin-block: -0.5em -0.3em;
+}
 
 /* ==========================================================================
    Dialogs
@@ -2149,7 +2241,7 @@ kbd {
 }
 
 /* ==========================================================================
-   Entry · under the lamp
+   Entry · the set
    ========================================================================== */
 
 .entry {
@@ -2159,38 +2251,49 @@ kbd {
   display: flex;
   flex-direction: column;
   padding: 18px clamp(18px, 4vw, 52px) 28px;
-  overflow-x: hidden;
+  /* the floor runs the full width from 面包's feet down; the set simply ends at the page's edges */
+  overflow: hidden;
 }
 /*
- * The room: one low lamp behind 面包, its light pooling where it sits rather than spreading over the
- * page, and the evening in the far corner. Calm comes from where the light is, not from turning it down.
+ * The wall. A large soft key light at the upper left — so the falloff is long and even, never a spot —
+ * the wall settling a shade deeper toward the floor, and on the far right a breath of cool fill: the
+ * evening outside, said with temperature rather than darkness.
  */
 .entry::before {
   content: '';
   position: absolute;
-  inset: 0 0 auto;
-  height: 100vh;
-  z-index: -1;
+  inset: 0;
+  z-index: -3;
   background:
-    radial-gradient(26% 28% at 27% 37%, var(--glow-core), transparent 100%),
-    radial-gradient(56% 62% at 27% 45%, var(--glow-room), transparent 76%),
-    radial-gradient(30% 28% at 28% 59%, var(--glow-hush), transparent 80%),
-    radial-gradient(48% 42% at 98% 98%, var(--dusk), transparent 72%),
-    linear-gradient(to bottom, transparent 58%, var(--floor) 100%);
+    radial-gradient(64% 58% at 16% 6%, var(--set-key), transparent 74%),
+    radial-gradient(42% 66% at 106% 34%, var(--set-fill), transparent 76%),
+    linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 48%, var(--set-wall-lo));
   pointer-events: none;
-  /* Arriving, the lamp is already on and simply warms up to its full glow — once, slowly, then still. */
-  animation: lamp-on 2.2s 0.05s cubic-bezier(0.3, 0, 0.2, 1) both;
 }
-/* The quiet edge of the table: a broad, low wash that keeps the page from floating in white. */
+/*
+ * Window light: four panes thrown onto the wall by the same low sun that lights 面包's fur — from the
+ * upper left, out of frame — so they lean down to the right. Soft-edged and faint: it should read as light
+ * and as the time of day, never as a drawing of a window. Without mask support it is a soft patch of light.
+ */
 .entry::after {
   content: '';
   position: absolute;
-  inset: auto 0 0;
-  height: 44vh;
   z-index: -2;
-  background:
-    radial-gradient(58% 88% at 28% 68%, color-mix(in srgb, var(--lamp) 8%, transparent), transparent 72%),
-    linear-gradient(to top, color-mix(in srgb, var(--bg-deep) 54%, transparent), transparent 72%);
+  left: 47%;
+  top: 3%;
+  width: min(520px, 42vw);
+  aspect-ratio: 1.08;
+  background: radial-gradient(closest-side, var(--set-window), transparent);
+  /* the mullions are soft-edged in the mask itself: a mask is applied after any blur, so blur can't soften it */
+  -webkit-mask-image:
+    linear-gradient(90deg, #000 0 40%, transparent 47.5% 52.5%, #000 60%),
+    linear-gradient(#000 0 39%, transparent 47% 53%, #000 61%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(90deg, #000 0 40%, transparent 47.5% 52.5%, #000 60%),
+    linear-gradient(#000 0 39%, transparent 47% 53%, #000 61%);
+  mask-composite: intersect;
+  transform: skewX(-14deg) rotate(-4deg);
   pointer-events: none;
 }
 .entry__top {
@@ -2199,73 +2302,81 @@ kbd {
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  max-width: 1160px;
+  max-width: 1200px;
   min-height: 42px;
   margin: 0 auto;
 }
 .entry__stage {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.03fr) minmax(0, 0.97fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   gap: clamp(28px, 4.5vw, 70px);
   align-items: center;
   width: 100%;
-  max-width: 1160px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: clamp(6px, 2.2vh, 28px) 0;
 }
 /*
- * 面包 sits in the light on the left; its red phone stands in front, to the right — on the same table.
+ * 面包 sits in the light on the left; its red phone stands in front, to the right — on the same floor.
  *
- * One table line for both, at every width. The hero is square, so these percentages mean the same thing
+ * One floor line for both, at every width. The hero is square, so these percentages mean the same thing
  * across and down: 面包's feet sit 94.1% of the way down its picture, and the phone's base sits 199/260
  * of the phone picture's width below that picture's top. The phone is placed from the top so its base
- * lands on the feet line, and its name plate rests on the table in front of it, growing downward with
- * the text size instead of lifting the phone off the table.
+ * lands on the feet line, and its label sits on the floor in front of it, growing downward with the
+ * text size instead of lifting the phone off the floor.
  */
 .entry__hero {
   --scene-top: 4%;
   --scene-w: 88%;
   --door-w: 50%;
+  /* where 面包's feet (and the phone's base) meet the floor, as a share of the hero's height */
+  --feet: calc(var(--scene-top) + var(--scene-w) * 0.941);
   position: relative;
   width: 100%;
-  max-width: 560px;
+  /* at 1440 the first cut left a wide empty band above and below; the still life now holds the room */
+  max-width: min(610px, calc(100dvh - 160px));
   aspect-ratio: 1 / 1;
   justify-self: center;
 }
 /*
- * The table both of them stand on, centred on the feet line from the arithmetic above so it moves with
- * it: the lamp's spot nearest 面包, the wood darkening away from the light and under the phone.
+ * Where the key light reaches the floor: a broad, low pool under the two of them, brightest toward the
+ * lamp side, so the floor has a lit place and a falloff instead of being one even tone.
+ */
+.entry__hero::after {
+  content: '';
+  position: absolute;
+  left: -18%;
+  right: -22%;
+  top: calc(var(--feet) - 46px);
+  height: 150px;
+  z-index: -2;
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 40% 46%, var(--set-pool), transparent 100%);
+  pointer-events: none;
+}
+/*
+ * The floor, across the whole set, hung from the feet line so it moves with it at every width. It
+ * starts a little above the feet — the cove, where the wall turns into floor and catches a little more of
+ * the light — reaches floor tone just before the feet, and deepens toward you. 面包 and the phone stand
+ * on it in their own contact shadows; on narrow screens the words below stand on it too.
  */
 .entry__hero::before {
   content: '';
   position: absolute;
-  left: -8%;
-  right: -10%;
-  top: calc(var(--scene-top) + var(--scene-w) * 0.941 - 8%);
-  height: 18%;
-  z-index: -1;
-  border-radius: 50%;
-  background:
-    radial-gradient(38% 62% at 35% 50%, color-mix(in srgb, var(--lamp) 27%, transparent), transparent 100%),
-    radial-gradient(closest-side, color-mix(in srgb, var(--wood) 24%, transparent), color-mix(in srgb, var(--wood) 7%, transparent) 72%, transparent);
-  filter: blur(1.5px);
-  pointer-events: none;
-}
-/* A broad, quiet halo on the wall behind the still life. No ring, no shine. */
-.entry__hero::after {
-  content: '';
-  position: absolute;
+  left: -100vw;
+  right: -100vw;
+  top: calc(var(--feet) - 74px);
+  height: 300vh;
   z-index: -2;
-  left: 2%;
-  top: 5%;
-  width: 88%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 43% 43%, color-mix(in srgb, var(--glow-hush) 58%, transparent), transparent 68%);
-  filter: blur(16px);
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    var(--set-cove) 34px,
+    var(--set-floor) 82px,
+    var(--set-floor-far) 560px
+  );
   pointer-events: none;
-  animation: lamp-on 2.6s 0.2s cubic-bezier(0.3, 0, 0.2, 1) both;
 }
 .entry__scene {
   position: absolute;
@@ -2273,7 +2384,10 @@ kbd {
   top: var(--scene-top);
   width: var(--scene-w);
 }
-/* 面包 says who it is — an AI — from beside its head, once, and asks for nothing. */
+/*
+ * 面包 says who it is — an AI — once, beside its head, and asks for nothing. A subtitle in its own hand
+ * rather than a speech bubble: no box, no tail, just the words where it is.
+ */
 .hello-bubble {
   position: absolute;
   top: 0;
@@ -2281,80 +2395,59 @@ kbd {
   z-index: 2;
   width: max-content;
   max-width: min(14em, 48%);
-  padding: 11px 16px 12px;
-  border-radius: 16px 16px 16px 5px;
-  border: 1px solid var(--line);
-  background: var(--grain), var(--sheet);
-  background-size: 240px 240px, auto;
-  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 10px 24px -20px rgba(74, 54, 32, 0.22);
+  padding: 0;
   /* it is simply there when the page has settled — no pop, no scale */
   animation: settle-in 1.2s 0.4s ease-out both;
 }
-.hello-bubble::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  bottom: -7px;
-  width: 14px;
-  height: 14px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-bottom-right-radius: 4px;
-  background: var(--sheet);
-  transform: rotate(45deg);
-}
-/* In its own hand: the line that says who it is. */
 .hello-bubble__big {
   display: block;
   font-family: var(--font-voice);
-  font-size: 1.08rem;
-  font-weight: 600;
+  font-size: 1.18rem;
+  font-weight: 400;
   line-height: 1.5;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  color: var(--ink);
 }
 .hello-bubble__small {
   display: block;
+  margin-top: 2px;
   color: var(--ink-2);
   font-family: var(--font-voice);
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   line-height: 1.6;
+  letter-spacing: 0.03em;
 }
 
 .entry__content {
-  max-width: 534px;
+  max-width: 520px;
   animation: settle-in 1s 0.1s ease-out both;
 }
-.entry__content::before {
-  content: '';
-  display: block;
-  width: 34px;
-  height: 1px;
-  margin-bottom: 18px;
-  background: color-mix(in srgb, var(--crust) 34%, var(--line));
+/* The night, said once: a small opening line above the title, widely set, like the first card of a film. */
+.entry__eyebrow {
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.5;
+  /* wide enough to read as a title card, not so wide that the characters fall apart into single letters */
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
 }
 /*
- * A sentence, not a headline: set like the first line of a letter, in 面包's hand, unhurried. Opening
+ * A sentence, not a headline: in 面包's hand at its one real weight, large and unhurried. Opening
  * punctuation is trimmed at the margin and the full stop is allowed to hang, so the line sits flush.
  */
 .entry__title {
   font-family: var(--font-voice);
-  font-size: clamp(2.1rem, 4.35vw, 3.08rem);
-  line-height: 1.25;
-  letter-spacing: 0.035em;
-  font-weight: 600;
+  font-size: clamp(2.3rem, 4.5vw, 3.35rem);
+  font-weight: 400;
+  line-height: 1.22;
+  letter-spacing: 0.02em;
   text-spacing-trim: trim-start;
   hanging-punctuation: allow-end;
 }
-/* the one phrase worth underlining, in soft crayon, sitting under the words rather than through them */
-.entry__title-mark {
-  padding-bottom: 0.08em;
-  background: var(--crayon) no-repeat 0 92% / 100% 0.42em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
 .entry__lede {
   max-width: 27em;
-  margin-top: 16px;
+  margin-top: 18px;
   font-size: 1.03rem;
   color: var(--ink-2);
   line-height: 1.85;
@@ -2362,59 +2455,31 @@ kbd {
 }
 
 /*
- * The lightest way in: listen to 面包 for a moment. Found first, asks nothing. It reads as a small
- * player rather than a card — a brass-rimmed speaker on the left, a round play key on the right — so
- * what pressing it does (a voice plays; nothing records) is visible before the words are read.
+ * The lightest way in: listen to 面包 for a moment. Found first, asks nothing. One ivory play key — the
+ * same matte prop as the call's keys — and two lines of type; what pressing it does (a voice plays,
+ * nothing records) is visible before the words are read. With no voice, the key says 文 instead.
  */
 .rest-listen {
-  position: relative;
-  isolation: isolate;
   display: flex;
   align-items: center;
-  gap: 13px;
-  width: 100%;
-  margin-top: 26px;
-  padding: 12px 2px;
+  gap: 14px;
+  /* the key's edge lines up with the title; the hover wash reaches a little past the text on both sides */
+  width: calc(100% + 16px);
+  margin: 30px -10px 0 -6px;
+  padding: 8px 12px 8px 6px;
   border: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
   color: var(--ink);
   text-align: left;
   box-shadow: none;
-  transition: border-color 0.18s, background-color 0.18s, color 0.18s;
-}
-.rest-listen::before {
-  content: '';
-  position: absolute;
-  inset: 0 -8px;
-  z-index: -1;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--sheet) 42%, transparent);
-  opacity: 0;
-  transition: opacity 0.18s;
-  pointer-events: none;
+  transition: background-color 0.18s;
 }
 .rest-listen:hover {
-  border-color: var(--line-strong);
-}
-.rest-listen:hover::before {
-  opacity: 1;
+  background: color-mix(in srgb, var(--sheet) 52%, transparent);
 }
 .rest-listen:active {
-  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
-}
-/* the speaker: a quiet outlined badge, not a brass ring */
-.rest-listen__icon {
-  flex: none;
-  width: 40px !important;
-  height: 40px !important;
-  padding: 10px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--line);
-  color: var(--crust);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
 }
 .rest-listen__text {
   display: flex;
@@ -2424,12 +2489,12 @@ kbd {
 }
 .rest-listen__title {
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.45;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.02em;
 }
 .rest-listen__sub {
-  font-size: 0.83rem;
+  font-size: 0.84rem;
   line-height: 1.5;
   color: var(--ink-3);
 }
@@ -2437,139 +2502,122 @@ kbd {
   flex: none;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: transparent;
-  color: var(--crust);
-  box-shadow: none;
+  border: 1px solid var(--key-edge);
+  background: var(--key-face);
+  color: var(--ink);
+  box-shadow: var(--key-shadow);
+  font-family: var(--font-voice);
+  font-size: 1.05rem;
+  line-height: 1;
   transition: background-color 0.18s, color 0.18s, border-color 0.18s;
 }
 .rest-listen__play svg {
-  width: 12px;
-  height: 12px;
-  margin-left: 2px;
+  width: 13px;
+  height: 13px;
+  margin-left: 3px;
   fill: currentColor;
 }
-.rest-listen:hover .rest-listen__play {
+.rest-listen:hover .rest-listen__play:not(.is-text) {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--sheet);
 }
 
-/* For later: sorting it out, and what was kept. Present, reachable, never first. */
+/* For later: sorting it out, and what was kept. Present, reachable, never first — just two lines of type. */
+/* both links hang from one baseline: the second's small print falls below it rather than lifting it */
 .entry__later {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 26px;
-  margin-top: 22px;
-  padding-top: 13px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+  align-items: flex-start;
+  gap: 2px 28px;
+  margin-top: 20px;
 }
 .later-link {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   min-height: 44px;
-  padding: 4px 2px;
+  padding: 11px 2px 6px;
   border: 0;
   background: none;
-  color: var(--ink-3);
+  color: var(--ink-2);
   font-size: 0.88rem;
   line-height: 1.45;
   text-align: left;
+  transition: color 0.15s;
+}
+.later-link__text {
+  display: flex;
+  flex-direction: column;
+}
+/* One hairline under the link's own words only; the small print under it (where things are kept) stays plain. */
+.later-link__title {
   text-decoration: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 4px;
-  transition: color 0.15s, text-decoration-color 0.15s;
+  text-decoration-color: color-mix(in srgb, var(--ink-3) 32%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  transition: text-decoration-color 0.15s;
 }
 .later-link:hover {
   color: var(--ink);
-  text-decoration-color: color-mix(in srgb, var(--crust) 45%, transparent);
 }
-.later-link .lucide {
-  flex: none;
-  width: 17px;
-  height: 17px;
-  color: color-mix(in srgb, var(--crust) 80%, var(--ink-3));
+.later-link:hover .later-link__title {
+  text-decoration-color: color-mix(in srgb, var(--crust) 60%, transparent);
 }
 .later-link small {
   display: block;
+  margin-top: 3px;
   font-size: 0.74rem;
   color: var(--ink-3);
 }
 
 /*
- * A quiet note on the table: there if you want to write, not a form waiting to be filled. It is a sheet
- * torn from a small pad — gummed along the top, ruled faintly, cut almost square — and the lines are on
- * the textarea itself (background-attachment: local), so they scroll with the words and every line of
- * writing sits on one. --note-line is the line box; the input's line-height is exactly that.
+ * Somewhere to write, if you want to: a single matte surface in the set's light — no gum, no ruled
+ * lines, no second sheet peeking out. Lit along its top edge, a soft shadow falling down-right, so it
+ * rests on the floor of the set with everything else.
  */
 .first-note {
-  --note-line: 1.86rem;
   position: relative;
-  margin-top: 18px;
-  padding: 22px 20px 13px;
-  border-radius: 3px 3px var(--r-paper) var(--r-paper);
-  border: 1px solid var(--sheet-edge);
-  background: var(--grain), var(--sheet);
-  background-size: 240px 240px, auto;
-  box-shadow: var(--shadow-paper);
-  transition: border-color 0.2s, box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
-}
-/* the gum along the top of the pad: one quiet band, not a tan bar */
-.first-note::before {
-  content: '';
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  top: -1px;
-  height: 5px;
-  border-radius: 3px 3px 0 0;
-  background: color-mix(in srgb, var(--kraft) 62%, var(--sheet));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 10%, transparent);
-}
-/* the next sheet down, peeking out under this one */
-.first-note::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  right: 3px;
-  bottom: -4px;
-  z-index: -1;
-  height: 12px;
-  border: 1px solid var(--sheet-edge);
-  border-top: 0;
-  border-radius: 0 0 var(--r-paper) var(--r-paper);
-  background: color-mix(in srgb, var(--sheet) 80%, var(--surface-2));
-  transform: rotate(-0.5deg);
-  transform-origin: 0 0;
+  margin-top: 14px;
+  padding: 16px 18px 12px 20px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 52%, transparent);
+  background: color-mix(in srgb, var(--sheet) 74%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
+    0 1px 1px rgba(74, 54, 32, 0.04),
+    3px 16px 32px -26px rgba(74, 54, 32, 0.4);
+  transition: border-color 0.2s, box-shadow 0.3s var(--ease);
 }
 .first-note:focus-within {
-  border-color: color-mix(in srgb, var(--focus) 42%, var(--sheet-edge));
-  box-shadow: var(--shadow-paper), 0 0 0 3px var(--focus-ring);
+  border-color: color-mix(in srgb, var(--focus) 48%, var(--line-strong));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
+    3px 16px 32px -26px rgba(74, 54, 32, 0.4),
+    0 0 0 3px var(--focus-ring);
 }
 .first-note__label {
   display: block;
   font-size: 0.83rem;
   font-weight: 600;
-  letter-spacing: 0.035em;
+  letter-spacing: 0.04em;
   color: var(--ink-3);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 .first-note__input {
   display: block;
   width: 100%;
-  min-height: calc(var(--note-line) * 2);
+  min-height: 3.6em;
   padding: 0;
   border: 0;
-  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--note-line) - 1px), var(--rule) calc(var(--note-line) - 1px) var(--note-line));
-  background-attachment: local;
+  background: transparent;
   resize: none;
   /* your words stay in your own (typed) letters; only 面包 writes in its hand */
   font-size: 1.04rem;
-  line-height: var(--note-line);
+  line-height: 1.8;
 }
 .first-note__input:focus-visible {
   outline: none;
@@ -2586,9 +2634,7 @@ kbd {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 12px;
-  padding-top: 9px;
-  border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  margin-top: 8px;
 }
 /* Nothing to say under the box unless the line is too long; then it takes the left side. */
 .first-note__help {
@@ -2611,13 +2657,15 @@ kbd {
   overflow: hidden;
 }
 .session::before {
-  /* the lamp overhead; it breathes while the loaf is thinking */
+  /* the set's key light from the upper left; it breathes while 面包 is working on something */
   content: '';
   position: absolute;
   inset: 0 0 auto;
   height: 70vh;
   z-index: -1;
-  background: radial-gradient(42% 70% at 50% 0%, var(--glow), transparent 72%);
+  background:
+    radial-gradient(56% 70% at 18% 0%, var(--set-key), transparent 74%),
+    radial-gradient(42% 70% at 50% 0%, var(--glow), transparent 72%);
   pointer-events: none;
   transition: opacity 0.8s;
 }
@@ -2650,12 +2698,11 @@ kbd {
   transition: background-color 0.6s;
 }
 .session.is-calling {
-  /* The room gets quieter, not darker: one broad pool of daylight over the table, open at the edges. */
+  /* The same set, the camera closer: quieter, not darker. Key light upper left, cool fill at the right. */
   background:
-    radial-gradient(120% 82% at 50% -8%, color-mix(in srgb, var(--surface) 72%, transparent), transparent 68%),
-    radial-gradient(70% 54% at 50% 30%, var(--glow), transparent 72%),
-    linear-gradient(to bottom, transparent 58%, color-mix(in srgb, var(--bg-deep) 36%, transparent)),
-    var(--bg);
+    radial-gradient(64% 56% at 16% 0%, var(--set-key), transparent 74%),
+    radial-gradient(40% 64% at 106% 32%, var(--set-fill), transparent 76%),
+    linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 52%, var(--set-wall-lo));
   color: var(--ink);
   transition: background-color 0.6s, background 0.6s;
 }
@@ -3714,45 +3761,35 @@ kbd {
 }
 
 /*
- * The pad you write on, the same one as on the first screen: gummed along the top, cut nearly square,
- * one faint rule under each line of writing (on the textarea, so it scrolls with the words).
+ * Where you write, the same surface as on the first screen: one matte panel in the set's light, lit
+ * along its top edge, its shadow falling down-right. No gum, no ruled lines.
  */
 .composer {
   --note-line: 1.78rem;
   position: relative;
-  padding: 16px 10px 8px 18px;
-  border-radius: 4px 4px var(--r-sheet) var(--r-sheet);
-  border: 1px solid var(--sheet-edge);
-  background: var(--grain), var(--sheet);
-  background-size: 240px 240px, auto;
-  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 14px 34px -30px rgba(74, 54, 32, 0.3);
+  padding: 14px 10px 8px 18px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 52%, transparent);
+  background: color-mix(in srgb, var(--sheet) 80%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
+    0 1px 1px rgba(74, 54, 32, 0.04),
+    3px 16px 32px -26px rgba(74, 54, 32, 0.36);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-.composer::before {
-  content: '';
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  top: -1px;
-  height: 4px;
-  border-radius: 4px 4px 0 0;
-  background: color-mix(in srgb, var(--kraft) 58%, var(--sheet));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--crust) 9%, transparent);
-  pointer-events: none;
-}
 .composer:focus-within {
-  border-color: color-mix(in srgb, var(--focus) 36%, var(--sheet-edge));
-  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 0 0 3px var(--focus-ring);
+  border-color: color-mix(in srgb, var(--focus) 48%, var(--line-strong));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
+    0 0 0 3px var(--focus-ring);
 }
 .composer__input {
   display: block;
   width: 100%;
   min-height: var(--note-line);
-  /* no vertical padding: the first rule must fall exactly under the first line, not float above it */
   padding: 0 6px 0 0;
   border: 0;
-  background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--note-line) - 1px), var(--rule) calc(var(--note-line) - 1px) var(--note-line));
-  background-attachment: local;
+  background: transparent;
   resize: none;
   font-size: 1.03rem;
   line-height: var(--note-line);
@@ -4591,10 +4628,13 @@ kbd {
   grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
   gap: clamp(28px, 5vw, 72px);
   align-items: start;
+  /* the key light reaches past the scene's box; the set ends at the page's edges, no sideways scroll */
+  overflow-x: clip;
 }
 /*
- * Goodnight: as the lamp turns down to a night light, the evening that waited in the far corner comes
- * into the room — once, over the same 1.8s, then still.
+ * Goodnight, in the same set: the key light turns down once and the cool fill from the window side comes
+ * a little further in — later in the evening, not dark. The window light has moved: lower on the wall,
+ * longer, warmer. Once, over the same 1.8s, then still.
  */
 .end::before {
   content: '';
@@ -4602,10 +4642,32 @@ kbd {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(32% 38% at 24% 29%, color-mix(in srgb, var(--lamp) 17%, transparent), transparent 78%),
-    radial-gradient(68% 62% at 50% 110%, color-mix(in srgb, var(--bg-deep) 58%, transparent), transparent 72%),
+    radial-gradient(34% 40% at 22% 26%, var(--set-key), transparent 78%),
+    radial-gradient(56% 80% at 108% 40%, var(--set-fill), transparent 76%),
     radial-gradient(80% 70% at 100% 100%, var(--dusk), transparent 75%),
-    linear-gradient(to bottom, var(--dusk), transparent 70%);
+    linear-gradient(to bottom, var(--set-wall), var(--set-wall-lo) 62%, var(--set-floor));
+  pointer-events: none;
+  animation: settle-in 1.8s 0.5s ease-in both;
+}
+.end::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  left: 50%;
+  top: 34%;
+  width: min(620px, 52vw);
+  aspect-ratio: 1.5;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--set-window) 80%, var(--lamp)), transparent);
+  -webkit-mask-image:
+    linear-gradient(90deg, #000 0 40%, transparent 47.5% 52.5%, #000 60%),
+    linear-gradient(#000 0 39%, transparent 47% 53%, #000 61%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(90deg, #000 0 40%, transparent 47.5% 52.5%, #000 60%),
+    linear-gradient(#000 0 39%, transparent 47% 53%, #000 61%);
+  mask-composite: intersect;
+  transform: skewX(-26deg) rotate(-6deg);
+  opacity: 0.7;
   pointer-events: none;
   animation: settle-in 1.8s 0.5s ease-in both;
 }
@@ -4620,21 +4682,13 @@ kbd {
   max-width: 610px;
   animation: rise 0.8s 0.3s var(--ease) both;
 }
-.end__content::before {
-  content: '';
-  display: block;
-  width: 34px;
-  height: 1px;
-  margin-bottom: 18px;
-  background: color-mix(in srgb, var(--crust) 28%, var(--line));
-}
-/* 面包's goodnight, in its hand, the same size and voice as the first screen's line. */
+/* 面包's goodnight, in its hand at its one real weight, the same voice as the first screen's line. */
 .end__title {
   font-family: var(--font-voice);
-  font-size: clamp(2rem, 4.4vw, 2.9rem);
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.06em;
+  font-size: clamp(2.1rem, 4.4vw, 3rem);
+  font-weight: 400;
+  line-height: 1.26;
+  letter-spacing: 0.03em;
   text-spacing-trim: trim-start;
   hanging-punctuation: allow-end;
 }
@@ -4850,24 +4904,24 @@ kbd {
   overflow-y: auto;
   padding: 18px 22px 20px;
   border-right: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  /*
+   * A narrow view into the same set as the first screen. In the first cut the floor ran from 面包's
+   * feet to the bottom of the panel and read as a tan slab beside the cream conversation; now the floor
+   * is where the light falls — a broad pool under 面包 (its feet land 257–283px down at every corner
+   * width) that reaches the phone below and fades back into the wall at the panel's edges and foot, so
+   * the corner and the conversation are one room. Painted on the panel's own box: no extra scroll.
+   */
   background:
-    radial-gradient(75% 38% at 50% 22%, color-mix(in srgb, var(--glow-room) 54%, transparent), transparent 74%),
-    linear-gradient(to bottom, color-mix(in srgb, var(--bg-deep) 48%, transparent), transparent 78%);
+    radial-gradient(90% 34% at 10% 0%, var(--set-key), transparent 74%),
+    radial-gradient(80% 150px at 50% 340px, var(--set-floor), var(--set-floor) 45%, transparent 100%),
+    linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 46%, var(--set-wall-lo));
   box-shadow: inset -1px 0 0 color-mix(in srgb, var(--rim-light) 34%, transparent);
-}
-.companion::after {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 46%;
-  z-index: -1;
-  background: radial-gradient(55% 65% at 50% 35%, color-mix(in srgb, var(--lamp) 9%, transparent), transparent 75%);
-  pointer-events: none;
 }
 .companion__figure {
   position: relative;
   padding-top: 58px;
 }
+/* What 面包 says, as a subtitle above its head in its own hand — no bubble, no tail. */
 .companion__bubble {
   position: absolute;
   top: 0;
@@ -4875,33 +4929,19 @@ kbd {
   z-index: 1;
   width: max-content;
   max-width: 100%;
-  padding: 8px 15px 9px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 60%, var(--line));
-  background: var(--grain), var(--sheet);
-  background-size: 240px 240px, auto;
-  box-shadow: var(--edge-hi), 2px 8px 16px -10px rgba(70, 44, 18, 0.3);
+  padding: 0 4px;
   font-family: var(--font-voice);
-  font-size: 1rem;
+  font-size: 1.04rem;
+  font-weight: 400;
   line-height: 1.5;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  text-align: center;
   transform: translateX(-50%);
   animation: bubble-in-center 0.4s var(--ease) both;
 }
-.companion__bubble::after {
-  content: '';
-  position: absolute;
-  left: calc(50% - 7px);
-  bottom: -7px;
-  width: 12px;
-  height: 12px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--sheet);
-  transform: rotate(45deg);
-}
 .companion__bubble[data-state='error'] {
-  border-color: var(--amber);
+  color: var(--amber);
 }
 .companion__scene {
   max-width: 220px;
@@ -4947,9 +4987,10 @@ kbd {
   gap: 10px;
   padding: 7px 12px 7px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+  /* the same wall, seen in a strip: lit from the left, the cove's warmth along the bottom edge */
   background:
-    linear-gradient(to bottom, color-mix(in srgb, var(--sheet) 28%, transparent), transparent),
-    color-mix(in srgb, var(--bg-deep) 52%, var(--bg));
+    radial-gradient(60% 140% at 0% 0%, var(--set-key), transparent 76%),
+    linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 70%, var(--set-cove));
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--rim-light) 55%, transparent);
 }
 .perch__buddy {
@@ -5007,15 +5048,15 @@ kbd {
 .phone-door__btn:focus-visible {
   outline-offset: 0;
 }
-/* The plate under the phone is the visible control; the focus ring belongs there, not round the art. */
+/* On the home page the label under the phone is the visible control; the focus ring belongs there. */
 .phone-door--hero .phone-door__btn:focus-visible {
   outline: none;
 }
 .phone-door--hero .phone-door__btn:focus-visible .phone-door__text {
   outline: 2px solid var(--focus);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
-/* Its shadows are drawn in the same light as 面包's, inside the SVG; the box itself never moves. */
+/* Its shadows are cast in the same light as 面包's; the box itself never moves. */
 .phone-door__phone {
   width: 100%;
   transition: filter 0.3s, opacity 0.3s;
@@ -5025,11 +5066,21 @@ kbd {
   flex-direction: column;
   min-width: 0;
 }
+/* The name is ink, like every other word on the page. Red belongs to the phone, and to hanging up. */
 .phone-door__title {
-  font-size: 1.04rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.4;
-  color: var(--phone-ink);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+  transition: text-decoration-color 0.2s;
+}
+.phone-door__btn:not([aria-disabled='true']):hover .phone-door__title {
+  text-decoration-color: color-mix(in srgb, var(--lacquer) 55%, transparent);
 }
 .phone-door__sub {
   font-size: 0.84rem;
@@ -5039,10 +5090,10 @@ kbd {
 .phone-door.is-blocked .phone-door__btn {
   cursor: not-allowed;
 }
-/* When the call is unavailable the plaque grows a line taller; reserve that line instead of
-   letting the plate sit on the heading below it. */
+/* When the call is unavailable the label's second line is the reason, which can wrap; reserve room for
+   it instead of letting the label sit on the heading below. */
 .entry__hero:has(.phone-door.is-blocked) {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 .phone-door.is-pending .phone-door__btn {
   cursor: progress;
@@ -5055,8 +5106,10 @@ kbd {
   color: var(--ink-2);
 }
 /*
- * home: the phone stands on the table in front of 面包, a little to the right — its base on the same
+ * home: the phone stands on the floor in front of 面包, a little to the right — its base on the same
  * line as 面包's feet (see .entry__hero for the arithmetic), so the two are one still life at every width.
+ * No colour grading: in the old flat room the render had to be toned down to fit; in the set it is the
+ * one saturated thing, standing in the same light as 面包 — that is the point.
  */
 .phone-door--hero {
   position: absolute;
@@ -5065,13 +5118,6 @@ kbd {
   bottom: auto;
   z-index: 1;
   width: var(--door-w);
-}
-/*
- * The same lacquer, a shade quieter on the first screen: a little less saturated and bright, so its red
- * belongs with the plush's crust and blush rather than outshining them. Easy to find, never shouting.
- */
-.phone-door--hero .phone-door__art {
-  filter: saturate(0.86) brightness(0.97) drop-shadow(0 16px 12px rgba(82, 44, 20, 0.14));
 }
 /*
  * Its box overlaps 面包, so only the phone's outline and its name take a click — patting 面包's side
@@ -5090,170 +5136,114 @@ kbd {
   padding: 0 0 6px;
 }
 /*
- * On the home page the name under the phone is the call's doorplate — an enamel nameplate, the kind
- * screwed to the base of an old telephone: ivory enamel, a thin lacquer-red pinstripe inside a brass
- * bezel, a brass screw at each end, the name in red. It is the only part of the still life that says
- * "this is a button"; the plate itself is the hit area, so the object stays a picture.
+ * On the home page the phone's name sits under it the way a label sits beside an object on a table: two
+ * short lines of type, centred, no plate, no icon, no arrow. The phone is the thing you press; the label
+ * is its name and the larger, steadier half of the hit area (the phone's outline is the other half).
  */
 .phone-door--hero .phone-door__text {
   position: relative;
-  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 1px;
   width: 100%;
   min-height: 44px;
-  padding: 9px 18px 10px;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 72%, var(--line));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--enamel) 80%, var(--sheet));
-  box-shadow: 0 1px 2px rgba(72, 45, 24, 0.04);
-  text-align: left;
-  transition: border-color 0.18s, background-color 0.18s, box-shadow 0.2s, transform 0.18s var(--ease);
-}
-/* A single hairline echoes the enamel pinstripe, without a second metal frame. */
-.phone-door--hero .phone-door__text::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid color-mix(in srgb, var(--phone) 13%, transparent);
-  border-radius: inherit;
-  pointer-events: none;
-}
-.phone-door--hero .phone-door__title {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  font-size: 1rem;
-  letter-spacing: 0.06em;
-}
-.phone-door__glyph {
-  flex: none;
-  width: 38px;
-  margin: -8px 0 -7px -4px;
-}
-.phone-door__go {
-  flex: none;
-  width: 17px;
-  height: 17px;
-  margin-left: auto;
-  color: var(--ink-3);
-  transition: transform 0.2s var(--ease), color 0.2s;
-}
-.phone-door__btn:not([aria-disabled='true']):hover .phone-door__text {
-  border-color: color-mix(in srgb, var(--phone) 52%, var(--line));
-  transform: translateY(-1px);
+  margin-top: 4px;
+  padding: 5px 12px 6px;
+  border-radius: 14px;
+  text-align: center;
+  transition: background-color 0.2s;
 }
 .phone-door--hero .phone-door__btn:not([aria-disabled='true']):hover .phone-door__text {
-  border-color: color-mix(in srgb, var(--phone) 34%, var(--line-strong));
-  background: var(--enamel);
-  box-shadow: 0 4px 14px -14px rgba(72, 34, 12, 0.35);
+  background: color-mix(in srgb, var(--sheet) 42%, transparent);
 }
 .phone-door--hero .phone-door__btn:not([aria-disabled='true']):active .phone-door__text {
-  transform: translateY(0.5px);
-  background: var(--enamel-2);
-  box-shadow: inset 0 1px 2px rgba(72, 34, 12, 0.08);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
 }
-.phone-door__btn:not([aria-disabled='true']):hover .phone-door__go {
-  color: var(--phone);
-  transform: translateX(2px);
+.phone-door--hero .phone-door__title {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
 }
 .phone-door--hero .phone-door__sub {
-  display: none;
-}
-.phone-door--hero.is-blocked .phone-door__text {
-  border-radius: 16px;
-  border-style: dashed;
-  border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
-  box-shadow: none;
-}
-.phone-door--hero.is-blocked .phone-door__text::before,
-.phone-door--hero.is-blocked .phone-door__text::after {
-  filter: saturate(0.2);
-  opacity: 0.6;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
 }
 .phone-door--hero.is-blocked .phone-door__title {
   color: var(--ink-2);
 }
-.phone-door--hero.is-blocked .phone-door__glyph {
-  filter: saturate(0.25);
-  opacity: 0.7;
-}
-.phone-door--hero.is-blocked .phone-door__go {
-  display: none;
-}
 .phone-door--hero.is-blocked .phone-door__sub {
-  display: block;
-  flex-basis: 100%;
   font-size: 0.78rem;
   line-height: 1.5;
-  color: var(--ink-3);
-}
-.phone-door--hero.is-blocked .phone-door__text {
-  flex-wrap: wrap;
-  gap: 4px;
+  letter-spacing: 0.02em;
 }
 .phone-door--hero .rp-svg .rp-hit {
   pointer-events: all;
 }
-/* the corner and the empty chat: the phone next to its name */
-/* Same enamel as the home nameplate, cut as a small plaque with the phone standing on it. */
+/*
+ * The corner and the empty chat: the same phone — the Blender still — standing on the floor of the
+ * set, its name beside it. No card, no enamel, no red lettering: an object and a label. The row only
+ * shows its edge under the hand, as a soft wash of light.
+ */
 .phone-door--panel .phone-door__btn {
   flex-direction: row;
-  gap: 10px;
-  padding: 8px 14px 8px 8px;
-  border: 1px solid color-mix(in srgb, var(--phone) 14%, var(--line));
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--enamel) 54%, transparent);
+  align-items: center;
+  /* centred under 面包, on the same axis as the figure and its status line */
+  justify-content: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 4px 14px 4px 2px;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  background: transparent;
   box-shadow: none;
   text-align: left;
-  transition: background-color 0.18s, border-color 0.18s, transform 0.18s var(--ease);
+  transition: background-color 0.2s, border-color 0.2s;
 }
 .phone-door--panel .phone-door__btn:not([aria-disabled='true']):hover {
-  border-color: color-mix(in srgb, var(--phone) 28%, var(--line));
-  background: color-mix(in srgb, var(--enamel) 80%, var(--sheet));
+  border-color: color-mix(in srgb, var(--line) 75%, transparent);
+  background: color-mix(in srgb, var(--sheet) 46%, transparent);
 }
 .phone-door--panel .phone-door__phone {
   flex: none;
-  width: 74px;
+  width: 96px;
+  margin-block: -4px -2px;
 }
 .phone-door.is-blocked.phone-door--panel .phone-door__btn {
   border-style: dashed;
   border-color: var(--line-strong);
-  background: var(--surface-2);
+  background: transparent;
   box-shadow: none;
 }
+.phone-door.is-blocked.phone-door--panel .phone-door__title {
+  color: var(--ink-2);
+}
 
+/* Phones: an ivory key from the set with the same phone standing in it, and the word. */
 .call-pill {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-height: 44px;
-  padding: 0 12px 0 8px;
+  padding: 0 14px 0 4px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--phone) 24%, var(--line));
-  background: color-mix(in srgb, var(--enamel) 64%, var(--sheet));
-  color: var(--phone-ink);
+  border: 1px solid var(--key-edge);
+  background: var(--key-face);
+  color: var(--ink);
   font-size: 0.86rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 12px -14px rgba(74, 54, 32, 0.35);
+  letter-spacing: 0.04em;
+  box-shadow: var(--key-shadow);
   touch-action: manipulation;
-  transition: background-color 0.18s, border-color 0.18s, color 0.18s;
+  transition: border-color 0.18s, color 0.18s;
 }
 .call-pill__phone {
-  width: 22px;
-  transition: transform 0.25s var(--ease);
+  width: 40px;
+  margin-block: -6px -3px;
 }
 .call-pill:not(.is-blocked):hover {
-  border-color: color-mix(in srgb, var(--phone) 42%, var(--line));
-  background: var(--enamel);
+  border-color: color-mix(in srgb, var(--lacquer) 32%, var(--key-edge));
 }
-.call-pill:not(.is-blocked):hover .call-pill__phone {
-  transform: rotate(-6deg);
+.call-pill:not(.is-blocked):hover .rp-redglow {
+  opacity: 1;
 }
 .call-pill.is-blocked {
   border-style: dashed;
@@ -5308,39 +5298,21 @@ kbd {
   align-items: center;
   min-height: 0;
   overflow-y: auto;
+  /* the light behind 面包 may reach past the picture; it never becomes a sideways scroll */
+  overflow-x: hidden;
   padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
 }
-.callroom__main::before {
-  /* one broad, low light above 面包 — a room at rest, not a stage */
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 86%;
-  z-index: -2;
-  background:
-    radial-gradient(52% 62% at 50% 26%, color-mix(in srgb, var(--lamp) 15%, transparent), transparent 74%),
-    radial-gradient(80% 58% at 50% 88%, color-mix(in srgb, var(--glow-hush) 35%, transparent), transparent 76%);
-  pointer-events: none;
-  transition: opacity 0.6s;
-}
-/* The floor of the room, low and quiet, so the controls rest on something. */
+/* The floor of the set, low and quiet, so the keys rest on something. Inside the box: no extra scroll. */
 .callroom__main::after {
   content: '';
   position: absolute;
-  left: 50%;
-  bottom: -8%;
+  inset: auto 0 0;
   z-index: -1;
-  width: min(980px, 100%);
-  height: 58%;
-  transform: translateX(-50%);
-  background: radial-gradient(60% 72% at 50% 86%, color-mix(in srgb, var(--bg-deep) 46%, transparent), transparent 78%);
+  height: 46%;
+  background:
+    radial-gradient(60% 80% at 50% 100%, color-mix(in srgb, var(--set-floor) 70%, transparent), transparent 78%),
+    linear-gradient(to bottom, transparent, color-mix(in srgb, var(--set-cove) 60%, transparent));
   pointer-events: none;
-}
-.callroom[data-phase='speaking'] .callroom__main::before {
-  animation: glow-breathe 2.8s ease-in-out infinite;
-}
-.callroom:is([data-phase='paused'], [data-phase='muted'], [data-phase='error']) .callroom__main::before {
-  opacity: 0.58;
 }
 
 .callroom__bar {
@@ -5354,18 +5326,16 @@ kbd {
   font-size: 0.8rem;
   color: var(--ink-2);
 }
+/* A line of type, like the running time in a film's corner — no capsule round it. */
 .callroom__live {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 54%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 34%, transparent);
+  padding: 0;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--rim-light) 38%, transparent);
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
 }
 .callroom__pulse {
   width: 6px;
@@ -5404,85 +5374,87 @@ kbd {
   height: auto;
   overflow: visible;
 }
+/* The floor under the two of them: a soft, slightly deeper patch, fading out before the picture's edges. */
+.cstage::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 74%;
+  height: 30%;
+  z-index: -1;
+  background: radial-gradient(50% 50% at 52% 46%, var(--set-floor), transparent 100%);
+  pointer-events: none;
+}
 .cstage__pool {
-  fill: var(--lamp);
-  opacity: 0.1;
+  fill: var(--set-pool);
+  opacity: 0;
 }
-.cstage[data-pose='down'] .cstage__phone {
-  filter: saturate(0.3) brightness(0.9);
+/*
+ * Ringing, said with light: the phone's warm red glow on the floor beneath it, two quick swells and a
+ * pause — the cadence of a ring — only while the call is really connecting. Nothing shakes. With reduced
+ * motion it simply stays lit for as long as it rings. Placed under the phone's base in CALL_PHONE's frame.
+ */
+.cstage__ring {
+  position: absolute;
+  left: 73%;
+  top: 93%;
+  z-index: -1;
+  width: 46%;
+  height: 9%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(214, 70, 50, 0.3), rgba(214, 70, 50, 0.1) 55%, transparent);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
 }
-/* The rings sit behind 面包 only; the phone has its own bell. */
-.cstage__halo {
+.cstage[data-phase='connecting'] .cstage__ring {
+  opacity: 1;
+  animation: ring-light 2.4s ease-in-out infinite;
+}
+/*
+ * Light, not a diagram: the key light where it lands on the wall behind 面包, warmer than the wall so a
+ * change can be seen. It only ever says a real phase. Listening, it brightens and opens a little with
+ * your voice; speaking, it holds steady and full; thinking or turning speech into text, it takes one
+ * slow breath at a time; muted, paused or in trouble, it is turned down. Centred on 面包 and kept inside
+ * the picture's width, so it never makes the room scroll sideways.
+ */
+.cstage__light {
+  --light-o: 0.5;
+  --light-s: 1;
   position: absolute;
   left: 39%;
-  top: 48%;
+  top: 47%;
   z-index: -1;
-  display: grid;
-  place-items: center;
-  width: 80%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-}
-.cstage__halo span {
-  grid-area: 1 / 1;
-  aspect-ratio: 1;
+  width: 78%;
+  aspect-ratio: 1.12;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--lamp) 48%, transparent);
-  opacity: 0;
-  transition: transform 0.12s ease-out, opacity 0.4s, border-color 0.4s;
+  background: radial-gradient(closest-side, var(--set-lamp), color-mix(in srgb, var(--set-lamp) 42%, transparent) 52%, transparent);
+  opacity: var(--light-o);
+  transform: translate(-50%, -50%) scale(var(--light-s));
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+  pointer-events: none;
 }
-.cstage__halo span:nth-child(1) {
-  width: 68%;
+.cstage[data-phase='listening'] .cstage__light {
+  --light-o: calc(0.62 + var(--lvl, 0) * 0.38);
+  --light-s: calc(1 + var(--lvl, 0) * 0.07);
+  transition-duration: 0.18s;
 }
-.cstage__halo span:nth-child(2) {
-  width: 84%;
+.cstage[data-phase='speaking'] .cstage__light {
+  --light-o: 0.9;
 }
-.cstage__halo span:nth-child(3) {
-  width: 100%;
+.cstage:is([data-phase='thinking'], [data-phase='transcribing']) .cstage__light {
+  animation: light-breath 3.6s ease-in-out infinite;
 }
-/* listening: the rings follow the loudness of your voice */
-.cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(1) {
-  opacity: 0.7;
+.cstage:is([data-phase='muted'], [data-phase='paused'], [data-phase='error']) .cstage__light {
+  --light-o: 0.3;
 }
-.cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(2) {
-  opacity: 0.42;
-}
-.cstage:is([data-phase='listening'], [data-phase='speaking'], [data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span:nth-child(3) {
-  opacity: 0.24;
-}
-.cstage[data-phase='listening'] .cstage__halo span {
-  border-color: color-mix(in srgb, var(--ink) 24%, transparent);
-}
-.cstage[data-phase='listening'] .cstage__halo span:nth-child(1) {
-  transform: scale(calc(1 + var(--lvl, 0) * 0.14));
-}
-.cstage[data-phase='listening'] .cstage__halo span:nth-child(2) {
-  transform: scale(calc(1 + var(--lvl, 0) * 0.22));
-}
-.cstage[data-phase='listening'] .cstage__halo span:nth-child(3) {
-  transform: scale(calc(1 + var(--lvl, 0) * 0.3));
-}
-/* speaking: 面包's voice goes outward */
-.cstage[data-phase='speaking'] .cstage__halo span {
-  animation: halo-out 2.4s ease-out infinite;
-}
-.cstage[data-phase='speaking'] .cstage__halo span:nth-child(2) {
-  animation-delay: 0.8s;
-}
-.cstage[data-phase='speaking'] .cstage__halo span:nth-child(3) {
-  animation-delay: 1.6s;
-}
-.cstage:is([data-phase='thinking'], [data-phase='transcribing']) .cstage__halo span {
-  animation: halo-breathe 3s ease-in-out infinite;
-}
-.cstage[data-phase='muted'] .cstage__halo span {
-  border-style: dashed;
-  opacity: 0.2;
-}
-/* Just interrupted: the rings come up to full strength for a beat, as a plain state change. */
-.callroom.is-caught .cstage__halo span:nth-child(n) {
-  border-color: color-mix(in srgb, var(--ink) 38%, transparent);
-  opacity: 0.9;
+/* Just interrupted: the light comes straight up to listen, for a beat, as a plain state change. */
+.callroom.is-caught .cstage__light {
+  --light-o: 1;
+  --light-s: 1.05;
+  animation: none;
 }
 
 .callroom__status {
@@ -5490,13 +5462,17 @@ kbd {
   max-width: 34em;
   text-align: center;
 }
-/* One short line per phase, in 面包's own voice — so in its hand. */
+/*
+ * One short line per phase, in 面包's own voice — so in its hand. A step down from a headline: in a call
+ * the eyes should be free to leave the screen, and what 面包 says (below) is the larger type.
+ */
 .callroom__phase {
   font-family: var(--font-voice);
-  font-size: clamp(1.5rem, 2.8vw, 1.92rem);
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: 0.035em;
+  font-size: clamp(1.18rem, 2vw, 1.4rem);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
 }
 .callroom__phase:focus {
   outline: none;
@@ -5542,86 +5518,76 @@ kbd {
   stroke-width: 1.9;
 }
 
+/*
+ * Subtitles, not a chat log. Centred; 面包's line large in its own hand; yours small and pale above it,
+ * an echo of what it heard. Nothing is boxed. The speaker labels stay in the markup for screen readers.
+ */
 .callroom__captions {
   display: flex;
   flex: 0 1 auto;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-start;
   overflow-y: auto;
-  gap: 9px;
+  gap: 6px;
   width: 100%;
-  max-width: 620px;
+  max-width: 36em;
   min-height: 52px;
-  margin-top: 16px;
+  margin-top: 14px;
+  text-align: center;
 }
 .cap {
   flex: none;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+  display: block;
+  max-width: 100%;
   animation: rise 0.35s var(--ease) both;
 }
 .cap__who {
-  flex: none;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-2) 76%, transparent);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--ink-3);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .cap--you .cap__text {
   display: -webkit-box;
   overflow: hidden;
-  font-size: 0.95rem;
-  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--ink-3);
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-/* 面包's line: a card held up in the lamplight, warm along its top edge. */
 .cap--bread {
-  padding: 12px 15px;
-  border-radius: var(--r-sheet);
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 92%, var(--sheet));
-  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04), 0 12px 28px -28px rgba(48, 34, 19, 0.26);
-  transition: border-color 0.3s, background-color 0.3s, box-shadow 0.3s;
-}
-.cap--bread .cap__who {
-  background: var(--surface-2);
-  color: var(--ink-3);
+  transition: opacity 0.3s;
 }
 .cap--bread .cap__text {
-  max-height: 5.5em;
+  display: block;
+  max-height: 5.4em;
   overflow-y: auto;
-  /* a long reply scrolls inside its own box; the gutter is held so the text never shifts */
-  scrollbar-gutter: stable;
+  /* a long reply scrolls inside itself; the gutter is held so the text never shifts */
+  scrollbar-gutter: stable both-edges;
   font-family: var(--font-voice);
-  font-size: 1.2rem;
+  font-size: 1.36rem;
+  font-weight: 400;
   line-height: 1.8;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
-.cap--bread.is-live {
-  border-color: color-mix(in srgb, var(--crust) 26%, var(--line));
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(74, 54, 32, 0.04);
-}
-/* Cut off mid-sentence. Static properties only, so this still reads with reduced motion on. */
-.cap--bread.is-cut {
-  border-style: dashed;
-  border-color: var(--line-strong);
-  box-shadow: none;
-}
-.cap--bread.is-cut .cap__who,
+/* Cut off mid-sentence: the line recedes and trails off. Static properties, so it reads with reduced motion. */
 .cap--bread.is-cut .cap__text {
   color: var(--ink-3);
-  opacity: 0.6;
+  opacity: 0.55;
+  text-decoration: underline dotted color-mix(in srgb, var(--ink-3) 60%, transparent);
+  text-underline-offset: 6px;
 }
 .cap--empty {
-  justify-content: center;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: var(--ink-3);
   text-align: center;
 }
@@ -5637,19 +5603,6 @@ kbd {
   justify-content: center;
   gap: clamp(20px, 6vw, 48px);
 }
-.callroom__controls::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  z-index: -1;
-  width: min(440px, 58vw);
-  height: 112px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--sheet) 40%, transparent), transparent 70%);
-  pointer-events: none;
-}
 .callkey {
   display: flex;
   flex-direction: column;
@@ -5659,25 +5612,21 @@ kbd {
   text-align: center;
 }
 /*
- * The keys are bakelite, like the phone they belong to: domed (lit high on the left, shaded low on the
- * right), sitting on a short dark collar, and they go down when pressed. Colour says what each one is;
- * the shape and position never change between phases.
+ * The keys are props from the same set: matte ivory discs lit from above, each casting its small shadow
+ * down and to the right, and they go down when pressed. Only hanging up shares the phone's lacquer.
+ * The shape and position never change between phases.
  */
 .callkey__btn {
-  --key: var(--call-key-bg);
   display: grid;
   place-items: center;
   width: 66px;
   height: 66px;
   border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--key);
+  border: 1px solid var(--key-edge);
+  background: var(--key-face);
   color: var(--ink-2);
-  box-shadow:
-    0 1px 2px rgba(74, 54, 32, 0.045),
-    0 12px 26px -24px rgba(48, 34, 19, 0.34),
-    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 65%, transparent);
-  transition: background-color 0.18s, border-color 0.18s, color 0.18s, transform 0.12s var(--ease), box-shadow 0.18s, opacity 0.18s;
+  box-shadow: var(--key-shadow);
+  transition: background-color 0.18s, border-color 0.18s, color 0.18s, transform 0.12s var(--ease), box-shadow 0.18s, opacity 0.18s, filter 0.18s;
 }
 .callkey__btn .lucide {
   width: 25px;
@@ -5685,8 +5634,7 @@ kbd {
   stroke-width: 1.75;
 }
 .callkey__btn:hover:not([aria-disabled='true']) {
-  border-color: var(--line-strong);
-  background: var(--call-key-bg-hover);
+  border-color: color-mix(in srgb, var(--crust) 32%, var(--key-edge));
   color: var(--ink);
 }
 .callkey__btn:active:not([aria-disabled='true']) {
@@ -5706,22 +5654,17 @@ kbd {
   line-height: 1.35;
   color: var(--ink-2);
 }
-/* The lit key: a warm paper disc, sized and placed first so the eye finds it without a dark slab. */
+/* The main key: the same ivory, larger, with a crust ring, so the eye finds it first without a dark slab. */
 .callkey--primary .callkey__btn {
   width: 84px;
   height: 84px;
-  border-color: var(--call-primary-border);
-  background: var(--call-primary-bg);
-  color: var(--call-primary-ink);
-  box-shadow:
-    0 1px 2px rgba(74, 54, 32, 0.05),
-    0 16px 34px -28px rgba(96, 64, 30, 0.42),
-    inset 0 1px 0 color-mix(in srgb, var(--rim-light) 62%, transparent);
+  border-color: color-mix(in srgb, var(--crust) 30%, var(--key-edge));
+  color: var(--ink);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--set-wall-hi) 70%, transparent), var(--key-shadow);
 }
 .callkey--primary .callkey__btn:hover:not([aria-disabled='true']) {
-  border-color: color-mix(in srgb, var(--call-primary-border) 80%, var(--crust));
-  background: var(--call-primary-bg-hover);
-  color: var(--call-primary-ink);
+  border-color: color-mix(in srgb, var(--crust) 50%, var(--key-edge));
+  color: var(--ink);
 }
 .callkey--primary .callkey__btn .lucide {
   width: 29px;
@@ -5734,14 +5677,12 @@ kbd {
 }
 /* 插话: same slot and size, but quiet — speaking up is the usual way; this is the way round it. */
 .callkey--soft .callkey__btn {
-  background: var(--call-key-bg);
-  border-color: var(--line);
+  border-color: var(--key-edge);
   color: var(--ink-2);
-  box-shadow: none;
+  box-shadow: var(--key-shadow);
 }
 .callkey--soft .callkey__btn:hover:not([aria-disabled='true']) {
-  background: var(--call-key-bg-hover);
-  border-color: var(--line-strong);
+  border-color: color-mix(in srgb, var(--crust) 32%, var(--key-edge));
   color: var(--ink);
 }
 .callkey--soft .callkey__label {
@@ -5755,25 +5696,33 @@ kbd {
   box-shadow: none;
   opacity: 1;
 }
-/* Hang up: the phone's red, held back to a tinted paper key with a red rim and icon. */
+/*
+ * Hang up: solid lacquer, the phone's own red, with a white glyph — the one control on screen that shares
+ * the phone's colour, so "stop" is the easiest thing to find, not the faintest. Lit like the phone: a
+ * highlight up and to the left, the deep red low on the right.
+ */
 .callkey--hangup .callkey__btn {
-  border-color: var(--call-hangup-border);
-  background: var(--call-hangup-bg);
-  color: var(--call-hangup-ink);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--rim-light) 45%, transparent);
+  border-color: var(--lacquer-deep);
+  background: radial-gradient(120% 120% at 30% 18%, var(--lacquer-hi), var(--lacquer) 52%, var(--lacquer-deep));
+  color: #fff;
+  box-shadow:
+    0 1px 1px rgba(80, 16, 12, 0.25),
+    2px 10px 22px -10px rgba(120, 30, 20, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 .callkey--hangup .callkey__btn:hover {
-  border-color: color-mix(in srgb, var(--call-hangup-ink) 38%, var(--call-hangup-border));
-  background: color-mix(in srgb, var(--call-hangup-bg) 72%, var(--surface));
-  color: color-mix(in srgb, var(--call-hangup-ink) 88%, var(--ink));
+  border-color: var(--lacquer-deep);
+  color: #fff;
+  filter: brightness(1.06);
 }
 .callkey--hangup .callkey__label {
-  color: var(--call-hangup-ink);
+  color: var(--ink-2);
 }
 .callkey--mute .callkey__btn[aria-pressed='true'] {
   border-color: var(--line-strong);
   background: var(--surface-2);
   color: var(--ink);
+  box-shadow: inset 0 1px 3px rgba(74, 54, 32, 0.14);
 }
 
 .callroom__more {
@@ -6052,7 +6001,7 @@ body:has(.connbar) .topbar {
     --corner-w: 236px;
   }
   .session.has-tray .phone-door--panel .phone-door__phone {
-    width: 68px;
+    width: 80px;
   }
 }
 
@@ -6084,33 +6033,55 @@ body:has(.connbar) .topbar {
    * Still square, so the table-line arithmetic in .entry__hero holds here too: feet at 81.4%, the
    * phone's picture from 47.7%, its base on the feet line, the plate below inside the box.
    */
+  /*
+   * 面包's own line gets a row of its own above the picture. Beside the head, on a phone it ran into the
+   * tuft and the felt flower; above, it reads as the line spoken just before the shot, and the figure
+   * moves up into the space it used to keep clear.
+   */
   .entry__hero {
-    --scene-top: 8%;
+    --scene-top: 3%;
     --scene-w: 78%;
     --door-w: 44%;
     max-width: 500px;
     aspect-ratio: 1 / 1;
-    margin-top: -4px;
+    margin-top: 3.3rem;
+    margin-bottom: 0;
+  }
+  html:is([data-text-size='l'], [data-text-size='xl']) .entry__hero {
+    margin-top: 4.5rem;
+    margin-bottom: 1.5rem;
+  }
+  html:is([data-text-size='l'], [data-text-size='xl']) .hello-bubble {
+    top: -4.3rem;
   }
   .entry__scene {
     left: -1%;
   }
-  /* stacked, 面包 is near the top: the lamp's pool follows it there */
+  /* stacked, 面包 is near the top: the key light sits up there with it, the window light across from it */
   .entry::before {
     background:
-      radial-gradient(34% 18% at 32% 20%, var(--glow-core), transparent 100%),
-      radial-gradient(70% 34% at 34% 24%, var(--glow), transparent 74%),
-      radial-gradient(60% 30% at 100% 100%, var(--dusk), transparent 70%);
+      radial-gradient(80% 34% at 18% 4%, var(--set-key), transparent 74%),
+      radial-gradient(60% 40% at 110% 22%, var(--set-fill), transparent 76%),
+      linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 30%, var(--set-wall-lo));
+  }
+  .entry::after {
+    left: 38%;
+    top: 1%;
+    width: 66vw;
   }
   .hello-bubble {
-    top: 0;
-    right: 0;
+    top: -3.1rem;
+    left: 0;
+    right: auto;
     width: max-content;
-    max-width: 58%;
-    padding: 9px 13px 10px;
+    max-width: 100%;
+  }
+  .hello-bubble__big {
+    font-size: 1.06rem;
   }
   .hello-bubble__small {
-    font-size: 0.82rem;
+    margin-top: 0;
+    font-size: 0.88rem;
   }
   .phone-door--hero {
     position: absolute;
@@ -6119,24 +6090,16 @@ body:has(.connbar) .topbar {
     margin-top: 0;
   }
   .phone-door--hero .phone-door__title {
-    font-size: 0.86rem;
-    gap: 6px;
-    letter-spacing: 0.03em;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
     white-space: nowrap;
   }
-  .phone-door--hero .phone-door__glyph {
-    display: none;
+  .phone-door--hero .phone-door__sub {
+    font-size: 0.76rem;
+    letter-spacing: 0.03em;
   }
-  /* the plate keeps its screws; they move in a little with the narrower plate */
   .phone-door--hero .phone-door__text {
-    padding: 9px 19px 10px;
-  }
-  .phone-door--hero .phone-door__text::before {
-    inset: 3px;
-  }
-  .phone-door--hero .phone-door__go {
-    width: 15px;
-    height: 15px;
+    padding: 4px 8px 5px;
   }
   .entry__content,
   .end__content {
@@ -6160,8 +6123,7 @@ body:has(.connbar) .topbar {
 }
 
 @media (max-width: 720px) {
-  .tool-btn__label,
-  .wordmark__sub {
+  .tool-btn__label {
     display: none;
   }
   .topbar {
@@ -6244,17 +6206,12 @@ body:has(.connbar) .topbar {
     font-size: 0.9rem;
   }
   .cap--bread .cap__text {
-    font-size: 1.08rem;
+    font-size: 1.16rem;
   }
   .callroom__controls {
     width: 100%;
     gap: 10px;
     padding: 18px 0 2px;
-  }
-  .callroom__controls::before {
-    width: min(340px, 92vw);
-    height: 104px;
-    bottom: -6px;
   }
   .callkey {
     width: 84px;
@@ -6378,12 +6335,16 @@ body:has(.connbar) .topbar {
   .call-pill {
     padding: 0 12px 0 8px;
   }
+  /* the key keeps its own size at the right, like on wide screens; a full-width bar read as a form's submit */
   .first-note__row {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-end;
   }
-  .ai-stamp__mode {
-    padding: 0 6px;
+  .first-note__help {
+    align-self: stretch;
+  }
+  .ai-stamp {
+    padding-inline: 10px;
   }
   .ctl {
     padding: 0 11px;
@@ -6437,7 +6398,7 @@ body:has(.connbar) .topbar {
   }
 }
 
-/* The narrowest bars keep the bun; its name is still there for screen readers and in 面包's own line. */
+/* The narrowest bars keep the portrait; its name is still there for screen readers and in 面包's own line. */
 @media (max-width: 360px) {
   .entry__hero {
     margin-top: 4.5rem;
@@ -6460,9 +6421,8 @@ body:has(.connbar) .topbar {
   .ai-stamp__mode {
     display: none;
   }
-  .ai-stamp__ai {
+  .ai-stamp {
     padding-inline: 8px;
-    border-right: 0;
   }
   .topbar__tools {
     gap: 0;
@@ -6521,11 +6481,9 @@ body:has(.connbar) .topbar {
   .call-pill,
   .callkey__btn,
   .hello__bubble,
-  .hello-bubble,
-  .companion__bubble,
-  .cap--bread,
   .starter,
   .rest-listen,
+  .ai-stamp,
   .first-note,
   .archive__item,
   .end-desk,
@@ -6541,9 +6499,13 @@ body:has(.connbar) .topbar {
   .paper.is-draft {
     outline: 1px dashed CanvasText;
   }
-  /* Materials are decoration: in a forced palette they go, and only the outlines and words remain. */
+  /* Materials and light are decoration: in a forced palette they go, and only the outlines and words remain. */
   body::before,
   body::after,
+  .entry::after,
+  .end::after,
+  .cstage__light,
+  .cstage__ring,
   .first-note::before,
   .first-note::after,
   .composer::before,
@@ -6916,23 +6878,31 @@ body:has(.connbar) .topbar {
     box-shadow: 0 0 0 6px transparent;
   }
 }
-@keyframes halo-out {
-  0% {
-    opacity: 0.75;
-    transform: scale(0.82);
-  }
+/* a telephone's ring as light on the floor: brr-brr, then quiet */
+@keyframes ring-light {
+  0%,
+  42%,
   100% {
-    opacity: 0;
-    transform: scale(1.12);
+    opacity: 0.3;
+  }
+  9%,
+  27% {
+    opacity: 1;
+  }
+  18% {
+    opacity: 0.5;
   }
 }
-@keyframes halo-breathe {
+/* the call's light while 面包 thinks: one slow breath in and out, centred where it stands */
+@keyframes light-breath {
   0%,
   100% {
-    transform: scale(0.96);
+    opacity: 0.46;
+    transform: translate(-50%, -50%) scale(0.98);
   }
   50% {
-    transform: scale(1.03);
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(1.04);
   }
 }
 @keyframes bob {
@@ -6973,24 +6943,6 @@ body:has(.connbar) .topbar {
   50% {
     opacity: 1;
     transform: translateY(-3px);
-  }
-}
-@keyframes lamp-warm {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.93;
-  }
-}
-/* a lamp that was already on, warming to its glow: never from dark, so the page is never black or blank */
-@keyframes lamp-on {
-  from {
-    opacity: 0.45;
-  }
-  to {
-    opacity: 1;
   }
 }
 /* down to a night light, not to dark */

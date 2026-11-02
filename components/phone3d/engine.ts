@@ -500,6 +500,9 @@ export class PhoneEngine {
   private step(dt: number, now: number): boolean {
     const rig = this.rig!;
     const { pose, lift, reducedMotion: still } = this.input;
+    // A late renderer inherits the pose already shown by its poster. Replaying
+    // an earlier pickup would lower a raised handset at the exact hand-off.
+    const settlePose = still || !this.painted;
     if (still) { this.greetFrom = 0; this.landFrom = 0; }
 
     const goal = {
@@ -509,10 +512,10 @@ export class PhoneEngine {
       plunge: pose === 'lifted' ? 1 : 0,
     };
     const wasUp = this.lift > 0;
-    this.lift = still ? goal.lift : toward(this.lift, goal.lift, dt / LIFT_MS);
-    this.hold = still ? goal.hold : toward(this.hold, goal.hold, dt / HOLD_MS);
-    this.hover = still ? goal.hover : toward(this.hover, goal.hover, dt / HOVER_MS);
-    this.plunge = still ? goal.plunge : toward(this.plunge, goal.plunge, dt / PLUNGE_MS);
+    this.lift = settlePose ? goal.lift : toward(this.lift, goal.lift, dt / LIFT_MS);
+    this.hold = settlePose ? goal.hold : toward(this.hold, goal.hold, dt / HOLD_MS);
+    this.hover = settlePose ? goal.hover : toward(this.hover, goal.hover, dt / HOVER_MS);
+    this.plunge = settlePose ? goal.plunge : toward(this.plunge, goal.plunge, dt / PLUNGE_MS);
     // the moment it touches down in the cradle: a small settle, and the buttons clack down
     if (wasUp && this.lift === 0 && !still) this.landFrom = now;
     let busy =
@@ -679,6 +682,18 @@ export class PhoneEngine {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    // Resizing clears the drawing buffer. Once the poster has stepped aside,
+    // repaint before ResizeObserver returns so a viewport/rotation change cannot
+    // expose a transparent phone for one compositor frame. Initial loading still
+    // waits for the normal first-frame callback; hidden stages stay idle.
+    if (this.painted && this.canRun()) {
+      try {
+        this.renderer.render(this.scene, this.camera);
+      } catch {
+        this.onLost();
+        return;
+      }
+    }
     this.kick();
   };
 

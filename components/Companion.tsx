@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState, type FocusEvent } from 'react';
-import { ArrowRight } from 'lucide-react';
 import type { Capabilities } from '@/domain/types';
 import { BreadBuddy, type BuddyState } from './BreadBuddy';
 import { LampScene } from './NightWindow';
 import { Phone3D } from './Phone3D';
-import { PhoneGlyph, RedPhone } from './RedPhone';
+import { PHONE_STILL, PhoneStill, RedPhone } from './RedPhone';
 import { BUDDY_LINE, CALL_PREFACE, callBlockDetail, callBlockReason } from './call';
 import { useDomId } from './hooks';
 import { HERO_PHONE, overlayBox } from './phone3d/layouts';
@@ -26,10 +25,14 @@ interface CallLauncherProps {
  * not a paragraph under it. When a call can't happen the phone stays put with its colour drained,
  * says why, and points back to typing — it never fakes a connection.
  *
- * On the home page a still from the Blender model is present before hydration; the live model takes
- * over only after its first painted frame, with the same camera and bounds. The
- * <button>, its name and its static hit outline are the SVG phone's and never change: the canvas takes
+ * Every variant shows the same object: the Blender model. On the home page its still is present before
+ * hydration and the live model takes over only after its first painted frame, with the same camera and
+ * bounds; the corner, the empty chat and the pill show that same still (PhoneStill). The drawn phone is
+ * only the fallback. The <button>, its name and its static hit outline never change: the canvas takes
  * no pointer, so pressing works the same before, during and after the model loads — or if it never does.
+ *
+ * Its name sits under it like the label beside an object on a table — ink, not red, no plate, no arrow:
+ * the phone itself is the thing you press.
  */
 export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLauncherProps) {
   const id = useDomId('call');
@@ -91,7 +94,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           aria-describedby={`${id}-pre`}
           data-phone
         >
-          <PhoneGlyph className="call-pill__phone" />
+          <PhoneStill pose={unavailable ? 'down' : 'rest'} className="call-pill__phone" />
           打电话
         </button>
         <span id={`${id}-pre`} className="sr-only">
@@ -130,7 +133,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
             {!posterFailed && <img
               ref={posterRef}
               className="phone-door__poster"
-              src="/companion/3d/bread-phone-rest.webp"
+              src={PHONE_STILL}
               width={632}
               height={484}
               style={overlayBox(HERO_PHONE)}
@@ -151,15 +154,15 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
             />}
           </span>
         ) : (
-          <RedPhone pose={unavailable ? 'down' : 'rest'} className="phone-door__phone" />
+          <PhoneStill pose={unavailable ? 'down' : 'rest'} className="phone-door__phone" />
         )}
         <span className="phone-door__text">
-          <span className="phone-door__title">
-            {variant === 'hero' && <PhoneGlyph className="phone-door__glyph" />}
-            给面包打个电话
-            {variant === 'hero' && <ArrowRight className="phone-door__go" aria-hidden="true" />}
+          <span className="phone-door__title">给面包打个电话</span>
+          {/* On the home page the label is always visible now; a check still running isn't flashed into it
+              (the description and the press hint still say it). A real block always shows. */}
+          <span className="phone-door__sub">
+            {block && (unavailable || variant !== 'hero') ? block : '用说的，不用打字'}
           </span>
-          <span className="phone-door__sub">{block || '用说的，不用打字'}</span>
         </span>
       </button>
       <span id={`${id}-pre`} className="sr-only">
