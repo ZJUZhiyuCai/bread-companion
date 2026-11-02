@@ -9,6 +9,7 @@ import { timeoutSignal } from '@/server/limits';
 import { synthesizeStream } from '@/server/providers/speech-stream';
 import { synthesize } from '@/server/providers/speech';
 import { withCircuit } from '@/server/resilience';
+import { providerFetch } from '@/server/provider-fetch';
 
 export const runtime = 'nodejs';
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
             if (streamed) {
               await withCircuit('tts', async () => {
                 let sequence = 0;
-                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal, fetch, format)) {
+                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal, providerFetch, format)) {
                   if (!sequence) { firstAudioMs = performance.now() - speechStart; send({ type: 'audio_start', requestId, format: format === 'pcm' ? 'pcm-s16le' : 'mp3', sampleRate: 32000, channels: 1 }); }
                   send({ type: 'audio_chunk', requestId, sequence: sequence++, audio: Buffer.from(audio).toString('base64') });
                 }

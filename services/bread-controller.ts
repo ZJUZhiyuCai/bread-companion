@@ -18,6 +18,7 @@ import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
 import { callServiceError } from './call-error';
+import { networkDelayMs } from './network-timing';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 export class BreadController {
@@ -45,8 +46,11 @@ export class BreadController {
       cancelReply: () => { this.stopWork(); if (this.call.active) { this.error = ''; this.publish(); } },
       transcribe: async (file, signal) => {
         const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
+        const started = performance.now();
         const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
         const json = await response.json(); signal.throwIfAborted();
+        const delay = networkDelayMs(performance.now() - started, response.headers.get('server-timing'));
+        if (response.ok && delay !== undefined) this.callController.observeNetworkDelay(delay);
         if (!response.ok) {
           throw callServiceError(json.error, response.status);
         }

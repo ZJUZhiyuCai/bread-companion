@@ -146,6 +146,26 @@ describe('local speech boundaries',()=>{
   });
 });
 describe('call and text continuity',()=>{
+  it.each(['timed', 'missing-timing', 'failed'])('uses only successful ASR network timing to tune playback: %s',async kind=>{
+    vi.useRealTimers();
+    const audio=Object.assign(new AudioFake(),{observeNetworkDelay:vi.fn()});let now=100;
+    const clock=vi.spyOn(performance,'now').mockImplementation(()=>now);
+    const c=new BreadController(async(url,init)=>{
+      if(String(url).endsWith('/capabilities')){const caps=getCapabilities();caps.asr.available=caps.tts.available=true;return Response.json(caps);}
+      if(String(url).endsWith('/synthesize'))return new Response(new Blob(['audio']));
+      if(String(url).endsWith('/transcribe')){
+        now=900;
+        return Response.json(kind==='failed'?{error:{code:'PROVIDER_UNAVAILABLE'}}:{requestId:(init!.body as FormData).get('requestId'),text:'先听我说。'},
+          {status:kind==='failed'?502:200,headers:kind==='missing-timing'?{}:{'Server-Timing':'provider;dur=150, total;dur=200'}});
+      }
+      return Response.json(mockCandidate(JSON.parse(init!.body as string)));
+    },undefined,audio);
+    try{
+      await c.initialize();await c.startCall();audio.say();await tick();
+      if(kind==='timed')expect(audio.observeNetworkDelay).toHaveBeenCalledExactlyOnceWith(600);
+      else expect(audio.observeNetworkDelay).not.toHaveBeenCalled();
+    }finally{c.dispose();clock.mockRestore();}
+  });
   it.each([403,429])('preserves HTTP %i from combined voice admission through the call controller',async status=>{
     vi.useRealTimers();const audio=new AudioFake();let voices=0;
     const c=new BreadController(async(url,init)=>{

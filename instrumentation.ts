@@ -11,5 +11,8 @@ export async function register() {
     if (!['127.0.0.1', '[::1]'].includes(url.hostname) || url.protocol !== 'https:' || url.origin !== nodeInternalOrigin || url.username || url.password) throw new Error('BREAD_NODE_INTERNAL_ORIGIN must be an HTTPS loopback origin');
   }
   const { openAdmissionDatabase } = await import('./deployment/node/sqlite.mjs');
-  host.__breadNodeRuntime = {env: process.env, nodeInternalOrigin, db: openAdmissionDatabase(process.env.BREAD_SQLITE_PATH)};
+  const { configuredProviderOrigins, createProviderTransport } = await import('./deployment/node/provider-transport');
+  const transport = process.env.BREAD_PROVIDER_KEEPALIVE === 'off' ? undefined
+    : createProviderTransport(configuredProviderOrigins(process.env));
+  host.__breadNodeRuntime = {env: process.env, nodeInternalOrigin, db: openAdmissionDatabase(process.env.BREAD_SQLITE_PATH), providerFetch: transport?.fetch};
 }

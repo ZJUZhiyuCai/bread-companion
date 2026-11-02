@@ -28,6 +28,7 @@ export interface CallAudioPort {
   play: (blob: CallSpeech, signal: AbortSignal, onStart: () => void) => Promise<void>;
   stopPlayback: () => void;
   stopDialTone?: () => void;
+  observeNetworkDelay?: (ms: number) => void;
   close: () => void;
 }
 
@@ -50,6 +51,10 @@ export class BrowserCallAudio implements CallAudioPort {
   private healthTimer: ReturnType<typeof setInterval> | null = null;
   private inputWarning = '';
   private stopRingback: (() => void) | null = null;
+  private networkDelayMs = 0;
+  observeNetworkDelay = (ms: number) => {
+    if (Number.isFinite(ms) && ms >= 0 && ms <= 5000) this.networkDelayMs = Math.max(ms, this.networkDelayMs * .7);
+  };
   stopDialTone = () => { this.stopRingback?.(); this.stopRingback = null; };
 
   async open(events: CallAudioEvents): Promise<boolean> {
@@ -162,7 +167,7 @@ export class BrowserCallAudio implements CallAudioPort {
     const network = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: { effectiveType?: string; downlink?: number; rtt?: number } }).connection;
     // The first MP3 fragment can contain only 252 ms. On a high-RTT link, starting
     // it immediately may exhaust playback before the next fragment arrives.
-    const weakLink = network?.effectiveType === '3g' || (network?.rtt ?? 0) >= 250 || ((network?.downlink ?? 0) > 0 && network!.downlink! < 1);
+    const weakLink = this.networkDelayMs >= 250 || network?.effectiveType === '3g' || (network?.rtt ?? 0) >= 250 || ((network?.downlink ?? 0) > 0 && network!.downlink! < 1);
     const startupSamples = decoder ? stream.sampleRate * (weakLink ? .5 : .2) : 0;
     let buffered: Float32Array[] = [], bufferedSamples = 0;
     const schedule = (pcm: Float32Array) => {
@@ -231,6 +236,7 @@ export class BrowserCallAudio implements CallAudioPort {
   close() {
     if (this.healthTimer) clearInterval(this.healthTimer); this.healthTimer = null;
     this.inputWarning = '';
+    this.networkDelayMs = 0;
     this.generation++; this.listening = false; this.captureEpoch++; this.stopPlayback();
     if (this.capture) { this.capture.port.onmessage = null; this.capture.onprocessorerror = null; this.capture.disconnect(); this.capture.port.close(); }
     this.capture = null; this.source?.disconnect(); this.source = null;

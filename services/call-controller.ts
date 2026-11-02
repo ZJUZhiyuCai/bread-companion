@@ -31,6 +31,7 @@ export class CallController {
   private turnWarning = '';
   constructor(private deps: CallDeps, private audio: CallAudioPort = new BrowserCallAudio()) {}
   get snapshot() { return this.state; }
+  observeNetworkDelay = (ms: number) => { if (this.state.active) this.audio.observeNetworkDelay?.(ms); };
   private patch(patch: Partial<CallState>) { this.state = { ...this.state, ...patch }; this.deps.update(this.state); }
   private clearIdle() { if (this.idle) clearTimeout(this.idle); this.idle = null; }
   private cancelTurn(preserveCapture = false) { this.turn++; this.pending?.abort(); this.pending = null; this.opening?.abort(); this.opening = null; this.clearIdle(); if (!preserveCapture) this.audio.listen(false); this.audio.stopPlayback(); this.deps.cancelReply(); }
