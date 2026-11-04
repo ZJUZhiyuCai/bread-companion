@@ -5,7 +5,7 @@ import { mockCandidate } from '../../server/providers/mock-agent';
 
 // A controllable microphone connected to the actual browser AudioWorklet. Provider I/O is mocked
 // here; the separate opt-in live check measures MiniMax + the configured model end to end.
-async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' | 'mp3' = false) {
+async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' | 'mp3' = false, opus = false) {
   const stats = { asr: [] as ArrayBuffer[], turns: [] as any[], tts: 0, voices: 0, release: () => {} };
   const held = new Promise<void>(r => { stats.release = r; });
   await page.addInitScript(({ voice }) => {
@@ -47,7 +47,7 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
       return dest.stream;
     };
   }, { voice: readFileSync('tests/fixtures/voice-input.wav').toString('base64') });
-  await page.route('**/api/capabilities', async r => { const res = await r.fetch(), c = await res.json(); c.asr.available = c.tts.available = true; if (combined) c.tts.turnStream = true; await r.fulfill({ json: c }); });
+  await page.route('**/api/capabilities', async r => { const res = await r.fetch(), c = await res.json(); c.asr.available = c.tts.available = true; if (opus) c.asr.opusUpload = true; if (combined) c.tts.turnStream = true; await r.fulfill({ json: c }); });
   if (combined) await page.route('**/api/agent/voice', async r => {
     const input = r.request().postDataJSON(); stats.turns.push(input); stats.voices++;
     if (hold === 'model' && stats.voices === 1) await held;
@@ -263,4 +263,19 @@ test('a high-RTT call holds a short MP3 fragment until delayed audio can play co
   expect(schedule).toHaveLength(2);
   expect(schedule[1].at).toBeCloseTo(schedule[0].at + schedule[0].duration, 3);
   await phase(page, 'listening'); expect(stats.voices).toBe(1); expect(stats.tts).toBe(1); await hangup(page);
+});
+
+for (const fallback of [false, true]) test(`native Opus upload ${fallback ? 'falls back before sending when unavailable' : 'stays small across consecutive turns'}`, async ({ page }) => {
+  test.setTimeout(45000);
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  if (fallback) await page.addInitScript(() => { (window as any).Worker = class { constructor() { throw new Error('encoder unavailable'); } }; });
+  const stats = await setup(page, '', 'mp3', true);
+  for (let i = 0; i < 2; i++) {
+    await speak(page, 'short'); await phase(page, 'speaking'); await phase(page, 'listening');
+    const bytes = new Uint8Array(stats.asr[i]);
+    expect(new TextDecoder().decode(bytes.slice(0, 4))).toBe(fallback ? 'RIFF' : 'OggS');
+    if (!fallback) expect(bytes.byteLength).toBeLessThan(12000);
+  }
+  expect(stats.asr).toHaveLength(2); expect(stats.voices).toBe(2);
+  await hangup(page); expect(errors).toEqual([]);
 });

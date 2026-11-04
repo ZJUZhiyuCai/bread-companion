@@ -26,8 +26,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN" data-text-size="m">
       <head>
+        {/* 面包 first. Its photo is only named inside inline SVG, which the preload scanner never reads,
+            so without this it was requested late and arrived after the phone. */}
+        <link rel="preload" href="/companion/bread-plush.webp" as="image" type="image/webp" fetchPriority="high" />
         <link rel="preload" href="/design/fonts/bread-voice-core-835e939dbc07.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/companion/3d/bread-phone-rest.webp" as="image" type="image/webp" />
+        <link rel="preload" href="/design/soft-expression/felt-flower.svg" as="image" type="image/svg+xml" />
       </head>
       <body>{children}</body>
     </html>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
-import type { CallState } from '@/domain/types';
+import type { CallPhase, CallState } from '@/domain/types';
 import { PlushSvg } from './BreadBuddy';
 import { Phone3D } from './Phone3D';
 import { PhoneFigure, phonePose } from './RedPhone';
@@ -41,13 +41,20 @@ const CALL_STILLS: Record<StillKey, string> = {
  * While it rings, the phone's warm light on the floor pulses in the ring's rhythm — light, not a shake.
  *
  * Behind 面包 is light, not a diagram: a soft patch of the key light on the wall that brightens with
- * your voice while it listens, holds while it speaks and takes one slow breath while it thinks.
+ * your voice while it listens, holds while it speaks and takes one slow breath while it thinks. The
+ * breath grows out of the light that is already there and fades back into it; it is never cut.
+ *
+ * 面包 stands in its own layer above the light and under the phone, so its breathing and its lean
+ * toward your voice move on the compositor; the level is set once here, as --lvl, for both. When your
+ * turn really ends (listening → transcribing or thinking) it gives one small nod — "got it" — and
+ * nothing else: no loop that pretends to listen or to think on a beat.
  */
 export function CallStage({ call, level, className = '' }: { call: CallState; level: number; className?: string }) {
   const id = useDomId('stage');
   const pose = phonePose(call.phase);
   const spatial = usePhone3D();
   const [solid, setSolid] = useState(false);
+  const ack = useAck(call.phase);
 
   const restRef = useRef<HTMLImageElement>(null);
   const liftedRef = useRef<HTMLImageElement>(null);
@@ -79,17 +86,12 @@ export function CallStage({ call, level, className = '' }: { call: CallState; le
     >
       <span className="cstage__light" />
       <span className="cstage__ring" />
+      {/* 720 × 720 at (30, 40) of the 1000 × 820 picture. While connecting, 面包 watches the phone. */}
+      <span className={`cstage__plush ${ack ? 'is-ack' : ''}`}>
+        <PlushSvg state={buddyForCall(call)} lookAt={LOOK_AT_PHONE} lit phoneLight />
+      </span>
       <svg className="cstage__svg" viewBox="0 0 1000 820" focusable="false">
         <ellipse className="cstage__pool" cx="500" cy="770" rx="470" ry="44" />
-        {/* While connecting, 面包 watches the phone (down and to the right). */}
-        <PlushSvg
-          state={buddyForCall(call)}
-          level={level}
-          lookAt={[0.8, 0.6]}
-          lit
-          phoneLight
-          frame={{ x: 30, y: 40, width: 720, height: 720 }}
-        />
         <svg className="cstage__phone" x="600" y="490" width="380" height="321.54" viewBox="0 0 260 220" overflow="visible">
           <PhoneFigure pose={pose} id={id} />
         </svg>
@@ -113,6 +115,31 @@ export function CallStage({ call, level, className = '' }: { call: CallState; le
       {spatial && <Phone3D layout={CALL_PHONE} pose={pose} onReady={setSolid} />}
     </div>
   );
+}
+
+/** Down and to the right, where the phone stands. A constant, so the memoised figure is left alone. */
+const LOOK_AT_PHONE: [number, number] = [0.8, 0.6];
+/** One nod, as long as the `ack` keyframes. */
+const ACK_MS = 760;
+
+/**
+ * True for one nod after the person's turn has really ended: the phase leaves `listening` for
+ * transcribing or thinking. A plain state change, shown once; it promises nothing about the reply.
+ */
+function useAck(phase: CallPhase): boolean {
+  const [ack, setAck] = useState(false);
+  const prev = useRef(phase);
+  useEffect(() => {
+    const from = prev.current;
+    prev.current = phase;
+    if (from === 'listening' && (phase === 'transcribing' || phase === 'thinking')) setAck(true);
+  }, [phase]);
+  useEffect(() => {
+    if (!ack) return;
+    const t = window.setTimeout(() => setAck(false), ACK_MS);
+    return () => window.clearTimeout(t);
+  }, [ack]);
+  return ack;
 }
 
 /**

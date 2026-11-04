@@ -1,6 +1,54 @@
 'use client';
 
 import { useEffect, useId, useLayoutEffect, useState, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => {
+    ready: Promise<void>;
+    finished: Promise<void>;
+    updateCallbackDone: Promise<void>;
+  };
+};
+
+/**
+ * Moves from one view to the next as one continuous shot where the browser can: 面包, its phone and
+ * the name glide from where they were to where they are now (view-transition-name in the CSS), and the
+ * rest of the room cross-fades. Elsewhere — or with reduced motion — the update simply happens.
+ *
+ * The browser shows the old view for one more frame before the update runs, so this is only for
+ * steps that start nothing time-sensitive: never a call, a hang-up, audio or anything that stops work
+ * in progress. `keyboard` marks a step whose new view focuses a text field: on touch screens that has
+ * to happen inside the tap to bring up the keyboard, so there it is not deferred at all.
+ *
+ * While it runs the transition takes no pointer (see ::view-transition), so the new view underneath
+ * is usable from its first frame.
+ */
+export function morph(update: () => void, { keyboard = false }: { keyboard?: boolean } = {}): void {
+  const doc = typeof document === 'undefined' ? null : (document as ViewTransitionDocument);
+  if (
+    !doc?.startViewTransition ||
+    doc.visibilityState !== 'visible' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+    (keyboard && window.matchMedia('(pointer: coarse)').matches)
+  ) {
+    update();
+    return;
+  }
+  let ran = false;
+  try {
+    const t = doc.startViewTransition(() => {
+      ran = true;
+      flushSync(update);
+    });
+    // A skipped transition (e.g. a duplicate name) is not an error for the person; the update still ran.
+    t.ready.catch(() => undefined);
+    t.finished.catch(() => undefined);
+    t.updateCallbackDone.catch((err: unknown) => window.reportError?.(err));
+  } catch {
+    if (!ran) update();
+  }
+}
 
 /**
  * Reads the real value on first client render. Only use in views that are never server-rendered

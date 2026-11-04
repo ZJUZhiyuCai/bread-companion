@@ -14,7 +14,7 @@ import { MaterialDialog } from './Sources';
 import { TopBar } from './TopBar';
 import { WorkPanel, type TraySection } from './WorkPanel';
 import { AUDIO_ACTIVITIES, IDLE_CALL, buddyForActivity, buddyLine, isCallOpen } from './call';
-import { anyDialogOpen, useFlash, useMediaQuery } from './hooks';
+import { anyDialogOpen, morph, useFlash, useMediaQuery } from './hooks';
 import {
   ACTIVITY_META,
   CARD_TYPE_LABEL,
@@ -329,7 +329,9 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
         onOpenArchive={onOpenArchive}
         onOpenAbout={onOpenAbout}
         onStop={vm.stop}
-        onEnd={vm.end}
+        // Into goodnight, 面包 walks to its lamp — unless something is still running (or a call is on):
+        // then ending stops it at once, with no frame of transition in front of it.
+        onEnd={inCall || working ? vm.end : () => morph(vm.end)}
       />
 
       <div className="session__body">

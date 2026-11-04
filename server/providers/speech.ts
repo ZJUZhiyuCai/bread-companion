@@ -2,6 +2,7 @@ import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
 import { readProviderJson, retryAfterSeconds } from './response';
 import { withAbort } from '@/lib/abort';
+import { validateOpus } from './opus-upload';
 import { providerFetch } from '@/server/provider-fetch';
 export async function synthesize(text: string, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<Uint8Array> {
   const c = config();
@@ -38,7 +39,8 @@ export async function validateWav(file: File) {
 export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<string> {
   const c = config();
   if (!c.asr || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
-  await validateWav(file);
+  if (file.type.split(';')[0] === 'audio/ogg') await validateOpus(file, signal);
+  else await validateWav(file);
   // At most one sequential retry within the original request deadline/admission slot.
   // No duplicate browser request, no hedge, no retry after cancellation or a quota/auth rejection.
   for (let attempt = 0; ; attempt++) {

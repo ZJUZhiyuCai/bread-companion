@@ -147,8 +147,11 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
         <CallStage call={call} level={level} className="callroom__stage" />
 
         <div className="callroom__status">
+          {/* The words change inside a heading that stays put, so focus never drops when a phase does. */}
           <h2 id={`${id}-h`} ref={headingRef} tabIndex={-1} className="callroom__phase">
-            {meta.title}
+            <span key={meta.title} className="callroom__phase-text">
+              {meta.title}
+            </span>
           </h2>
           {(meta.hint || (phase === 'paused' && call.error)) && (
             <p className="callroom__hint">{phase === 'paused' && call.error ? call.error : meta.hint}</p>
@@ -168,8 +171,9 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           <CallLog messages={messages} compact />
         ) : (
           <div className="callroom__captions">
+            {/* A new line is a new subtitle and comes up as one; a line that grows keeps its place. */}
             {call.lastHeard && (
-              <p className="cap cap--you">
+              <p key={lineKey(call.lastHeard)} className="cap cap--you">
                 <span className="cap__who">你</span>
                 <span className="cap__text">{call.lastHeard}</span>
               </p>
@@ -177,7 +181,10 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
             {call.caption ? (
               // Cut off while speaking, the backend keeps the caption: the line recedes instead of
               // vanishing, so it reads as interrupted. Cut off while thinking, there is no line — the light says it.
-              <p className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''}`}>
+              <p
+                key={lineKey(call.caption)}
+                className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''}`}
+              >
                 <span className="cap__who">面包</span>
                 <span className="cap__text">{call.caption}</span>
               </p>
@@ -263,9 +270,18 @@ interface CallKeyProps {
 }
 
 /**
+ * Which subtitle a line belongs to: its opening characters. A caption that grows as it is spoken keeps
+ * its key (and its place); a different sentence gets a new one, so it comes up as a new subtitle.
+ */
+function lineKey(text: string): string {
+  return text.slice(0, 6);
+}
+
+/**
  * Round key with its label underneath — no small print: in a call, a key's own name has to be enough.
  * Disabled keys use aria-disabled so focus never drops out from under a keyboard user when the
- * phase changes, and the three keys keep their size and position in every phase.
+ * phase changes, and the three keys keep their size and position in every phase. Only the glyph
+ * inside changes, and it turns over in place: the button itself is never replaced or delayed.
  */
 function CallKey({ label, ariaLabel, pressed, disabled, onPress, className = '', children }: CallKeyProps) {
   return (
@@ -280,7 +296,9 @@ function CallKey({ label, ariaLabel, pressed, disabled, onPress, className = '',
         aria-pressed={pressed}
         aria-label={ariaLabel}
       >
-        {children}
+        <span key={label} className="callkey__glyph" aria-hidden="true">
+          {children}
+        </span>
         {!ariaLabel && <span className="sr-only">{label}</span>}
       </button>
       <span className="callkey__label" aria-hidden="true">

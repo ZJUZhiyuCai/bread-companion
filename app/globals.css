@@ -1132,8 +1132,60 @@ kbd {
 .p-pose {
   transition: transform 0.7s var(--ease);
 }
-.p-breathe {
+
+/*
+ * The body's motion, outside the drawing. Transforms inside an SVG are repainted every frame; this HTML
+ * wrapper moves on the compositor, so a resting 面包 costs no paint at all. It carries exactly one loop —
+ * breathing, which never stops and so never has to be cut — and the lift and lean of speaking phrases
+ * as transitions. Every other change of pose is a single eased move in the drawing (.p-pose), driven by
+ * a real state. Origin: the feet, so nothing here lifts 面包 off the floor.
+ */
+.plush-motion {
+  position: relative;
+  display: block;
+  transform-origin: 50% 94.1%;
   animation: breathe 5.2s ease-in-out infinite;
+  transition: opacity 0.7s ease-out, translate 0.9s var(--ease), rotate 0.9s var(--ease);
+}
+/* settled for the night: the same breath, slower — this 面包 is always a fresh one, so nothing jumps */
+.plush-motion[data-buddy='night'] {
+  animation-duration: 7s;
+}
+/* Speaking: each phrase she lifts a little — a different lean each time — and settles in the pause. */
+.plush-motion[data-buddy='speaking'] {
+  rotate: calc(var(--tilt, 0) * 0.6deg);
+  transition-duration: 0.7s, 1.2s, 1.2s;
+}
+.plush-motion[data-buddy='speaking'][data-phrase] {
+  translate: 0 -0.56%;
+  rotate: calc(var(--tilt, 0) * 0.8deg);
+  transition-duration: 0.7s, 0.6s, 0.6s;
+}
+/* What 面包 is busy with (thought dots, the moon, a drop, a badge), in a drawing of its own over the figure */
+.plush-extras {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/*
+ * Arriving whole (watchPlush). Until the photo is decoded every 面包 on the page is held out of sight and
+ * then fades in as one — body, face, flower and shadow together — and the face stops being drawn through
+ * the photo's alpha once the photo is there. Before hydration none of this applies: the alpha alone keeps
+ * the face from appearing ahead of the body.
+ */
+html[data-plush='wait'] :is(.plush-motion, .bread-mark) {
+  opacity: 0;
+}
+.bread-mark {
+  transition: opacity 0.6s ease-out;
+}
+html[data-plush='ready'] :is(.p-face, .pm-face) {
+  mask: none;
 }
 
 /* the room's light on the fur, cut to the plush's own outline */
@@ -1259,15 +1311,18 @@ kbd {
  * What 面包 is doing — never what the user feels. Eyes stay open and friendly in every state:
  * attention widens them a touch, rest is a posture, trouble is a tilt and a small prop.
  */
-/* hello: the seam parts into a held smile (useMouth) */
+/*
+ * hello: the seam parts into a held smile (useMouth) and, once 面包 has landed in its corner, one small
+ * bob — a settle and a lift, not a double hop. The delay lets the walk in from the first screen finish.
+ */
 .plush[data-state='wave'] {
   --cheek: 0.55;
 }
 .plush[data-state='wave'] .p-pose {
-  animation: hop 0.9s ease-in-out 2;
+  animation: hello 1.15s 0.45s ease-in-out both;
 }
 .plush[data-state='wave'] .p-ground {
-  animation: ground-hop 0.9s ease-in-out 2;
+  animation: ground-hello 1.15s 0.45s ease-in-out both;
 }
 .plush[data-state='attentive'] {
   --pupil: 1.08;
@@ -1280,42 +1335,34 @@ kbd {
   --pupil: 1.14;
   --eye: 1.03;
 }
-/* leaning in; a voice adds a small nod — loudness only, never meaning */
+/*
+ * Leaning in, once. The voice itself moves 面包 only on the call stage (.cstage__plush, on the
+ * compositor) and the light behind it — never by redrawing the figure on every level.
+ */
 .plush:is([data-state='listening'], [data-state='hearing'], [data-state='recording']) .p-pose {
-  transform: translateY(calc(var(--lvl, 0) * 16px)) scale(1.03);
-  transition-duration: 0.18s;
+  transform: scale(1.03);
 }
 .plush[data-state='hearing'] {
-  --pupil: calc(1.16 + var(--lvl, 0) * 0.08);
+  --pupil: 1.16;
   --eye: 1.03;
   --cheek: 0.38;
-}
-.plush[data-state='hearing'] .p-breathe {
-  animation: nod 1.6s ease-in-out infinite;
 }
 .plush[data-state='transcribing'] .p-pose {
   transform: rotate(-1.5deg);
 }
+/* Thinking is a held pose — the head tipped, the eyes up and resting (useLife) — not a sway on a beat. */
 .plush[data-state='thinking'] {
   --pupil: 0.96;
 }
 .plush[data-state='thinking'] .p-pose {
-  animation: ponder 3.6s ease-in-out infinite;
+  transform: rotate(-2deg);
+  transition-duration: 0.9s;
 }
 /*
- * Speaking: no bounce. She keeps breathing; each phrase she lifts a little — a slightly different lean
- * each time (--tilt) — and settles back in the pause, the way a person's head rises with a sentence.
+ * Speaking: no bounce. She keeps breathing; the lift of each phrase is the wrapper's (.plush-motion).
  */
 .plush[data-state='speaking'] {
   --cheek: 0.42;
-}
-.plush[data-state='speaking'] .p-pose {
-  transform: rotate(calc(var(--tilt, 0) * 0.6deg));
-  transition-duration: 1.2s;
-}
-.plush[data-state='speaking'][data-phrase] .p-pose {
-  transform: translateY(-7px) rotate(calc(var(--tilt, 0) * 0.8deg)) scale(1.004, 1.01);
-  transition-duration: 0.6s;
 }
 /* turned toward the phone that is ringing beside it */
 .plush[data-state='connecting'] {
@@ -1338,9 +1385,6 @@ kbd {
 .plush:is([data-state='muted'], [data-state='paused']) .p-pose {
   transform: translateY(10px) rotate(-1.5deg) scale(1.02, 0.975);
 }
-.plush:is([data-state='muted'], [data-state='paused']) .p-breathe {
-  animation-duration: 6.4s;
-}
 /* Trouble: a small head tilt and a drop of sweat; eyes on you, earnest rather than sad. */
 .plush[data-state='error'] {
   --pupil: 1.04;
@@ -1355,9 +1399,6 @@ kbd {
 }
 .plush[data-state='night'] .p-pose {
   transform: translateY(8px) rotate(-2deg) scale(1.015, 0.985);
-}
-.plush[data-state='night'] .p-breathe {
-  animation-duration: 7s;
 }
 /* The phone is being hovered or focused: a little more interest, once. */
 .plush[data-curious] {
@@ -1382,6 +1423,10 @@ kbd {
   animation: wiggle 0.7s ease-in-out;
 }
 
+/* the thought dots come up softly rather than appearing at half strength */
+.p-x--dots {
+  animation: settle-in 0.5s ease-out both;
+}
 .p-x--dots circle {
   fill: var(--surface);
   stroke: var(--line-strong);
@@ -2399,6 +2444,10 @@ kbd {
   /* it is simply there when the page has settled — no pop, no scale */
   animation: settle-in 1.2s 0.4s ease-out both;
 }
+/* …and it waits for 面包 to be there to say it: the countdown holds while the photo is on its way */
+html[data-plush='wait'] .hello-bubble {
+  animation-play-state: paused;
+}
 .hello-bubble__big {
   display: block;
   font-family: var(--font-voice);
@@ -2739,7 +2788,10 @@ kbd {
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--sheet) 44%, transparent),
     0 12px 26px -28px rgba(74, 54, 32, 0.28);
-  backdrop-filter: saturate(1.05) blur(12px);
+  /*
+   * No backdrop blur: the bar is a row of its own and nothing scrolls under it — only the smooth wall,
+   * which looks the same blurred. The blur was recomputed on every frame the light behind it breathed.
+   */
   z-index: 5;
 }
 .topbar__id {
@@ -3046,10 +3098,32 @@ kbd {
 }
 .msg {
   display: flex;
-  animation: msg-in 0.42s var(--ease) both;
 }
+/* Your note is handed across from where you wrote it: up a little, from your corner of the table. */
 .msg--user {
   justify-content: flex-end;
+  transform-origin: 100% 100%;
+  animation: note-in 0.42s var(--ease-out) both;
+}
+/*
+ * 面包's reply takes over the "在想" row in place: the little face beside it does not blink out and
+ * back, only the words arrive, written in from the top in its own hand. The reply came whole (it is
+ * checked before it is shown), so this is a quick reveal of what is already there — the first line is
+ * readable within a tenth of a second.
+ */
+.msg--bread .msg__body {
+  animation: ink-in 0.7s var(--ease-out) backwards;
+}
+/* the postcard is a sheet with its own shadow, which a wipe would cut off: it is laid down instead */
+.msg--welcome .msg__body {
+  animation: rise 0.5s var(--ease-out) backwards;
+}
+/*
+ * "在想" waits a beat before it says so: a reply that is back within a quarter of a second replaces it
+ * before it shows, instead of flashing it. The face, and the status beside 面包, say it at once.
+ */
+.msg--thinking .msg__body {
+  animation: settle-in 0.35s 0.28s ease-out backwards;
 }
 /*
  * What you said, on a kraft slip on your side of the table: fibrous, cut nearly square at the corner
@@ -3163,13 +3237,21 @@ kbd {
   color: var(--ink-3);
   font-size: 0.85rem;
 }
-/* Being read aloud: the line is marked in the same soft crayon as the first screen's one phrase. */
-.msg.is-speaking .msg__text {
+/*
+ * Being read aloud: the line is marked in the same soft crayon as the first screen's one phrase. The mark
+ * is always there, clear, so starting and stopping the voice brings it up and lets it go instead of
+ * switching it.
+ */
+.msg--bread .msg__text {
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--lamp) 75%, transparent);
+  text-decoration-color: transparent;
   text-decoration-thickness: 0.38em;
   text-underline-offset: -0.2em;
   text-decoration-skip-ink: none;
+  transition: text-decoration-color 0.45s ease-out;
+}
+.msg.is-speaking .msg__text {
+  text-decoration-color: color-mix(in srgb, var(--lamp) 75%, transparent);
 }
 .msg__text--quiet {
   color: var(--ink-2) !important;
@@ -5022,6 +5104,7 @@ kbd {
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  animation: settle-in 0.4s ease-out both;
 }
 
 /* ---------- the phone as a button ---------- */
@@ -5338,14 +5421,26 @@ kbd {
   color: var(--ink-3);
 }
 .callroom__pulse {
+  position: relative;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--green);
-  animation: live-pulse 3.2s ease-out infinite;
+}
+/* the line is open: a faint ring leaves the dot now and then — scale and fade, nothing repainted */
+.callroom__pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--green);
+  opacity: 0;
+  animation: live-ring 3.2s ease-out infinite;
 }
 .callroom:is([data-phase='paused'], [data-phase='error'], [data-phase='connecting']) .callroom__pulse {
   background: var(--amber);
+}
+.callroom:is([data-phase='paused'], [data-phase='error'], [data-phase='connecting']) .callroom__pulse::after {
   animation: none;
 }
 .callroom__time {
@@ -5354,13 +5449,16 @@ kbd {
   color: var(--ink-3);
 }
 /* 面包 and the red phone on one table. The picture is wider than tall (1000 × 820). */
+/*
+ * No width transition: animating the width re-laid out the room and rebuilt the 3D phone's drawing
+ * buffer on every frame. Opening the transcript is a cut to a closer shot; the transcript rises in.
+ */
 .callroom__stage {
   position: relative;
   flex: none;
   width: min(490px, 90vw, 51dvh);
   max-width: 100%;
   margin: clamp(8px, 1.8vh, 20px) 0 0;
-  transition: width 0.35s var(--ease);
 }
 .cstage {
   position: relative;
@@ -5389,6 +5487,27 @@ kbd {
 .cstage__pool {
   fill: var(--set-pool);
   opacity: 0;
+}
+/*
+ * 面包 on the call stage: its own layer, above the light and under the phone (the drawing that follows
+ * it, the stills and the live model all stack higher). 720 × 720 at (30, 40) of the 1000 × 820 picture.
+ * Your voice moves it here, a few pixels toward you with the level, on the compositor; and when your
+ * turn really ends it nods once (.is-ack).
+ */
+.cstage__plush {
+  position: absolute;
+  left: 3%;
+  top: 4.878%;
+  width: 72%;
+  transform-origin: 50% 94.1%;
+  transition: translate 0.6s var(--ease);
+}
+.cstage[data-phase='listening'] .cstage__plush {
+  translate: 0 calc(var(--lvl, 0) * 1.3%);
+  transition-duration: 0.18s;
+}
+.cstage__plush.is-ack {
+  animation: ack 0.76s var(--ease-out);
 }
 /*
  * Ringing, said with light: the phone's warm red glow on the floor beneath it, two quick swells and a
@@ -5435,6 +5554,8 @@ kbd {
   transform: translate(-50%, -50%) scale(var(--light-s));
   transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
   pointer-events: none;
+  /* when the call opens, the lamp comes up rather than being on already */
+  animation: light-up 1.2s var(--ease-out) backwards;
 }
 .cstage[data-phase='listening'] .cstage__light {
   --light-o: calc(0.62 + var(--lvl, 0) * 0.38);
@@ -5444,11 +5565,37 @@ kbd {
 .cstage[data-phase='speaking'] .cstage__light {
   --light-o: 0.9;
 }
+/* thinking holds the light where your voice left it (a quiet listening light), and breathes on top of it */
 .cstage:is([data-phase='thinking'], [data-phase='transcribing']) .cstage__light {
-  animation: light-breath 3.6s ease-in-out infinite;
+  --light-o: 0.62;
 }
 .cstage:is([data-phase='muted'], [data-phase='paused'], [data-phase='error']) .cstage__light {
   --light-o: 0.3;
+}
+/*
+ * The breath while 面包 thinks is a second, softer light over the first. It is always running and its
+ * depth (--breath) is what changes: it swells in from nothing when the thinking starts and ebbs away
+ * when it ends, from wherever in the breath it was. Cutting the animation itself would make the light
+ * jump — before, it dropped a step the moment you stopped talking, every turn.
+ */
+@property --breath {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+.cstage__light::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--set-lamp), transparent);
+  opacity: 0;
+  --breath: 0;
+  transition: --breath 0.9s var(--ease);
+  animation: light-breath 3.6s ease-in-out infinite;
+}
+.cstage:is([data-phase='thinking'], [data-phase='transcribing']) .cstage__light::after {
+  --breath: 1;
 }
 /* Just interrupted: the light comes straight up to listen, for a beat, as a plain state change. */
 .callroom.is-caught .cstage__light {
@@ -5476,6 +5623,11 @@ kbd {
 }
 .callroom__phase:focus {
   outline: none;
+}
+/* a new line turns over in place, softly, under a heading that never moves */
+.callroom__phase-text {
+  display: inline-block;
+  animation: phase-in 0.42s var(--ease-out) both;
 }
 /* Only four phases say anything here, so no row is reserved: the space goes to the captions. */
 .callroom__hint {
@@ -5562,9 +5714,6 @@ kbd {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.cap--bread {
-  transition: opacity 0.3s;
-}
 .cap--bread .cap__text {
   display: block;
   max-height: 5.4em;
@@ -5578,6 +5727,8 @@ kbd {
   letter-spacing: 0.03em;
   overflow-wrap: anywhere;
   text-wrap: balance;
+  /* being cut off is a recession, not a switch */
+  transition: color 0.35s ease-out, opacity 0.35s ease-out;
 }
 /* Cut off mid-sentence: the line recedes and trails off. Static properties, so it reads with reduced motion. */
 .cap--bread.is-cut .cap__text {
@@ -5632,6 +5783,12 @@ kbd {
   width: 25px;
   height: 25px;
   stroke-width: 1.75;
+}
+/* When the key's job changes, only the mark on it turns over; the key never moves or waits. */
+.callkey__glyph {
+  display: grid;
+  place-items: center;
+  animation: glyph-in 0.24s var(--ease-out) both;
 }
 .callkey__btn:hover:not([aria-disabled='true']) {
   border-color: color-mix(in srgb, var(--crust) 32%, var(--key-edge));
@@ -5834,6 +5991,7 @@ kbd {
   border: 1px solid var(--line);
   border-radius: var(--r-sheet);
   background: color-mix(in srgb, var(--surface) 66%, transparent);
+  animation: rise 0.32s var(--ease-out) both;
 }
 .calllog--compact .calllog__h {
   padding: 12px 16px 6px;
@@ -5984,6 +6142,57 @@ body {
 body:has(.connbar) .topbar {
   /* the strip has already cleared the notch */
   padding-top: 8px;
+}
+
+/* ==========================================================================
+   One 面包 from view to view (morph in hooks.ts)
+   ========================================================================== */
+
+/*
+ * The same character and the same phone in every view, so going from one to the next they move instead
+ * of being swapped: from the first screen into the corner (or the strip on phones), from the
+ * conversation to its lamp at goodnight, and back. The name in the bar travels too. Each name is on
+ * exactly one element per view — a duplicate would cancel the move (and only the move).
+ */
+.entry__scene,
+.companion__scene,
+.perch__buddy,
+.end__scene > .nook {
+  view-transition-name: bread;
+}
+.phone-door--hero .phone-door__art,
+.companion .phone-door__phone,
+.perch .call-pill__phone,
+.end__scene .nook__phone {
+  view-transition-name: bread-phone;
+}
+.entry__top .wordmark,
+.topbar .wordmark {
+  view-transition-name: bread-name;
+}
+/* The new view is live under the move and takes the pointer from its first frame. */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(*) {
+  animation-duration: 0.56s;
+  animation-timing-function: cubic-bezier(0.22, 0.9, 0.24, 1);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.34s;
+}
+
+/*
+ * Behind a modal nothing needs to breathe: the loops wait, and the blurred backdrop stops being
+ * recomputed on every frame. Inside the modal (面包 in 关于) they run as usual.
+ */
+body:has(dialog[open]) .plush-motion:not(dialog .plush-motion),
+body:has(dialog[open]) .plush-extras *,
+body:has(dialog[open]) .session::before,
+body:has(dialog[open]) .companion__dot,
+body:has(dialog[open]) .callroom__pulse::after {
+  animation-play-state: paused;
 }
 
 /* ==========================================================================
@@ -6521,6 +6730,13 @@ body:has(.connbar) .topbar {
   .connbar__cord {
     stroke: CanvasText;
   }
+  /* a forced palette would paint the resting (transparent) reading mark; only the line being read keeps it */
+  .msg--bread .msg__text {
+    text-decoration-line: none;
+  }
+  .msg.is-speaking .msg__text {
+    text-decoration-line: underline;
+  }
   .first-note__input,
   .composer__input,
   .entry__title-mark {
@@ -6570,14 +6786,52 @@ body:has(.connbar) .topbar {
     transform: none;
   }
 }
-@keyframes msg-in {
+/* your note, handed across from your corner of the table */
+@keyframes note-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    translate: 0 12px;
+    scale: 0.985;
+  }
+}
+/*
+ * 面包's words written in from the top: a soft edge travels down the reply (the mask is 2.5× the
+ * block, opaque for its first 40%). The mask exists only while this runs.
+ */
+@keyframes ink-in {
+  from {
+    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 44%);
+    mask-image: linear-gradient(to bottom, #000 40%, transparent 44%);
+    -webkit-mask-size: 100% 250%;
+    mask-size: 100% 250%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
   }
   to {
-    opacity: 1;
-    transform: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 44%);
+    mask-image: linear-gradient(to bottom, #000 40%, transparent 44%);
+    -webkit-mask-size: 100% 250%;
+    mask-size: 100% 250%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+/* a call's phase line turning over */
+@keyframes phase-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+/* the mark on a call key turning over */
+@keyframes glyph-in {
+  from {
+    opacity: 0;
+    scale: 0.78;
   }
 }
 @keyframes land {
@@ -6622,65 +6876,58 @@ body:has(.connbar) .topbar {
     transform: none;
   }
 }
+/* on .plush-motion, about the feet: the individual `scale`, so it composes with a phrase's lift and lean */
 @keyframes breathe {
   0%,
   100% {
-    transform: scale(1, 1);
+    scale: 1 1;
   }
   50% {
-    transform: scale(1.008, 1.018);
+    scale: 1.008 1.018;
   }
 }
-@keyframes ponder {
+/* hello moves the drawing, so its lengths are in the plush's 1254-unit space: settle, one lift, settle */
+@keyframes hello {
   0%,
   100% {
-    transform: rotate(-2deg);
+    transform: none;
   }
-  50% {
-    transform: rotate(1deg) scale(1.01, 1.02);
+  18% {
+    transform: scale(1.03, 0.965);
+  }
+  46% {
+    transform: translateY(-30px) scale(0.985, 1.022);
+  }
+  72% {
+    transform: scale(1.014, 0.988);
+  }
+  88% {
+    transform: scale(0.997, 1.003);
   }
 }
-/* hop moves the plush, so its lengths are in its 1254-unit space */
-@keyframes hop {
+/* its shadow tightens a little while it is off the floor */
+@keyframes ground-hello {
   0%,
   100% {
-    transform: translateY(0);
-  }
-  12% {
-    transform: scale(1.04, 0.95);
-  }
-  38% {
-    transform: translateY(-64px) scale(0.97, 1.04);
-  }
-  62% {
-    transform: translateY(0) scale(1.04, 0.95);
-  }
-  80% {
-    transform: scale(0.99, 1.01);
-  }
-}
-/* 面包 — all in the plush's 1254-unit space */
-@keyframes ground-hop {
-  0%,
-  100% {
-    transform: scale(1);
+    transform: none;
     opacity: 1;
   }
-  35% {
-    transform: scale(0.86);
-    opacity: 0.7;
+  46% {
+    transform: scale(0.93);
+    opacity: 0.82;
   }
 }
-@keyframes nod {
+/* "got it": one nod about the feet when your turn ends, then still (.cstage__plush) */
+@keyframes ack {
   0%,
   100% {
-    transform: translateY(0);
+    scale: 1 1;
   }
-  30% {
-    transform: translateY(14px) scale(1.006, 0.99);
+  32% {
+    scale: 1.012 0.972;
   }
-  55% {
-    transform: translateY(0);
+  64% {
+    scale: 0.997 1.005;
   }
 }
 @keyframes squish {
@@ -6870,12 +7117,16 @@ body:has(.connbar) .topbar {
     transform: translate(-50%, 0);
   }
 }
-@keyframes live-pulse {
+/* the open line's small ring: out from the dot and gone, on the compositor */
+@keyframes live-ring {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 32%, transparent);
+    opacity: 0.34;
+    scale: 1;
   }
+  70%,
   100% {
-    box-shadow: 0 0 0 6px transparent;
+    opacity: 0;
+    scale: 3;
   }
 }
 /* a telephone's ring as light on the floor: brr-brr, then quiet */
@@ -6893,16 +7144,26 @@ body:has(.connbar) .topbar {
     opacity: 0.5;
   }
 }
-/* the call's light while 面包 thinks: one slow breath in and out, centred where it stands */
+/*
+ * The call's light while 面包 thinks: one slow breath in and out, on the second light layer. Its depth is
+ * --breath (0 when not thinking), so it can swell in and ebb away mid-breath without ever jumping.
+ */
 @keyframes light-breath {
   0%,
   100% {
-    opacity: 0.46;
-    transform: translate(-50%, -50%) scale(0.98);
+    opacity: 0;
+    scale: 1;
   }
   50% {
-    opacity: 0.82;
-    transform: translate(-50%, -50%) scale(1.04);
+    opacity: calc(var(--breath) * 0.55);
+    scale: calc(1 + var(--breath) * 0.06);
+  }
+}
+/* the lamp coming up as the call opens, to wherever the phase puts it */
+@keyframes light-up {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
   }
 }
 @keyframes bob {
@@ -6981,6 +7242,15 @@ body:has(.connbar) .topbar {
   .plush,
   .cstage {
     --lvl: 0 !important;
+  }
+  /* thinking keeps its own, still light instead of a breath */
+  .cstage:is([data-phase='thinking'], [data-phase='transcribing']) .cstage__light {
+    --light-o: 0.76;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
   /* The phone still says "ringing" without shaking: the bell marks simply stay on. */
   .rp[data-pose='dialing'] .rp-bell path {

@@ -1,0 +1,6 @@
+Mediabunny 1.65.1 — Copyright Vanilagy and contributors. MPL-2.0.
+Unmodified library used for Opus container writing and reading.
+Corresponding source (included in the published package):
+https://registry.npmjs.org/mediabunny/-/mediabunny-1.65.1.tgz
+Project: https://github.com/Vanilagy/mediabunny
+License: /licenses/mediabunny-MPL-2.0.txt

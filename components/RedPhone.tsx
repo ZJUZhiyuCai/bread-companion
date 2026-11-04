@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { CallPhase } from '@/domain/types';
 import { useDomId } from './hooks';
 import { HERO_PHONE, overlayBox } from './phone3d/layouts';
@@ -150,7 +150,8 @@ const CORD_LIFTED = coil([
 /** Where a pointer can press the phone. Never transformed, so hover can't move it out from under the hand. */
 const HIT = 'M14 186 C12 150 26 112 42 94 C42 72 52 52 70 52 H190 C208 52 218 72 218 94 C238 112 254 150 252 186 L246 204 H14 Z';
 
-export function PhoneFigure({ pose, id }: { pose: PhonePose; id: string }) {
+/** Memoised: a few hundred nodes that only ever change with the pose, never with a clock or a level. */
+export const PhoneFigure = memo(function PhoneFigure({ pose, id }: { pose: PhonePose; id: string }) {
   const cord = pose === 'lifted' ? CORD_LIFTED : CORD_REST;
   return (
     <g className="rp" data-pose={pose}>
@@ -384,7 +385,7 @@ export function PhoneFigure({ pose, id }: { pose: PhonePose; id: string }) {
       </g>
     </g>
   );
-}
+});
 
 /** The phone on its own, sized by CSS. Always decorative: the button around it carries the name. */
 export function RedPhone({ pose = 'rest', className = '' }: { pose?: PhonePose; className?: string }) {

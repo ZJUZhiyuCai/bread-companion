@@ -56,3 +56,7 @@ MINIMAX_VOICE_SPEED=1
 `dev` / `start` 仍绑定 `127.0.0.1`。在线版通过 `deployment/sites/` 的独立 Vinext / Worker 适配复用业务代码；配置 HTTPS 原点、签名访客 cookie、D1 共享配额与服务端 secrets，不能仅改监听地址。Node 自托管也可用 SQLite 保留同样的原子配额和去重，详见 [Node 部署](../deployment/node/README.md)。完整发布、迁移、验证与回退方法见 [部署指南](deployment.md)。
 
 公网实例不能连接维护者电脑上的 `127.0.0.1:3425`。需使用已授权的 HTTPS 上游端点和该端点实际支持的模型 ID；本项目线上使用 `https://maas-openapi.wanjiedata.com/api/anthropic/v1` 与 `deepseek-v4.1-flash-1017`。它们是运营者配置，访客不能修改。
+
+### 通话上传格式
+
+支持原生 Opus 的浏览器会在独立 Worker 中压缩语音，再交由原有 MiniMax 转写。不支持、尚未准备好或编码超过 250 ms 时自动使用 WAV。维护者可设置 `BREAD_OPUS_UPLOAD=off` 停止公告压缩能力；不需要用户配置。算法、许可与验证见 [上传与动效说明](open-source-improvements.md)。
