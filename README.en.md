@@ -100,3 +100,5 @@ The self-hosted Bread Voice subsets are derived from LXGW WenKai Screen under **
 The first hosted synthetic chain measured complete HTTP requests of **3.597 s ASR / 2.415 s text / 1.873 s TTS**. This is slower than the earlier local sample and does not include browser endpointing or playback setup; it is not a hosted first-audio guarantee.
 
 Mobile microphone recovery and the model latency comparison are documented in the [mobile call validation](docs/mobile-call-validation.md) (Chinese).
+
+The optional microphone upload encoder uses unmodified Mediabunny 1.65.1 under MPL-2.0; see [license and corresponding source](public/licenses/mediabunny.txt). Latest [upload and motion measurements](docs/open-source-improvements.md).

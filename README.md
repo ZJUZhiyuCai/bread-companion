@@ -6,7 +6,7 @@
 
 收到拒信的那个晚上，你可能只想把话说出来，还没有力气分析哪里出了问题。面包是一个中文陪伴与轻复盘工具：先陪你聊，等你愿意了，再一起看看那段回答。
 
-[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md) · [最新视觉打磨](docs/premium-frontend.md)
+[在线体验](https://bread.163-7-7-42.sslip.io) · [备用入口](https://bread-companion-czy.rosscai.chatgpt.site) · [English](README.en.md) · [快速开始](#快速开始) · [产品与 Harness](docs/product-harness.md) · [竞品对标](docs/competitive-benchmark.md) · [路线图](ROADMAP.md) · [参与贡献](CONTRIBUTING.md) · [评审体验迭代](docs/reviewer-readiness.md) · [最新动效与语音优化](docs/open-source-improvements.md)
 
 [![Checks](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZJUZhiyuCai/bread-companion/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
@@ -43,7 +43,7 @@
 - **存档留在当前浏览器。** 没有账号、云同步或跨天关系记忆。真实模式下，回复所需的文字和语音片段会发送给配置的处理服务；“本机保存”不等于“内容从不离开设备”。具体范围见 [数据处理说明](docs/data-handling.md)。
 - **公开体验有配额。** 为控制服务成本，站点限制同时处理的请求和一段时间内的使用量。达到上限会暂时无法发起新请求，当前不承诺全天可用。见 [部署与限额](docs/deployment.md)。
 
-通话的单轮故障恢复与长会话验证见 [连续通话记录](docs/call-continuity.md)；最新的连接复用与播放缓冲改动见 [通话性能记录](docs/provider-connection-reuse.md)。
+通话的单轮故障恢复与长会话验证见 [连续通话记录](docs/call-continuity.md)；连接复用与播放缓冲改动见 [通话性能记录](docs/provider-connection-reuse.md)；本轮复用了 Mediabunny 压缩语音上传，并改善角色入场与动画性能，见 [开源借鉴与实测](docs/open-source-improvements.md)。
 
 ## 快速开始
 
@@ -127,7 +127,7 @@ flowchart LR
 
 | 检查 | 已有结果与测量范围 |
 | --- | --- |
-| 工程回归 | **287 项单元/集成测试、63 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
+| 工程回归 | **302 项单元/集成测试、67 条浏览器流程**通过；CI 另检查类型、模型资产和生产构建 |
 | 核心任务（v15） | 最终一组 **8 个真实模型 API 回合**走完复盘、纠正、练习和保存；其中 **3 回合退回了原话卡或开放问题**，纠正后的训练反馈质量仍不够稳定 |
 | 中文对话（v14） | 8 个合成情境、16 轮接口调用，其中一句明确道别由本机规则回应；完整响应中位 **1.165 s**、p90 **1.477 s**，未测首 token |
 | 本轮语音分段复测（11 月 2 日） | 同路径各三轮，合成服务首音频中位 **0.871 → 0.297 s**；整通等待中位 **5.684 / 5.743 s**，尚未显示稳定改善。六轮播放连续，真实服务开口打断 **458 ms**；模型慢回合仍存在。见 [测量与失败样本](docs/call-streaming.md) |

@@ -216,7 +216,10 @@ export function CompanionPerch({ buddy, line = BUDDY_LINE[buddy], status, caps, 
       </span>
       <p className="perch__line">
         <span className="perch__name">面包</span>
-        <span className="perch__say">{line}</span>
+        {/* a new line settles in where the old one was, like the corner's subtitle */}
+        <span key={line} className="perch__say">
+          {line}
+        </span>
         <span className="sr-only">（{status}）</span>
       </p>
       <CallLauncher variant="pill" caps={caps} onCall={onCall} blocked={callBlocked} />

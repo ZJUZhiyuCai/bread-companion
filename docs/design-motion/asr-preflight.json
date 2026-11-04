@@ -1,0 +1,85 @@
+{
+  "candidate": "/srv/bread-companion/releases/20261105-motion-opus",
+  "previous": "/srv/bread-companion/releases/20261102-provider-reuse",
+  "readiness": true,
+  "asrComparisons": [
+    {
+      "name": "short",
+      "format": "wav",
+      "bytes": 43244,
+      "ms": 1112,
+      "timing": "provider;dur=1062.3, total;dur=1074.5, upload;dur=6.5, admission;dur=5.0",
+      "text": "今晚先说说"
+    },
+    {
+      "name": "short",
+      "format": "opus",
+      "bytes": 11303,
+      "ms": 519,
+      "timing": "provider;dur=506.7, total;dur=510.2, upload;dur=1.4, admission;dur=1.7",
+      "text": "今晚先说说"
+    },
+    {
+      "name": "empathy-one",
+      "format": "wav",
+      "bytes": 220664,
+      "ms": 865,
+      "timing": "provider;dur=854.6, total;dur=859.2, upload;dur=2.4, admission;dur=1.9",
+      "text": "我准备了整整一个月，还是被拒绝了。今晚不想听建议，只想有人听我说。"
+    },
+    {
+      "name": "empathy-one",
+      "format": "opus",
+      "bytes": 55718,
+      "ms": 776,
+      "timing": "provider;dur=764.8, total;dur=767.6, upload;dur=1.0, admission;dur=1.5",
+      "text": "我准备了整整一个月，还是被拒绝了。今晚不想听建议，只想有人听我说。"
+    },
+    {
+      "name": "empathy-two",
+      "format": "wav",
+      "bytes": 186360,
+      "ms": 986,
+      "timing": "provider;dur=978.2, total;dur=981.7, upload;dur=1.4, admission;dur=1.9",
+      "text": "我不是想放弃，我只是很累。别替我分析，我想先歇一会儿。"
+    },
+    {
+      "name": "empathy-two",
+      "format": "opus",
+      "bytes": 45049,
+      "ms": 733,
+      "timing": "provider;dur=727.0, total;dur=729.4, upload;dur=0.8, admission;dur=1.4",
+      "text": "我不是想放弃，我只是很累。别替我分析，我想先歇一会儿。"
+    }
+  ],
+  "retained_static_files": 51,
+  "manifest_verified": true,
+  "syntheticVoice": {
+    "events": [
+      "candidate",
+      "audio_start",
+      "audio_chunk",
+      "audio_chunk",
+      "audio_chunk",
+      "audio_chunk",
+      "audio_chunk",
+      "done"
+    ],
+    "reply": "面试里碰上不顺的地方，确实挺烦的。",
+    "replyMs": 2202,
+    "firstAudioMs": 2484,
+    "providerTiming": {
+      "agentMs": 2186.095716,
+      "firstAudioMs": 282.2496200000005,
+      "ttsMs": 620.2830830000003,
+      "totalMs": 2816.171598000001
+    },
+    "audioMs": 2834,
+    "bytes": 55341,
+    "guards": [
+      409,
+      403,
+      403
+    ]
+  }
+}

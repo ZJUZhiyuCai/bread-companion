@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reduce call upload size with native Opus and Mediabunny in a dedicated worker; preserve immediate WAV fallback, cancellation, duration limits and the existing model/voice. Add upload/admission timing. Claude Opus 5.5 / high refined companion arrival, compositor breathing and state transitions; Codex verified late/failed assets and consecutive compressed calls. See [open-source reuse and measurements](docs/open-source-improvements.md).
+
 - Keep a healthy microphone alive after a failed call turn. Retry a transient ASR failure at most once inside the existing deadline; preserve text after reply/audio failures without duplicate model or synthesis requests. Honor quota, permission and device failures; allow five idle foreground minutes before pausing. See [continuity validation](docs/call-continuity.md).
 
 - Unified the photo companion, portrait brand, type, shallow-lit room and telephone across home, chat and calls with two official Claude Opus 5.5 / high design rounds. Matching call posters preserve the model while loading; Codex fixed resize blanking and late first-frame handset resets. See [design and verification](docs/premium-frontend.md).

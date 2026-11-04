@@ -18,6 +18,7 @@ import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
 import { callServiceError } from './call-error';
+import { SpeechUpload } from './speech-upload';
 import { networkDelayMs } from './network-timing';
 
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
@@ -35,6 +36,7 @@ export class BreadController {
   private listeners = new Set<() => void>();
   private view: BreadViewModel;
   private call = idleCall();
+  private speechUpload = new SpeechUpload();
   private callController: CallController;
   private voiceFetcher: typeof fetch;
   private preparedCallSpeech: { text: string; token: RunToken; signal: AbortSignal; audio: Promise<CallSpeech> } | null = null;
@@ -45,6 +47,8 @@ export class BreadController {
       update: call => { this.call = call; this.publish(); },
       cancelReply: () => { this.stopWork(); if (this.call.active) { this.error = ''; this.publish(); } },
       transcribe: async (file, signal) => {
+        if (this.capabilities?.asr.opusUpload) file = await this.speechUpload.encode(file, signal);
+        signal.throwIfAborted();
         const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
         const started = performance.now();
         const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
@@ -114,7 +118,7 @@ export class BreadController {
       if (this.capabilityRequest === pending) { this.capabilityRequest = null; if (!this.disposed) this.publish(); }
     }
   };
-  dispose() { this.disposed = true; this.capabilityRequest?.abort(); this.capabilityRequest = null; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
+  dispose() { this.speechUpload.stop(); this.disposed = true; this.capabilityRequest?.abort(); this.capabilityRequest = null; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
   private cancelResources() { this.failedTurn = null; this.preparedCallSpeech = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。', retainFailedTurn = false) { if (!retainFailedTurn) this.failedTurn = null; this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   dismissNotice = () => { this.notice = ''; this.publish(); };
@@ -126,16 +130,17 @@ export class BreadController {
   private stopWork = () => { this.dispatch({ type: 'STOP' }); this.cancelResources(); this.publish(); };
   stop = () => { if (this.call.active) this.callController.pause(); else this.stopWork(); };
   pauseForBackground = () => { if (this.call.active) this.callController.pause('页面已切到后台，麦克风与播放都暂停了。回来后可以继续。'); else if (['requesting_mic', 'recording', 'preparing_speech', 'speaking'].includes(this.state.activity)) this.stop(); };
-  end = () => { this.callController.hangup(); this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
-  reset = () => { this.callController.hangup(); this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
+  end = () => { this.hangupCall(); this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
+  reset = () => { this.hangupCall(); this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
   startCall = async () => {
     if (this.call.active || this.state.lifecycle !== 'active') return;
     if (!this.capabilities?.asr.available || !this.capabilities?.tts.available || !this.capabilities.agent.configured) { this.fail(new Error('语音连接暂时不可用，可以先打字聊。')); return; }
     this.stopWork(); this.error = ''; this.notice = '';
     const first = !this.state.started; if (first) this.dispatch({ type: 'START', mode: 'listen', welcome: CALL_GREETING.text });
+    if (this.capabilities.asr.opusUpload) this.speechUpload.warm();
     await this.callController.start(CALL_GREETING.text);
   };
-  hangupCall = () => { this.callController.hangup(); };
+  hangupCall = () => { this.callController.hangup(); this.speechUpload.stop(); };
   setMode = (mode: Mode) => {
     if (this.state.lifecycle !== 'active') return;
     this.hangupCall();

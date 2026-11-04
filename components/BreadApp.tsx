@@ -10,6 +10,7 @@ import { SavedArchive } from './SavedArchive';
 import { AboutSheet, type TextSize } from './ServiceStatus';
 import { SessionView, type EntryIntent } from './SessionView';
 import { CALL_RUNNING, IDLE_CALL, isCallOpen } from './call';
+import { morph } from './hooks';
 import { STOP_BEFORE_MODAL } from './labels';
 import type { BreadVM } from './vm';
 
@@ -43,19 +44,29 @@ export default function BreadApp() {
     }
   }, [state.started, state.lifecycle, state.sessionId]);
 
-  const talk = (first?: string) => {
-    setInitialDraft('');
-    if (state.lifecycle === 'ended') vm.reset();
-    setIntent('talk');
-    if (first) pendingFirst.current = first;
-    vm.start('listen');
-  };
+  // Into a conversation, back to the start: 面包 and its phone glide to their new places (morph).
+  // Not for a call, the listen-first welcome (it plays audio) or anything that stops work in progress.
+  const talk = (first?: string) =>
+    morph(
+      () => {
+        setInitialDraft('');
+        if (state.lifecycle === 'ended') vm.reset();
+        setIntent('talk');
+        if (first) pendingFirst.current = first;
+        vm.start('listen');
+      },
+      { keyboard: true },
+    );
 
-  const review = () => {
-    setIntent('review');
-    pendingReview.current = true;
-    vm.start('review');
-  };
+  const review = () =>
+    morph(
+      () => {
+        setIntent('review');
+        pendingReview.current = true;
+        vm.start('review');
+      },
+      { keyboard: true },
+    );
 
   // Only ever from a tap on a phone button. startCall opens the temporary conversation itself.
   const call = (draft = '') => {
@@ -70,11 +81,12 @@ export default function BreadApp() {
     vm.resumeSaved(saved);
   };
 
-  const reset = () => {
-    setInitialDraft('');
-    setIntent(null);
-    vm.reset();
-  };
+  const reset = () =>
+    morph(() => {
+      setInitialDraft('');
+      setIntent(null);
+      vm.reset();
+    });
 
   const ended = state.lifecycle === 'ended';
   const sessionLive = state.started && !ended;

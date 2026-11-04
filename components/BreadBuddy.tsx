@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { memo, useEffect, useRef, type CSSProperties, type RefObject } from 'react';
 import { useDomId } from './hooks';
 
 /**
@@ -26,7 +26,15 @@ import { useDomId } from './hooks';
  *
  * Nothing here reads the user. The eyes rest on the person; they only turn toward the phone when it
  * is hovered, toward a field being typed in, or toward what 面包 itself is busy with. The microphone
- * level only ever drives a small nod.
+ * level only ever drives a small lean (in a call, on the stage around the figure).
+ *
+ * Motion lives in two places. The drawing (the SVG) changes only when a real state does: a pose, a
+ * look, the seam. The one thing that never stops — breathing — and the per-phrase lift while speaking
+ * run on the HTML wrapper round it (.plush-motion), on the compositor, so a resting 面包 costs no paint
+ * at all. Nothing loops on a fixed beat to look busy, and nothing that is cut short snaps back.
+ *
+ * 面包 arrives whole: the face is drawn through the photo's own alpha until the photo is there
+ * (watchPlush), so eyes, blush and flower can never hang on the wall without a body.
  */
 export type BuddyState =
   | 'idle'
@@ -138,10 +146,76 @@ const DEAD_ZONE = 0.14;
 const HOLD = 320;
 /** How long the light on the glass takes to soften and come back (ms). Matches p-glint in the CSS. */
 const GLINT_MS = 900;
+/** The longest 面包 is held back waiting for its photo before the page shows what it has (ms). */
+const PLUSH_PATIENCE = 2400;
+
+type PlushArrival = 'wait' | 'late' | 'ready';
+let plushArrival: PlushArrival | null = null;
+
+/**
+ * Whether the photo has arrived, published once for the whole page as <html data-plush>:
+ *
+ *   (none)  before hydration: the face is drawn through the photo's alpha, so it appears with the body
+ *   wait    the photo is still on its way: every 面包 is held out of sight, so it can fade in whole
+ *   late    still not here after PLUSH_PATIENCE: shown anyway; the face still waits for the body
+ *   ready   decoded: the alpha mask comes off the face (it costs a pass on every repaint) and 面包 fades in
+ *
+ * If the bytes were already in when the page hydrated, it goes straight to `ready` and nothing that was
+ * on screen is hidden again. Nothing interactive waits for any of this.
+ */
+function watchPlush() {
+  if (plushArrival || typeof window === 'undefined') return;
+  const root = document.documentElement;
+  const mark = (s: PlushArrival) => {
+    plushArrival = s;
+    root.dataset.plush = s;
+  };
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = PLUSH_SRC;
+  const url = new URL(PLUSH_SRC, window.location.href).href;
+  const fetched =
+    typeof performance?.getEntriesByName === 'function' &&
+    performance.getEntriesByName(url).some((e) => (e as PerformanceResourceTiming).responseEnd > 0);
+  if (img.complete && img.naturalWidth > 0) {
+    mark('ready');
+    return;
+  }
+  // A completed resource entry can also be a 404. Only decoded image pixels allow removing the face mask.
+  // If a fetch finished before hydration, leave the existing drawing visible while decode settles.
+  mark(fetched ? 'late' : 'wait');
+  const late = window.setTimeout(() => {
+    if (plushArrival === 'wait') mark('late');
+  }, PLUSH_PATIENCE);
+  const ready = () => {
+    window.clearTimeout(late);
+    mark('ready');
+  };
+  img.addEventListener(
+    'load',
+    () => {
+      if (typeof img.decode === 'function') img.decode().then(ready, ready);
+      else ready();
+    },
+    { once: true },
+  );
+  img.addEventListener(
+    'error',
+    () => {
+      window.clearTimeout(late);
+      mark('late');
+    },
+    { once: true },
+  );
+}
 
 interface FigureProps {
   state: BuddyState;
-  /** 0..1, microphone level while listening. Only the nod follows it. */
+  /**
+   * 0..1, microphone level while listening; only a small lean follows it. Leave it out to inherit
+   * --lvl from the surroundings — the call stage sets it once for the light and the figure together,
+   * so a new level never re-renders the drawing.
+   */
   level?: number;
   /** Where to look while connecting, as a direction from the eyes (-1..1). */
   lookAt?: [number, number];
@@ -154,22 +228,23 @@ interface FigureProps {
 }
 
 interface PlushSvgProps extends FigureProps {
-  /** Placement when nested inside a larger scene's SVG. */
-  frame?: { x: number; y: number; width: number; height: number };
   className?: string;
   label?: string;
   svgRef?: RefObject<SVGSVGElement | null>;
 }
 
-/** The figure as an <svg>: standalone (sized by CSS) or nested inside a scene via `frame`. */
-export function PlushSvg({
+/**
+ * The figure, sized by CSS: the drawing inside .plush-motion, the wrapper that breathes and lifts on the
+ * compositor. Memoised: its props are a state and a few flags, so a parent re-rendering for a clock or
+ * a level never redraws 面包.
+ */
+export const PlushSvg = memo(function PlushSvg({
   state,
-  level = 0,
+  level,
   lookAt,
   alive = true,
   lit = false,
   phoneLight = false,
-  frame,
   className = '',
   label,
   svgRef,
@@ -177,20 +252,22 @@ export function PlushSvg({
   const own = useRef<SVGSVGElement>(null);
   const ref = svgRef ?? own;
   const id = useDomId('plush');
-  const lvl = Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0));
   useLife(ref, state, alive, lookAt);
   useMouth(ref, state, alive);
+  useEffect(() => watchPlush(), []);
 
   const extra = EXTRA[state] ?? null;
+  const lean =
+    level === undefined
+      ? undefined
+      : ({ '--lvl': Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0)).toFixed(3) } as CSSProperties);
 
-  return (
+  const drawing = (
     <svg
       ref={ref}
       viewBox={`0 0 ${S} ${S}`}
       className={`plush ${className}`}
       data-state={state}
-      style={{ '--lvl': lvl.toFixed(3) } as CSSProperties}
-      {...(frame ?? {})}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true, focusable: false })}
     >
       <defs>
@@ -291,36 +368,50 @@ export function PlushSvg({
                 )}
               </>
             )}
-            <g className="p-blush">
-              <ellipse cx="374" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
-              <ellipse cx="880" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
-            </g>
-            <image
-              className="p-clip"
-              href={CLIP_SRC}
-              x={CLIP.cx - CLIP.size / 2}
-              y={CLIP.cy - CLIP.size / 2}
-              width={CLIP.size}
-              height={CLIP.size}
-              transform={`rotate(${CLIP.rotate} ${CLIP.cx} ${CLIP.cy})`}
-            />
-            {EYES.map((e) => (
-              <Eye key={e.side} id={id} side={e.side} cx={e.cx} cy={e.cy} phone={lit && phoneLight} />
-            ))}
-            {/* The photo's own stitched smile, parted. Closed, nothing here is visible. */}
-            <g className="p-mouth">
-              <ellipse className="p-mouth__part" cx={SEAM.cx} cy={SEAM.y + 20} rx="50" ry="24" fill={`url(#${id}-part)`} />
-              <path className="p-mouth__open" d={SHUT.open} fill={`url(#${id}-mouth)`} />
-              <path className="p-mouth__lip" d={SHUT.lip} />
+            {/* Everything drawn onto the fur shows only where the photo is; see watchPlush. */}
+            <g className="p-face" mask={`url(#${id}-body)`}>
+              <g className="p-blush">
+                <ellipse cx="374" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
+                <ellipse cx="880" cy="704" rx="80" ry="50" fill={`url(#${id}-blush)`} />
+              </g>
+              <image
+                className="p-clip"
+                href={CLIP_SRC}
+                x={CLIP.cx - CLIP.size / 2}
+                y={CLIP.cy - CLIP.size / 2}
+                width={CLIP.size}
+                height={CLIP.size}
+                transform={`rotate(${CLIP.rotate} ${CLIP.cx} ${CLIP.cy})`}
+              />
+              {EYES.map((e) => (
+                <Eye key={e.side} id={id} side={e.side} cx={e.cx} cy={e.cy} phone={lit && phoneLight} />
+              ))}
+              {/* The photo's own stitched smile, parted. Closed, nothing here is visible. */}
+              <g className="p-mouth">
+                <ellipse className="p-mouth__part" cx={SEAM.cx} cy={SEAM.y + 20} rx="50" ry="24" fill={`url(#${id}-part)`} />
+                <path className="p-mouth__open" d={SHUT.open} fill={`url(#${id}-mouth)`} />
+                <path className="p-mouth__lip" d={SHUT.lip} />
+              </g>
             </g>
           </g>
         </g>
       </g>
-
-      {extra && <Extras extra={extra} />}
     </svg>
   );
-}
+
+  return (
+    <span className="plush-motion" data-buddy={state} style={lean}>
+      {drawing}
+      {/* What 面包 is busy with floats beside it in a drawing of its own, so the bubbling thought dots
+          repaint a few small circles instead of the whole figure. */}
+      {extra && (
+        <svg className="plush-extras" viewBox={`0 0 ${S} ${S}`} aria-hidden="true" focusable="false">
+          <Extras extra={extra} />
+        </svg>
+      )}
+    </span>
+  );
+});
 
 function Eye({ id, side, cx, cy, phone }: { id: string; side: 'l' | 'r'; cx: number; cy: number; phone: boolean }) {
   return (
@@ -653,7 +744,8 @@ function useLife(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive:
 /* audio here, and the microphone level is the user's, so the mouth doesn't     */
 /* pretend to follow words: it speaks in loose phrases — small, uneven          */
 /* syllables, then a closed pause — and never on a fixed beat. Between phrases  */
-/* she lifts a little and settles (data-phrase, --tilt); the CSS does that.     */
+/* she lifts a little and settles (data-phrase, --tilt on .plush-motion); the   */
+/* CSS does that, on the compositor.                                           */
 /* -------------------------------------------------------------------------- */
 
 /** How far the seam parts for a held smile (hello, a pat) and for a surprised pat. */
@@ -661,6 +753,11 @@ const SMILE_OPEN = 0.46;
 const OH_OPEN = 0.2;
 /** With reduced motion, speech is a still, slightly parted mouth. */
 const STILL_OPEN = 0.4;
+/**
+ * While speaking the seam is redrawn at most this often (ms): about 30 times a second. Each redraw
+ * repaints the whole figure, and a mouth twenty pixels wide reads the same at 30 as at 60.
+ */
+const SEAM_FRAME_MS = 32;
 
 function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive: boolean) {
   const stateRef = useRef(state);
@@ -690,6 +787,8 @@ function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive
     };
 
     // Speech cadence: phrases of 1.4–3.4 s, syllables of 150–270 ms, closed pauses of 0.4–0.9 s.
+    // The lift and lean of a phrase belong to the wrapper, which moves on the compositor.
+    const body: HTMLElement | SVGSVGElement = svg.parentElement ?? svg;
     let inPhrase = false;
     let phraseEnd = 0;
     let nextBeat = 0;
@@ -698,10 +797,10 @@ function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive
       if (on === inPhrase) return;
       inPhrase = on;
       if (on) {
-        svg.style.setProperty('--tilt', rand(-1, 1).toFixed(2));
-        svg.setAttribute('data-phrase', '');
+        body.style.setProperty('--tilt', rand(-1, 1).toFixed(2));
+        body.setAttribute('data-phrase', '');
       } else {
-        svg.removeAttribute('data-phrase');
+        body.removeAttribute('data-phrase');
       }
     };
     const speak = (now: number) => {
@@ -738,10 +837,14 @@ function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive
     let last = 0;
     const frame = (now: number) => {
       raf = 0;
+      const talking = stateRef.current === 'speaking';
+      if (talking && !still && last && now - last < SEAM_FRAME_MS) {
+        raf = window.requestAnimationFrame(frame);
+        return;
+      }
       const dt = last ? Math.min(64, now - last) : 16;
       last = now;
       const g = goal(now);
-      const talking = stateRef.current === 'speaking';
       // syllables open quickly and close a touch slower; smiles arrive and leave unhurried
       const tau = g > open ? (talking ? 55 : 150) : talking ? 85 : 200;
       open = still ? g : open + (g - open) * (1 - Math.exp(-dt / tau));
@@ -771,8 +874,8 @@ function useMouth(ref: RefObject<SVGSVGElement | null>, state: BuddyState, alive
       fill.setAttribute('d', SHUT.open);
       lip.setAttribute('d', SHUT.lip);
       svg.style.removeProperty('--open');
-      svg.style.removeProperty('--tilt');
-      svg.removeAttribute('data-phrase');
+      body.style.removeProperty('--tilt');
+      body.removeAttribute('data-phrase');
     };
   }, [ref, alive]);
 }
@@ -825,22 +928,34 @@ export function BreadBuddy({ label, decorative = false, className = '', pokeable
 
 type MarkState = 'idle' | 'speaking' | 'thinking' | 'listening' | 'night';
 
-/** The little face next to messages: same plush, same glass eyes, flattened so it still reads at 30px. */
+/**
+ * The little face next to messages and in the name: same plush, same glass eyes, flattened so it still
+ * reads at 30px. Like the full figure, its eyes only show where the photo already is.
+ */
 export function BreadMark({ state = 'idle' }: { state?: MarkState }) {
+  const id = useDomId('mark');
+  useEffect(() => watchPlush(), []);
   return (
     <svg viewBox={`0 0 ${S} ${S}`} className="bread-mark" data-state={state} aria-hidden="true" focusable="false">
+      <defs>
+        <mask id={`${id}-body`} maskUnits="userSpaceOnUse" x="0" y="0" width={S} height={S} style={{ maskType: 'alpha' }}>
+          <image href={PLUSH_SRC} width={S} height={S} />
+        </mask>
+      </defs>
       <image href={PLUSH_SRC} width={S} height={S} />
-      {EYES.map((e) => (
-        <g key={e.side} transform={`translate(${e.cx} ${e.cy})`}>
-          <ellipse className="pm-glass" rx="96" ry="90" />
-          <g className="pm-look">
-            <circle className="pm-iris" r="58" />
-            <circle className="pm-pupil" r="34" />
+      <g className="pm-face" mask={`url(#${id}-body)`}>
+        {EYES.map((e) => (
+          <g key={e.side} transform={`translate(${e.cx} ${e.cy})`}>
+            <ellipse className="pm-glass" rx="96" ry="90" />
+            <g className="pm-look">
+              <circle className="pm-iris" r="58" />
+              <circle className="pm-pupil" r="34" />
+            </g>
+            <ellipse className="pm-shine" cx="-32" cy="-38" rx="28" ry="19" />
+            <circle className="pm-dot" cx="34" cy="28" r="10" />
           </g>
-          <ellipse className="pm-shine" cx="-32" cy="-38" rx="28" ry="19" />
-          <circle className="pm-dot" cx="34" cy="28" r="10" />
-        </g>
-      ))}
+        ))}
+      </g>
     </svg>
   );
 }
