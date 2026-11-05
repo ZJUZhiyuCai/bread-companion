@@ -55,6 +55,8 @@ The home telephone keeps the same appearance throughout loading: a matching mode
 
 ## Evidence, not an EQ badge
 
+The November 5 public continuity test completed ten real-provider replies across twelve turns, recovering from two injected failures and a 75-second foreground pause. Median end-of-input-to-playback wait was **4.413 s**, maximum **5.990 s** (two above five seconds), with no scheduled inter-chunk gaps; natural interruption took **449 ms**. An alternating three-per-path comparison did not establish a stable end-to-end speedup despite lower non-provider overhead. See the [complete results](docs/call-tail.md).
+
 327 unit/integration checks and 70 browser paths cover cancellation, evidence, storage, calls, the opening/animation lifecycle, compressed audio streaming and stationary-pointer regressions. The v14 synthetic Chinese suite completed 16/16 API responses, with a **1.165 s median complete-response latency**. One goodbye used an application rule, not an LLM call. Both before/after outputs remain public: formulaic language, unsupported detail and unsolicited advice still occur.
 
 A local production test with a virtual microphone started the bundled opening in **240 ms**. Two real-provider turns took **4.202 / 3.275 s** from end of input to audio, with **362 ms** speech interruption latency. The opening uses bundled audio; subsequent replies need live synthesis. These small samples are not a latency guarantee. Physical microphones, Bluetooth and real mobile devices remain unverified.
