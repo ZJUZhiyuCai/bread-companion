@@ -1966,7 +1966,7 @@
     "origin": "https://bread.163-7-7-42.sslip.io",
     "synthetic": true,
     "physicalMicrophone": false,
-    "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; the second and seventh ASR requests are deliberately failed in the browser. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One 75-second foreground silence is included.",
+    "method": "Three turns before this implementation: mobile-size Chrome, real ASR/model/TTS, first 1.35 seconds of a synthetic fixture through AudioWorklet, proxy disabled. No failures or long silence were injected in this diagnostic variant.",
     "turns": [
       {
         "turn": 1,
@@ -2421,6 +2421,7 @@
     "Synthetic audio; no physical microphone or hardware output-latency measurement.",
     "Alternating comparison changes only advertised callPipeline capability, using the same deployed model, prompt and audio buffering. Three samples per path cannot establish tail latency.",
     "Other-wait estimate subtracts server ASR provider, model and first-audio durations from browser end-of-input-to-scheduled-playback. It includes VAD, upload, transport, admission and browser scheduling, not network RTT alone.",
-    "Model transport experiment waits for complete JSON; first non-streaming request uses a cold connection. No promotion based on this small sample."
+    "Model transport experiment waits for complete JSON; first non-streaming request uses a cold connection. No promotion based on this small sample.",
+    "The baseline diagnostic inherited a stale method sentence from an earlier test template; this published method description is corrected to the actual three-turn execution. Numeric timings and replies are unchanged."
   ]
 }
