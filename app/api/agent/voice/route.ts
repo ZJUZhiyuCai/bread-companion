@@ -1,4 +1,6 @@
 import { turnRequestSchema } from '@/domain/schemas';
+import type { TurnRequest } from '@/domain/types';
+import { callSeedSchema, completeCallSeed, CALL_SEED_BYTES, type CallSeed } from '@/domain/call-pipeline';
 import { withAbort } from '@/lib/abort';
 import { generateTurn } from '@/server/agent-turn';
 import { admit } from '@/server/admission';
@@ -7,7 +9,9 @@ import { AppError, asAppError } from '@/server/errors';
 import { assertAppRequest, errorResponse, NO_STORE, readJson } from '@/server/http';
 import { timeoutSignal } from '@/server/limits';
 import { synthesizeStream } from '@/server/providers/speech-stream';
-import { synthesize } from '@/server/providers/speech';
+import { synthesize, transcribe } from '@/server/providers/speech';
+import { bufferSpeechStart } from '@/server/providers/speech-buffer';
+import { readAudioEnvelope } from '@/server/audio-envelope';
 import { withCircuit } from '@/server/resilience';
 import { providerFetch } from '@/server/provider-fetch';
 
@@ -21,19 +25,42 @@ export async function POST(req: Request) {
   const canceled = new AbortController();
   try {
     assertAppRequest(req);
-    const input = await readJson(req, turnRequestSchema); requestId = input.requestId;
-    if (input.mode !== 'listen' || input.channel !== 'call') throw new AppError('INVALID_INPUT');
+    let input: TurnRequest | null = null, seed: CallSeed | undefined, file: File | undefined;
+    if (req.headers.get('content-type')?.startsWith('multipart/form-data;')) {
+      const form = await readAudioEnvelope(req, CALL_SEED_BYTES + 8192), rawSeed = form.get('seed'), audio = form.get('file');
+      if (form.getAll('seed').length !== 1 || form.getAll('file').length !== 1 || typeof rawSeed !== 'string'
+        || new TextEncoder().encode(rawSeed).length > CALL_SEED_BYTES || !(audio instanceof File)) throw new AppError('INVALID_INPUT');
+      try { seed = callSeedSchema.parse(JSON.parse(rawSeed)); } catch { throw new AppError('INVALID_INPUT'); }
+      requestId = seed.requestId; file = audio;
+    } else {
+      input = await readJson(req, turnRequestSchema); requestId = input.requestId;
+      if (input.mode !== 'listen' || input.channel !== 'call') throw new AppError('INVALID_INPUT');
+    }
     const c = config();
     if (!c.tts || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
-    const signal = timeoutSignal(AbortSignal.any([req.signal, canceled.signal]), Math.min(c.agentTimeout, c.companionTimeout) + c.speechTimeout);
-    release = await admit(req, 'call', requestId, signal);
+    if (file && !c.asr) throw new AppError('PROVIDER_UNAVAILABLE', 503);
+    const signal = timeoutSignal(AbortSignal.any([req.signal, canceled.signal]), Math.min(c.agentTimeout, c.companionTimeout) + c.speechTimeout * (file ? 2 : 1));
+    release = await admit(req, file ? 'asr' : 'call', requestId, signal);
     const encoder = new TextEncoder();
     const body = new ReadableStream<Uint8Array>({
       start(controller) {
         const send = (event: unknown) => { signal.throwIfAborted(); controller.enqueue(encoder.encode(JSON.stringify(event) + '\n')); };
         void (async () => {
-          let stage = 'agent';
+          let stage = file ? 'transcribe' : 'agent';
+          let asrMs: number | undefined;
           try {
+            if (file && seed) {
+              const asrStart = performance.now(), asrSignal = timeoutSignal(signal, c.speechTimeout);
+              const text = await withCircuit('asr', () => withAbort(transcribe(file!, asrSignal), asrSignal));
+              asrMs = performance.now() - asrStart;
+              signal.throwIfAborted();
+              input = completeCallSeed(seed, text);
+              send({ type: 'transcript', requestId, text, timing: { asrMs, elapsedMs: performance.now() - started } });
+              await release?.(); release = undefined;
+              if (!input) { send({ type: 'transcript_done', requestId }); return; }
+              stage = 'agent'; release = await admit(req, 'call', requestId, signal);
+            }
+            if (!input) throw new AppError('INVALID_INPUT');
             const { candidate, providerMs } = await generateTurn(input, timeoutSignal(signal, Math.min(c.agentTimeout, c.companionTimeout)));
             send({ type: 'candidate', candidate, timing: { agentMs: providerMs, elapsedMs: performance.now() - started } });
             // Separate accounting/circuit lanes are preserved; no extra parallel paid generation.
@@ -48,7 +75,9 @@ export async function POST(req: Request) {
             if (streamed) {
               await withCircuit('tts', async () => {
                 let sequence = 0;
-                for await (const audio of synthesizeStream(candidate.assistantText, speechSignal, providerFetch, format)) {
+                const source = synthesizeStream(candidate.assistantText, speechSignal, providerFetch, format);
+                const chunks = format === 'mp3' && process.env.BREAD_SPEECH_START_BUFFER !== 'off' ? bufferSpeechStart(source) : source;
+                for await (const audio of chunks) {
                   if (!sequence) { firstAudioMs = performance.now() - speechStart; send({ type: 'audio_start', requestId, format: format === 'pcm' ? 'pcm-s16le' : 'mp3', sampleRate: 32000, channels: 1 }); }
                   send({ type: 'audio_chunk', requestId, sequence: sequence++, audio: Buffer.from(audio).toString('base64') });
                 }
@@ -58,7 +87,7 @@ export async function POST(req: Request) {
               if (!audio.length || audio.length > 4 * 1024 * 1024) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
               send({ type: 'audio', requestId, mime: 'audio/mpeg', audio: Buffer.from(audio).toString('base64') });
             }
-            send({ type: 'done', requestId, timing: { agentMs: providerMs, firstAudioMs, ttsMs: performance.now() - speechStart, totalMs: performance.now() - started } });
+            send({ type: 'done', requestId, timing: { asrMs, agentMs: providerMs, firstAudioMs, ttsMs: performance.now() - speechStart, totalMs: performance.now() - started } });
           } catch (error) {
             if (!signal.aborted) {
               const err = asAppError(error);

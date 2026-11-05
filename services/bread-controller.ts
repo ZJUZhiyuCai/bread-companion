@@ -13,7 +13,8 @@ import { CallController, idleCall } from './call-controller';
 import type { CallAudioPort } from './call-audio';
 import { fetchComplete } from './http';
 import type { CallSpeech } from './speech-stream';
-import { requestVoiceTurn, VoiceTransportUnavailable } from './voice-turn';
+import { requestVoiceTurn, requestAudioTurn, VoiceTransportUnavailable } from './voice-turn';
+import { createCallSeed, completeCallSeed, isCallHangup, type CallSeed } from '@/domain/call-pipeline';
 import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
@@ -40,6 +41,7 @@ export class BreadController {
   private callController: CallController;
   private voiceFetcher: typeof fetch;
   private preparedCallSpeech: { text: string; token: RunToken; signal: AbortSignal; audio: Promise<CallSpeech> } | null = null;
+  private preparedCallPipeline: { seed: CallSeed; stream: ReturnType<typeof requestAudioTurn>; signal: AbortSignal } | null = null;
   constructor(private fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init), private media = new MediaController(), callAudio?: CallAudioPort) {
     this.voiceFetcher = fetcher;
     this.fetcher = (input, init) => fetchComplete(fetcher, input, init, String(input).includes('/capabilities') ? 8000 : 60000);
@@ -49,6 +51,22 @@ export class BreadController {
       transcribe: async (file, signal) => {
         if (this.capabilities?.asr.opusUpload) file = await this.speechUpload.encode(file, signal);
         signal.throwIfAborted();
+        const seed = this.capabilities?.asr.callPipeline && this.capabilities.tts.turnStream ? createCallSeed(this.state) : null;
+        if (seed) {
+          const stream = requestAudioTurn(this.voiceFetcher, seed, file, signal);
+          this.preparedCallPipeline = { seed, stream, signal };
+          try {
+            const text = await stream.transcript; signal.throwIfAborted();
+            if (!completeCallSeed(seed, text)) this.preparedCallPipeline = null;
+            return text;
+          } catch (error) {
+            this.preparedCallPipeline = null;
+            if (!(error instanceof VoiceTransportUnavailable) || signal.aborted) throw error;
+            // A known older route rejected the media type before billing. Never
+            // replay an uncertain timeout, upstream error or truncated response.
+            this.capabilities = { ...this.capabilities!, asr: { ...this.capabilities!.asr, callPipeline: false } };
+          }
+        }
         const requestId = uid('request'); const form = new FormData(); form.append('file', file); form.append('requestId', requestId);
         const started = performance.now();
         const response = await this.fetcher('/api/speech/transcribe', { method: 'POST', body: form, signal });
@@ -119,7 +137,7 @@ export class BreadController {
     }
   };
   dispose() { this.speechUpload.stop(); this.disposed = true; this.capabilityRequest?.abort(); this.capabilityRequest = null; this.callController.hangup(); this.state = reducer(this.state, { type: 'STOP' }); this.cancelResources(); }
-  private cancelResources() { this.failedTurn = null; this.preparedCallSpeech = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
+  private cancelResources() { this.failedTurn = null; this.preparedCallPipeline = null; this.preparedCallSpeech = null; this.run.cancel(); this.media.cancel(); this.recording = null; this.recordedSeconds = 0; }
   private fail(error: unknown, fallback = '操作没有完成，请重试。', retainFailedTurn = false) { if (!retainFailedTurn) this.failedTurn = null; this.error = error instanceof Error ? error.message : fallback; this.publish(); }
   dismissNotice = () => { this.notice = ''; this.publish(); };
   clearNotice = () => { this.failedTurn = null; this.notice = ''; this.error = ''; this.publish(); };
@@ -151,7 +169,7 @@ export class BreadController {
   send = async (text: string) => { if (!text.trim()) return; this.hangupCall(); await this.sendMessage(text, 'text'); };
   private sendMessage = async (text: string, channel: 'text' | 'call', actionRequest = false) => {
     text = text.trim(); if (!text || this.state.lifecycle !== 'active') return;
-    if (channel === 'call' && /^(?:好[的吧]?[，,\s]*)?(?:先)?(?:挂了|挂断(?:电话)?|挂电话|不聊了|再见|晚安)[。！!，,\s]*$/.test(text)) { this.hangupCall(); return; }
+    if (channel === 'call' && isCallHangup(text)) { this.hangupCall(); return; }
     const intent = explicitIntent(text);
     if (intent === 'stop') { this.stop(); return; } if (intent === 'end') { this.end(); return; }
     if (text.length > 4000) { this.fail(new Error('每次最多发送 4,000 个字符，可以分几段说。')); return; }
@@ -159,7 +177,7 @@ export class BreadController {
     if (intent) { this.dispatch(intent === 'practice' ? { type: 'PREPARE_PRACTICE' } : { type: 'MODE', mode: intent }); this.cancelResources(); }
     else if (this.view.busy || this.state.activity === 'recorded') { this.fail(new Error('请先停止当前操作，或处理已录好的片段。')); return; }
     this.error = '';
-    const source: Source = { id: uid('source'), revision: 1, origin: 'user_recollection', label: actionRequest || isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
+    const source: Source = { id: channel === 'call' ? this.preparedCallPipeline?.seed.sourceId ?? uid('source') : uid('source'), revision: 1, origin: 'user_recollection', label: actionRequest || isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
     this.dispatch({ type: 'USER', text, source });
     await this.requestTurn(text, channel);
   };
@@ -181,12 +199,16 @@ export class BreadController {
   private async requestTurn(text: string, channel: 'text' | 'call' = 'text') {
     if (this.state.lifecycle !== 'active') return;
     this.failedTurn = null; this.error = '';
-    const { token, signal } = this.run.begin(this.state);
+    const pipeline = channel === 'call' ? this.preparedCallPipeline : null;
+    this.preparedCallPipeline = null;
+    const { token, signal: runSignal } = this.run.begin(this.state, pipeline?.seed.runId);
+    const signal = pipeline ? AbortSignal.any([runSignal, pipeline.signal]) : runSignal;
     this.dispatch({ type: 'RUN', runId: token.runId, activity: 'generating' });
-    const request = { ...buildTurn(this.state, text, token.runId, uid('request')), channel };
+    const request = { ...buildTurn(this.state, text, token.runId, pipeline?.seed.requestId ?? uid('request')), channel };
     let retryable = true;
     try {
       const validated = turnRequestSchema.safeParse(request); if (!validated.success) { retryable = false; throw new Error('这段内容有点长，可以分几段发送。'); }
+      if (pipeline && JSON.stringify(completeCallSeed(pipeline.seed, text)) !== JSON.stringify(validated.data)) throw new Error('这次对话内容已变化，旧回复已停止。');
       let json: unknown;
       let speech: Promise<CallSpeech> | undefined;
       const legacy = async () => {
@@ -196,7 +218,9 @@ export class BreadController {
         if (!res.ok) { retryable = body.error?.retryable !== false; throw callServiceError(body.error, res.status); }
         return body;
       };
-      if (channel === 'call' && request.mode === 'listen' && this.capabilities?.tts.turnStream) {
+      if (pipeline) {
+        json = await withAbort(pipeline.stream.candidate, signal); speech = pipeline.stream.audio;
+      } else if (channel === 'call' && request.mode === 'listen' && this.capabilities?.tts.turnStream) {
         const stream = requestVoiceTurn(this.voiceFetcher, validated.data, signal);
         try { json = await stream.candidate; speech = stream.audio; }
         catch (error) {

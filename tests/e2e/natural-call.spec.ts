@@ -2,10 +2,11 @@ import { test, expect, type Page } from '@playwright/test';
 import { encodeWav } from '../../services/media-controller';
 import { readFileSync } from 'node:fs';
 import { mockCandidate } from '../../server/providers/mock-agent';
+import { callSeedSchema, completeCallSeed } from '../../domain/call-pipeline';
 
 // A controllable microphone connected to the actual browser AudioWorklet. Provider I/O is mocked
 // here; the separate opt-in live check measures MiniMax + the configured model end to end.
-async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' | 'mp3' = false, opus = false) {
+async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: boolean | 'fail-tts' | 'pcm' | 'mp3' = false, opus = false, pipeline = false) {
   const stats = { asr: [] as ArrayBuffer[], turns: [] as any[], tts: 0, voices: 0, release: () => {} };
   const held = new Promise<void>(r => { stats.release = r; });
   await page.addInitScript(({ voice }) => {
@@ -47,9 +48,18 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
       return dest.stream;
     };
   }, { voice: readFileSync('tests/fixtures/voice-input.wav').toString('base64') });
-  await page.route('**/api/capabilities', async r => { const res = await r.fetch(), c = await res.json(); c.asr.available = c.tts.available = true; if (opus) c.asr.opusUpload = true; if (combined) c.tts.turnStream = true; await r.fulfill({ json: c }); });
+  await page.route('**/api/capabilities', async r => { const res = await r.fetch(), c = await res.json(); c.asr.available = c.tts.available = true; if (opus) c.asr.opusUpload = true; if (combined) c.tts.turnStream = true; if (pipeline) c.asr.callPipeline = true; await r.fulfill({ json: c }); });
   if (combined) await page.route('**/api/agent/voice', async r => {
-    const input = r.request().postDataJSON(); stats.turns.push(input); stats.voices++;
+    let input; const prefix: unknown[] = [];
+    if (pipeline) {
+      const request = new Request('http://localhost/', { method: 'POST', headers: { 'Content-Type': r.request().headers()['content-type'] }, body: new Uint8Array(r.request().postDataBuffer()!) });
+      const form = await request.formData(), seed = callSeedSchema.parse(JSON.parse(String(form.get('seed'))));
+      stats.asr.push(await (form.get('file') as File).arrayBuffer());
+      if (hold === 'asr' && stats.asr.length === 1) await held;
+      const transcript = '今晚不想听建议，今天也不要追问。'; input = completeCallSeed(seed, transcript)!;
+      prefix.push({ type: 'transcript', requestId: seed.requestId, text: transcript });
+    } else input = r.request().postDataJSON();
+    stats.turns.push(input); stats.voices++;
     if (hold === 'model' && stats.voices === 1) await held;
     const text = { type: 'candidate', candidate: mockCandidate(input) };
     const audio = Buffer.from(encodeWav(new Float32Array(16000 * 8))).toString('base64');
@@ -67,7 +77,7 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
     ] : combined === 'fail-tts'
       ? [text, { type: 'error', error: { requestId: input.requestId, userMessage: '声音暂时没接上。' } }]
       : [text, { type: 'audio', requestId: input.requestId, mime: 'audio/mpeg', audio }, { type: 'done', requestId: input.requestId }];
-    await r.fulfill({ body: events.map(e => JSON.stringify(e) + '\n').join(''), contentType: 'application/x-ndjson' }).catch(() => {});
+    await r.fulfill({ body: [...prefix, ...events].map(e => JSON.stringify(e) + '\n').join(''), contentType: 'application/x-ndjson' }).catch(() => {});
   });
   await page.route('**/api/speech/transcribe', async r => {
     const req = new Request('http://localhost/', { method: 'POST', headers: { 'Content-Type': r.request().headers()['content-type'] }, body: new Uint8Array(r.request().postDataBuffer()!) });
@@ -88,6 +98,41 @@ async function setup(page: Page, hold: 'asr' | 'model' | '' = '', combined: bool
 const speak = (page: Page, kind = 'speech') => page.evaluate(k => (window as any).__emit(k), kind);
 const phase = (page: Page, name: string) => expect(page.locator('.callroom')).toHaveAttribute('data-phase', name, { timeout: 12000 });
 const hangup = async(page: Page) => { await page.getByRole('button', { name: '挂断', exact: true }).click(); expect(await page.evaluate(() => (window as any).__audio.tracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true); };
+
+test('one-request mobile calls retain preferences, native Opus and consecutive MP3 playback', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  const stats = await setup(page, '', 'mp3', true, true);
+  for (let n = 1; n <= 2; n++) {
+    await speak(page, 'short'); await phase(page, 'speaking'); await phase(page, 'listening');
+    expect(stats.voices).toBe(n); expect(stats.turns[n - 1].context.preferences).toEqual({ advice: 'on_request', questions: 'avoid' });
+    expect(new TextDecoder().decode(stats.asr[n - 1].slice(0, 4))).toBe('OggS');
+  }
+  expect(stats.asr).toHaveLength(2); expect(stats.tts).toBe(1);
+  await hangup(page); expect(errors).toEqual([]);
+});
+
+test('natural speech cancels late pipeline transcription and only the current turn can speak', async ({ page }) => {
+  const stats = await setup(page, 'asr', 'mp3', true, true);
+  await speak(page, 'short'); await phase(page, 'transcribing');
+  await speak(page, 'short'); await phase(page, 'listening');
+  await expect.poll(() => stats.asr.length, { timeout: 12000 }).toBe(2); await phase(page, 'speaking');
+  const current = await page.getByRole('log').textContent(); stats.release();
+  await phase(page, 'listening'); await expect(page.getByRole('log')).toHaveText(current!);
+  expect(stats.tts).toBe(1); await hangup(page);
+});
+
+test('a transient pipeline failure keeps the same microphone and accepts the next utterance without replay', async ({ page }) => {
+  const stats = await setup(page, '', 'mp3', true, true); let failed = false;
+  await page.route('**/api/agent/voice', async route => {
+    if (!failed) { failed = true; await route.fulfill({ status: 502, json: { error: { code: 'PROVIDER_UNAVAILABLE', retryable: true } } }); }
+    else await route.fallback();
+  });
+  await speak(page, 'short'); await expect(page.locator('.callroom [role="status"]')).toContainText('没转成文字');
+  await phase(page, 'listening'); await speak(page, 'short'); await phase(page, 'speaking'); await phase(page, 'listening');
+  expect(stats.voices).toBe(1); expect(stats.asr).toHaveLength(1); expect(stats.tts).toBe(1);
+  expect(await page.evaluate(() => (window as any).__audio.tracks.length)).toBe(1); await hangup(page);
+});
 
 test('combined phone transport plays, accepts speech interruption and avoids a second synthesis request', async({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

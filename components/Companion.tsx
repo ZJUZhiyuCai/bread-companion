@@ -7,9 +7,27 @@ import { LampScene } from './NightWindow';
 import { Phone3D } from './Phone3D';
 import { PHONE_STILL, PhoneStill, RedPhone } from './RedPhone';
 import { BUDDY_LINE, CALL_PREFACE, callBlockDetail, callBlockReason } from './call';
-import { useDomId } from './hooks';
+import { useAfterimage, useDomId } from './hooks';
 import { HERO_PHONE, overlayBox } from './phone3d/layouts';
 import { usePhone3D } from './phone3d/usePhone3D';
+
+/**
+ * A short line of Chinese that breaks only between its phrases — after a ，or a 。— never one
+ * character from its end ("先打字 / 吧"). Each phrase is an inline block; one that is longer than the
+ * line still wraps inside itself, so nothing can overflow. Same text, same reading order.
+ */
+export function Phrases({ text }: { text: string }) {
+  const parts = text.match(/[^，。、；：！？…]+[，。、；：！？…]*|[，。、；：！？…]+/g) ?? [text];
+  return (
+    <>
+      {parts.map((p, i) => (
+        <span key={i} className="phrase">
+          {p}
+        </span>
+      ))}
+    </>
+  );
+}
 
 interface CallLauncherProps {
   caps: Capabilities | null;
@@ -101,7 +119,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           {block || CALL_PREFACE}
         </span>
         <p className="call-pill__hint" role="status">
-          {hint}
+          {hint && <Phrases text={hint} />}
         </p>
       </>
     );
@@ -161,7 +179,7 @@ export function CallLauncher({ caps, onCall, variant, blocked = '' }: CallLaunch
           {/* On the home page the label is always visible now; a check still running isn't flashed into it
               (the description and the press hint still say it). A real block always shows. */}
           <span className="phone-door__sub">
-            {block && (unavailable || variant !== 'hero') ? block : '用说的，不用打字'}
+            <Phrases text={block && (unavailable || variant !== 'hero') ? block : '用说的，不用打字'} />
           </span>
         </span>
       </button>
@@ -186,13 +204,26 @@ interface CompanionProps {
   callBlocked: string;
 }
 
-/** Desktop: 面包's corner. The plush in its pool of light follows the real state; the phone sits right below it. */
+/**
+ * Desktop: 面包's corner. The plush in its pool of light follows the real state; the phone sits right
+ * below it. They sit on the floor at the foot of the corner — level with where you write and where the
+ * newest words are — with the wall above them, as on the first screen.
+ *
+ * When 面包's line changes, the old one gives way to the new in place (useAfterimage): it fades first,
+ * the new one comes up a beat later, and nothing is ever blank in between.
+ */
 export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
+  const was = useAfterimage({ line, buddy }, line);
   return (
     <aside className="companion" aria-label="面包">
       <div className="companion__figure">
+        {was && (
+          <span key={was.n} className="companion__ghost" data-state={was.value.buddy} aria-hidden="true">
+            <Phrases text={was.value.line} />
+          </span>
+        )}
         <p key={line} className="companion__bubble" data-state={buddy}>
-          {line}
+          <Phrases text={line} />
         </p>
         <LampScene state={buddy} className="companion__scene" pokeable />
       </div>
@@ -209,6 +240,7 @@ export function CompanionPanel({ buddy, line = BUDDY_LINE[buddy], status, caps, 
 
 /** Phones: a slim perch under the top bar — 面包, one line from it, and the phone. */
 export function CompanionPerch({ buddy, line = BUDDY_LINE[buddy], status, caps, onCall, callBlocked }: CompanionProps) {
+  const was = useAfterimage(line, line);
   return (
     <div className="perch" data-state={buddy}>
       <span className="perch__buddy">
@@ -216,7 +248,12 @@ export function CompanionPerch({ buddy, line = BUDDY_LINE[buddy], status, caps, 
       </span>
       <p className="perch__line">
         <span className="perch__name">面包</span>
-        {/* a new line settles in where the old one was, like the corner's subtitle */}
+        {/* a new line takes over where the old one was, like the corner's subtitle: the old one goes first */}
+        {was && (
+          <span key={was.n} className="perch__ghost" aria-hidden="true">
+            {was.value}
+          </span>
+        )}
         <span key={line} className="perch__say">
           {line}
         </span>

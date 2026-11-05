@@ -1,0 +1,66 @@
+[
+  {
+    "label": "320-light-home",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "label": "320-light-chat",
+    "overflow": false,
+    "violations": [],
+    "endVisible": true,
+    "focus": true
+  },
+  {
+    "label": "390-light-home",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "label": "390-light-chat",
+    "overflow": false,
+    "violations": [],
+    "endVisible": true,
+    "focus": true
+  },
+  {
+    "label": "1440-light-home",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "label": "1440-light-chat",
+    "overflow": false,
+    "violations": [],
+    "endVisible": true,
+    "focus": true
+  },
+  {
+    "label": "390-dark-home",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "label": "390-dark-chat",
+    "overflow": false,
+    "violations": [],
+    "endVisible": true,
+    "focus": true
+  },
+  {
+    "label": "390-call-listening",
+    "overflow": false,
+    "violations": []
+  },
+  {
+    "label": "390-call-wait",
+    "overflow": false,
+    "violations": [],
+    "controlShift": 0
+  },
+  {
+    "label": "390-call-recovered",
+    "overflow": false,
+    "violations": []
+  }
+]

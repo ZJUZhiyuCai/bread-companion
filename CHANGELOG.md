@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Carry ordinary listening audio, transcript, validated response and speech on one request; retain controller ownership of stop/end/review and bounded context. Coalesce the first MP3 burst and avoid an unnecessary scheduling gap between on-time chunks. Keep existing DeepSeek empathy instructions and MiniMax HD voice. Recognize explicit time-qualified preferences such as “今晚不想听建议”. Claude Opus 5.5 / high refined phone color, small-screen controls, focus and text transitions. See [call latency and continuity](docs/call-tail.md).
+
 - Reduce call upload size with native Opus and Mediabunny in a dedicated worker; preserve immediate WAV fallback, cancellation, duration limits and the existing model/voice. Add upload/admission timing. Claude Opus 5.5 / high refined companion arrival, compositor breathing and state transitions; Codex verified late/failed assets and consecutive compressed calls. See [open-source reuse and measurements](docs/open-source-improvements.md).
 
 - Keep a healthy microphone alive after a failed call turn. Retry a transient ASR failure at most once inside the existing deadline; preserve text after reply/audio failures without duplicate model or synthesis requests. Honor quota, permission and device failures; allow five idle foreground minutes before pausing. See [continuity validation](docs/call-continuity.md).

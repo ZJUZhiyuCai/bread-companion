@@ -109,6 +109,16 @@ function player() {
   return { audio, context, nodes };
 }
 describe('PCM playback and endpointing', () => {
+  it('does not insert a fresh startup delay when the next fragment arrives just before the playing tail', async () => {
+    const h = player(), pcm = new PcmSpeech();
+    const played = h.audio.play(pcm, new AbortController().signal, () => {});
+    pcm.push(new Uint8Array(32000)); await vi.waitFor(() => expect(h.nodes).toHaveLength(1));
+    h.context.currentTime = 10.54; // The first fragment still has 20 ms to play.
+    pcm.push(new Uint8Array(16000)); pcm.end();
+    await vi.waitFor(() => expect(h.nodes).toHaveLength(2));
+    expect(h.nodes[1].start.mock.calls[0][0]).toBeCloseTo(10.56);
+    h.nodes.forEach(s => s.onended?.()); await played;
+  });
   it('schedules continuous audio, starts early, and waits for the actual final sample', async () => {
     const h = player(), pcm = new PcmSpeech(), start = vi.fn();
     const played = h.audio.play(pcm, new AbortController().signal, start);

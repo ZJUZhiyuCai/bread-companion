@@ -4,6 +4,7 @@ import { validateCandidate } from '@/domain/evidence';
 import { withAbort } from '@/lib/abort';
 import { PcmSpeech, Mp3Speech, type SpeechChunks, type CallSpeech } from './speech-stream';
 import { callServiceError } from './call-error';
+import { completeCallSeed, type CallSeed } from '@/domain/call-pipeline';
 
 function deferred<T>() {
   let resolve!: (value: T) => void, reject!: (error: unknown) => void;
@@ -27,9 +28,17 @@ export function canStreamMp3(connection?: { saveData?: boolean; effectiveType?: 
 }
 /** The reply may render while the same request is still preparing speech. */
 export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, parent: AbortSignal, timeoutMs = 60000) {
-  const candidate = deferred<TurnCandidate>(), audio = deferred<CallSpeech>();
+  return requestTurnStream(fetcher, input, parent, timeoutMs);
+}
+export function requestAudioTurn(fetcher: typeof fetch, seed: CallSeed, file: File, parent: AbortSignal, timeoutMs = 90000) {
+  return requestTurnStream(fetcher, null, parent, timeoutMs, { seed, file });
+}
+function requestTurnStream(fetcher: typeof fetch, input: TurnRequest | null, parent: AbortSignal, timeoutMs: number, upload?: { seed: CallSeed; file: File }) {
+  const candidate = deferred<TurnCandidate>(), audio = deferred<CallSpeech>(), transcript = deferred<string>();
+  const requestId = input?.requestId ?? upload!.seed.requestId;
+  if (input) transcript.resolve(input.userMessage);
   const connection = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string; downlink?: number } }).connection;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = upload ? {} : { 'Content-Type': 'application/json' };
   if (canStreamMp3(connection)) headers['X-Bread-Audio'] = 'mp3-chunks-v1';
   const deadline = new AbortController();
   const timer = setTimeout(() => deadline.abort(new DOMException('这次连接等得有点久，可以再试一次。', 'TimeoutError')), timeoutMs);
@@ -40,36 +49,44 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
   void (async () => {
     try {
       signal.throwIfAborted();
-      const res = await withAbort(fetcher('/api/agent/voice', { method: 'POST', headers, body: JSON.stringify(input), signal }), signal);
-      if (res.status === 404 || res.status === 405) { void res.body?.cancel().catch(() => {}); throw new VoiceTransportUnavailable(); }
+      let body: BodyInit = JSON.stringify(input);
+      if (upload) { const form = new FormData(); form.append('seed', JSON.stringify(upload.seed)); form.append('file', upload.file); body = form; }
+      const res = await withAbort(fetcher('/api/agent/voice', { method: 'POST', headers, body, signal }), signal);
+      // Older JSON-only releases reject multipart with 415 before any provider call.
+      if (res.status === 404 || res.status === 405 || (upload && res.status === 415)) { void res.body?.cancel().catch(() => {}); throw new VoiceTransportUnavailable(); }
       if (!res.body) throw invalid();
       reader = res.body.getReader();
       const decoder = new TextDecoder('utf-8', { fatal: true });
-      let buffer = '', bytes = 0, gotCandidate = false, clip: Blob | undefined, complete = false, sequence = 0;
+      let buffer = '', bytes = 0, gotCandidate = false, gotTranscript = !upload, clip: Blob | undefined, complete = false, sequence = 0;
       const handle = (line: string) => {
         let event;
         try { event = JSON.parse(line); } catch { throw invalid(); }
         if (!event || typeof event !== 'object') throw invalid();
-        if (event.type === 'error' && event.error?.requestId === input.requestId) throw callServiceError(event.error);
-        if (event.type === 'candidate' && !gotCandidate && !clip && !pcm) {
+        if (event.type === 'error' && event.error?.requestId === requestId) throw callServiceError(event.error);
+        if (event.type === 'transcript' && upload && !gotTranscript && event.requestId === requestId && typeof event.text === 'string' && event.text.length <= 4000) {
+          input = completeCallSeed(upload.seed, event.text); gotTranscript = true; transcript.resolve(event.text.trim());
+        } else if (event.type === 'transcript_done' && upload && gotTranscript && !input && !gotCandidate && event.requestId === requestId) {
+          complete = true;
+          const noReply = new Error('The transcript is handled by the local controller.'); candidate.reject(noReply); audio.reject(noReply);
+        } else if (event.type === 'candidate' && input && gotTranscript && !gotCandidate && !clip && !pcm) {
           const parsedResult = candidateSchema.safeParse(event.candidate);
           if (!parsedResult.success) throw invalid();
           const parsed = parsedResult.data;
           if (validateCandidate(parsed, input).length) throw invalid();
           gotCandidate = true; candidate.resolve(parsed);
-        } else if (event.type === 'audio' && gotCandidate && !clip && !pcm && event.requestId === input.requestId && event.mime === 'audio/mpeg') {
+        } else if (event.type === 'audio' && gotCandidate && !clip && !pcm && event.requestId === requestId && event.mime === 'audio/mpeg') {
           if (typeof event.audio !== 'string' || !event.audio.length || event.audio.length > 5592408 || event.audio.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(event.audio)) throw invalid();
           const raw = atob(event.audio), bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
           if (bytes.byteLength > 4 * 1024 * 1024) throw invalid();
           clip = new Blob([bytes], { type: 'audio/mpeg' });
-        } else if (event.type === 'audio_start' && gotCandidate && !clip && !pcm && event.requestId === input.requestId && ['pcm-s16le', 'mp3'].includes(event.format) && event.sampleRate === 32000 && event.channels === 1) {
+        } else if (event.type === 'audio_start' && gotCandidate && !clip && !pcm && event.requestId === requestId && ['pcm-s16le', 'mp3'].includes(event.format) && event.sampleRate === 32000 && event.channels === 1) {
           pcm = event.format === 'mp3' ? new Mp3Speech() : new PcmSpeech();
-        } else if (event.type === 'audio_chunk' && pcm && !clip && event.requestId === input.requestId && event.sequence === sequence) {
+        } else if (event.type === 'audio_chunk' && pcm && !clip && event.requestId === requestId && event.sequence === sequence) {
           if (sequence >= 512 || typeof event.audio !== 'string' || !event.audio.length || event.audio.length > 699052 || event.audio.length % 4 || !/^[A-Za-z0-9+/]+={0,2}$/.test(event.audio)) throw invalid();
           const raw = atob(event.audio);
           pcm.push(Uint8Array.from(raw, c => c.charCodeAt(0)));
           if (!sequence++) audio.resolve(pcm);
-        } else if (event.type === 'done' && gotCandidate && (clip || (pcm && sequence > 0)) && event.requestId === input.requestId) {
+        } else if (event.type === 'done' && gotCandidate && (clip || (pcm && sequence > 0)) && event.requestId === requestId) {
           complete = true;
         } else throw invalid();
       };
@@ -86,7 +103,7 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
         while ((newline = buffer.indexOf('\n')) >= 0) {
           const line = buffer.slice(0, newline); buffer = buffer.slice(newline + 1);
           if (line.trim()) handle(line);
-          if (complete) { signal.throwIfAborted(); if (pcm) pcm.end(); else audio.resolve(clip!); return; }
+          if (complete) { signal.throwIfAborted(); if (pcm) pcm.end(); else if (clip) audio.resolve(clip); return; }
         }
       }
       if (!res.ok) {
@@ -96,11 +113,11 @@ export function requestVoiceTurn(fetcher: typeof fetch, input: TurnRequest, pare
       }
       // EOF without an explicit done event is a broken response, never success.
       throw invalid();
-    } catch (error) { pcm?.fail(error); candidate.reject(error); audio.reject(error); }
+    } catch (error) { pcm?.fail(error); transcript.reject(error); candidate.reject(error); audio.reject(error); }
     finally {
       clearTimeout(timer);
       if (reader) { void reader.cancel().catch(() => {}); reader.releaseLock(); }
     }
   })();
-  return { candidate: candidate.promise, audio: audio.promise };
+  return { transcript: transcript.promise, candidate: candidate.promise, audio: audio.promise };
 }
