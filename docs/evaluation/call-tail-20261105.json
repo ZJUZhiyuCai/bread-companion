@@ -1,0 +1,2426 @@
+{
+  "summary": {
+    "continuity": {
+      "completed": 10,
+      "medianWaitMs": 4413.0,
+      "maxWaitMs": 5990,
+      "waitsOver5s": 2,
+      "maxScheduledGapMs": 0
+    },
+    "interruptionMs": 449,
+    "comparison": {
+      "legacy": {
+        "completed": 3,
+        "medianWaitMs": 3983,
+        "maxWaitMs": 4505,
+        "waitsOver5s": 0,
+        "maxScheduledGapMs": 0
+      },
+      "pipeline": {
+        "completed": 3,
+        "medianWaitMs": 4333,
+        "maxWaitMs": 4732,
+        "waitsOver5s": 0,
+        "maxScheduledGapMs": 0
+      }
+    }
+  },
+  "results": {
+    "continuity": {
+      "at": "2026-11-05T06:37:26.543Z",
+      "origin": "https://bread.163-7-7-42.sslip.io",
+      "synthetic": true,
+      "physicalMicrophone": false,
+      "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; the second and seventh combined audio requests are deliberately failed in the browser. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One 75-second foreground silence is included.",
+      "turns": [
+        {
+          "turn": 1,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "行，今晚先说说，我听着。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 819.6730129999996,
+              "agentMs": 3215.9827280000027,
+              "firstAudioMs": 335.66686499999923,
+              "ttsMs": 495.5632770000011,
+              "totalMs": 4558.986107000004
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 5392,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 2,
+          "injectedFailure": "HTTP 502",
+          "phase": "listening",
+          "warning": "刚才这句没转成文字，可以再说一遍。电话还在。",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [],
+          "providerTiming": [],
+          "playCount": 0,
+          "waitMs": null,
+          "maxScheduledGapMs": null
+        },
+        {
+          "turn": 3,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，今晚先说说，我听着。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 540.9186189999964,
+              "agentMs": 2611.0999449999945,
+              "firstAudioMs": 363.6384719999987,
+              "ttsMs": 621.1232369999998,
+              "totalMs": 3794.376053
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 4495,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 4,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，今晚先说说，我听着。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 575.4250050000046,
+              "agentMs": 1469.7095649999974,
+              "firstAudioMs": 274.9490850000002,
+              "ttsMs": 491.97545700000774,
+              "totalMs": 2563.9786319999985
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 3302,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 5,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，我在这儿，你说。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 572.0757400000002,
+              "agentMs": 2601.6990589999914,
+              "firstAudioMs": 451.8756129999965,
+              "ttsMs": 607.476794000002,
+              "totalMs": 3802.921848999991
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 4591,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 6,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，你说，我听着。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 1075.498900000006,
+              "agentMs": 3638.2057360000035,
+              "firstAudioMs": 305.566651000001,
+              "ttsMs": 470.62991099999635,
+              "totalMs": 5208.392838
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 5990,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 7,
+          "injectedFailure": "network abort",
+          "phase": "listening",
+          "warning": "刚才这句没转成文字，可以再说一遍。电话还在。",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [],
+          "providerTiming": [],
+          "playCount": 0,
+          "waitMs": null,
+          "maxScheduledGapMs": null
+        },
+        {
+          "turn": 8,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，我听着，你说。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 738.0847950000025,
+              "agentMs": 2144.8227130000014,
+              "firstAudioMs": 792.844998000015,
+              "ttsMs": 1026.7666020000179,
+              "totalMs": 3933.0704899999837
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 4634,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 9,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，我听着，你说。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 761.3231410000008,
+              "agentMs": 1656.263299000013,
+              "firstAudioMs": 442.1679820000136,
+              "ttsMs": 601.3506409999973,
+              "totalMs": 3044.583749000012
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 3827,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 10,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，你说，我听着。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 598.3440850000188,
+              "agentMs": 1586.1185620000178,
+              "firstAudioMs": 452.0782719999843,
+              "ttsMs": 619.4186499999778,
+              "totalMs": 2827.2464150000014
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 4331,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 11,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，我听着，你说。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 614.7397820000187,
+              "agentMs": 1577.3752629999944,
+              "firstAudioMs": 340.5422440000111,
+              "ttsMs": 514.4102810000186,
+              "totalMs": 2731.0667229999963
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 3505,
+          "maxScheduledGapMs": 0
+        },
+        {
+          "turn": 12,
+          "injectedFailure": null,
+          "phase": "listening",
+          "warning": "",
+          "tracks": 1,
+          "liveTracks": 1,
+          "reply": [
+            "好，我听着，你说。"
+          ],
+          "providerTiming": [
+            {
+              "asrMs": 619.9319860000105,
+              "agentMs": 1444.9128060000075,
+              "firstAudioMs": 820.3001240000012,
+              "ttsMs": 904.6817549999978,
+              "totalMs": 2997.295023999992
+            }
+          ],
+          "playCount": 3,
+          "waitMs": 4033,
+          "maxScheduledGapMs": 0
+        }
+      ],
+      "errors": [],
+      "requests": [
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 502
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        },
+        {
+          "path": "/api/agent/voice",
+          "status": 200
+        }
+      ],
+      "quiet": {
+        "seconds": 75,
+        "phase": "listening",
+        "tracks": 1,
+        "liveTracks": 1,
+        "extraAsrRequests": 0
+      },
+      "final": {
+        "microphoneReleased": true,
+        "contextClosed": true,
+        "phases": [
+          {
+            "at": 2768.800000190735,
+            "phase": "connecting"
+          },
+          {
+            "at": 3171.4000005722046,
+            "phase": "speaking"
+          },
+          {
+            "at": 7180.199999809265,
+            "phase": "listening"
+          },
+          {
+            "at": 9240.60000038147,
+            "phase": "transcribing"
+          },
+          {
+            "at": 10290.800000190735,
+            "phase": "thinking"
+          },
+          {
+            "at": 13907,
+            "phase": "speaking"
+          },
+          {
+            "at": 16595.800000190735,
+            "phase": "listening"
+          },
+          {
+            "at": 18652.400000572205,
+            "phase": "transcribing"
+          },
+          {
+            "at": 18668,
+            "phase": "listening"
+          },
+          {
+            "at": 20720.800000190735,
+            "phase": "transcribing"
+          },
+          {
+            "at": 21492.199999809265,
+            "phase": "thinking"
+          },
+          {
+            "at": 24486,
+            "phase": "speaking"
+          },
+          {
+            "at": 27282.5,
+            "phase": "listening"
+          },
+          {
+            "at": 29338.60000038147,
+            "phase": "transcribing"
+          },
+          {
+            "at": 30112,
+            "phase": "thinking"
+          },
+          {
+            "at": 31906.400000572205,
+            "phase": "speaking"
+          },
+          {
+            "at": 34739.5,
+            "phase": "listening"
+          },
+          {
+            "at": 36785.10000038147,
+            "phase": "transcribing"
+          },
+          {
+            "at": 37525.400000572205,
+            "phase": "thinking"
+          },
+          {
+            "at": 40651.5,
+            "phase": "speaking"
+          },
+          {
+            "at": 42621.699999809265,
+            "phase": "listening"
+          },
+          {
+            "at": 44678.400000572205,
+            "phase": "transcribing"
+          },
+          {
+            "at": 45927.300000190735,
+            "phase": "thinking"
+          },
+          {
+            "at": 49938.699999809265,
+            "phase": "speaking"
+          },
+          {
+            "at": 52302.699999809265,
+            "phase": "listening"
+          },
+          {
+            "at": 129375.80000019073,
+            "phase": "transcribing"
+          },
+          {
+            "at": 129391,
+            "phase": "listening"
+          },
+          {
+            "at": 131425.30000019073,
+            "phase": "transcribing"
+          },
+          {
+            "at": 132344.4000005722,
+            "phase": "thinking"
+          },
+          {
+            "at": 135338.60000038147,
+            "phase": "speaking"
+          },
+          {
+            "at": 137773.60000038147,
+            "phase": "listening"
+          },
+          {
+            "at": 139829.9000005722,
+            "phase": "transcribing"
+          },
+          {
+            "at": 140794.30000019073,
+            "phase": "thinking"
+          },
+          {
+            "at": 142934,
+            "phase": "speaking"
+          },
+          {
+            "at": 145049,
+            "phase": "listening"
+          },
+          {
+            "at": 147104.4000005722,
+            "phase": "transcribing"
+          },
+          {
+            "at": 148591.10000038147,
+            "phase": "thinking"
+          },
+          {
+            "at": 150703.80000019073,
+            "phase": "speaking"
+          },
+          {
+            "at": 152744.10000038147,
+            "phase": "listening"
+          },
+          {
+            "at": 154805.69999980927,
+            "phase": "transcribing"
+          },
+          {
+            "at": 155595.19999980927,
+            "phase": "thinking"
+          },
+          {
+            "at": 157579.60000038147,
+            "phase": "speaking"
+          },
+          {
+            "at": 159656.4000005722,
+            "phase": "listening"
+          },
+          {
+            "at": 161718.30000019073,
+            "phase": "transcribing"
+          },
+          {
+            "at": 162579,
+            "phase": "thinking"
+          },
+          {
+            "at": 165021.5,
+            "phase": "speaking"
+          },
+          {
+            "at": 167277.4000005722,
+            "phase": "listening"
+          }
+        ],
+        "uploads": [
+          {
+            "bytes": 12653,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12812,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12971,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12971,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12970,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12971,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12970,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12967,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12971,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12970,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 13128,
+            "type": "audio/ogg"
+          },
+          {
+            "bytes": 12971,
+            "type": "audio/ogg"
+          }
+        ]
+      },
+      "passed": true,
+      "elapsedSeconds": 167
+    },
+    "interruption": {
+      "at": "2026-11-05T06:40:16.618Z",
+      "origin": "https://bread.163-7-7-42.sslip.io",
+      "synthetic": true,
+      "physicalMicrophone": false,
+      "method": "One real public call: synthetic speech interrupts active compressed MP3 playback, then a second utterance completes. First 1.35 seconds of a synthetic fixture through actual browser AudioWorklet and provider requests; no physical microphone or hardware output latency.",
+      "turns": [
+        {
+          "turn": 1,
+          "requests": [
+            {
+              "path": "/api/agent/voice",
+              "status": 200,
+              "ms": 5068,
+              "serverTiming": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "status": 200,
+              "ms": 3389,
+              "serverTiming": null
+            }
+          ],
+          "failedRequests": [
+            {
+              "path": "/api/agent/voice",
+              "error": "net::ERR_ABORTED"
+            },
+            {
+              "path": "/api/agent/voice",
+              "error": "net::ERR_ABORTED"
+            }
+          ],
+          "errors": [],
+          "naturalInterruptionMs": 449,
+          "phase": "speaking",
+          "completedPhase": "listening",
+          "timing": {
+            "plays": [
+              2355.1000003814697,
+              12609.699999809265,
+              12669.300000190735,
+              12669.5,
+              17927
+            ],
+            "stops": [
+              13060.900000572205,
+              13060.900000572205,
+              13060.900000572205
+            ],
+            "inputStart": 12641,
+            "inputDuration": 1350
+          },
+          "stoppedQueuedChunks": 3,
+          "playsBeforeInterruption": 2,
+          "waitMs": 3936,
+          "microphoneReleased": true
+        }
+      ],
+      "summary": {
+        "completed": 1,
+        "medianWaitMs": 3936,
+        "maxWaitMs": 3936
+      }
+    },
+    "comparison": [
+      {
+        "path": "legacy",
+        "at": "2026-11-05T06:40:37.782Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "好，今晚先听你说。"
+            ],
+            "providerTiming": [
+              {
+                "agentMs": 2274.38422800001,
+                "firstAudioMs": 404.11742100000265,
+                "ttsMs": 505.40416499998537,
+                "totalMs": 2787.4492489999975
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 4505,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 2336.8999996185303,
+              "phase": "connecting"
+            },
+            {
+              "at": 2611.0999994277954,
+              "phase": "speaking"
+            },
+            {
+              "at": 5771.599999427795,
+              "phase": "listening"
+            },
+            {
+              "at": 7829.599999427795,
+              "phase": "transcribing"
+            },
+            {
+              "at": 8629.5,
+              "phase": "thinking"
+            },
+            {
+              "at": 11603.199999809265,
+              "phase": "speaking"
+            },
+            {
+              "at": 13462.5,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12653,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 2120,
+              "requestAt": 1985,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 2600.5,
+              "requestAt": 2378.0999994277954,
+              "timing": null
+            },
+            {
+              "path": "/api/speech/transcribe",
+              "stage": "headers",
+              "at": 8619.89999961853,
+              "requestAt": 7847.199999809265,
+              "timing": "provider;dur=623.0, total;dur=634.7, upload;dur=9.6, admission;dur=1.8"
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 11043.099999427795,
+              "requestAt": 8628.79999923706,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 11044,
+              "timing": {
+                "agentMs": 2274.38422800001,
+                "elapsedMs": 2277.8656400000036
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 11583.099999427795
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11583.099999427795,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11613.199999809265,
+              "bytes": 13824
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11613.199999809265,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 11613.199999809265,
+              "timing": {
+                "agentMs": 2274.38422800001,
+                "firstAudioMs": 404.11742100000265,
+                "ttsMs": 505.40416499998537,
+                "totalMs": 2787.4492489999975
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 2609.8999996185303,
+              "clockAt": 0.256,
+              "duration": 3.1463125
+            },
+            {
+              "at": 11662.39999961853,
+              "clockAt": 9.292,
+              "duration": 1.008
+            },
+            {
+              "at": 12671.93333276113,
+              "clockAt": 10.3,
+              "duration": 0.648
+            },
+            {
+              "at": 13315.099999427797,
+              "clockAt": 10.948,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 14
+      },
+      {
+        "path": "pipeline",
+        "at": "2026-11-05T06:40:52.308Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "好，今晚先听你说。"
+            ],
+            "providerTiming": [
+              {
+                "asrMs": 569.3502799999842,
+                "agentMs": 1526.8728030000057,
+                "firstAudioMs": 403.5500030000112,
+                "ttsMs": 619.7341069999966,
+                "totalMs": 2737.986332999979
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 3504,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 1631.5,
+              "phase": "connecting"
+            },
+            {
+              "at": 1898.5,
+              "phase": "speaking"
+            },
+            {
+              "at": 5061.599999427795,
+              "phase": "listening"
+            },
+            {
+              "at": 7125.699999809265,
+              "phase": "transcribing"
+            },
+            {
+              "at": 7883.300000190735,
+              "phase": "thinking"
+            },
+            {
+              "at": 9894.5,
+              "phase": "speaking"
+            },
+            {
+              "at": 11974.300000190735,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12813,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 1451.8000001907349,
+              "requestAt": 1296.6999998092651,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 1894.0999994277954,
+              "requestAt": 1675.8999996185303,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 7875.699999809265,
+              "requestAt": 7143.599999427795,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "transcript",
+              "at": 7876.599999427795,
+              "timing": {
+                "asrMs": 569.3502799999842,
+                "elapsedMs": 583.9617179999768
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 9398.699999809265,
+              "timing": {
+                "agentMs": 1526.8728030000057,
+                "elapsedMs": 2113.935805999994
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 9875.89999961853
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 9876,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10024.5,
+              "bytes": 18432
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10024.5,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 10024.5,
+              "timing": {
+                "asrMs": 569.3502799999842,
+                "agentMs": 1526.8728030000057,
+                "firstAudioMs": 403.5500030000112,
+                "ttsMs": 619.7341069999966,
+                "totalMs": 2737.986332999979
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 1897.1999998092651,
+              "clockAt": 0.256,
+              "duration": 3.1463125
+            },
+            {
+              "at": 9953.800000190735,
+              "clockAt": 8.294666666666668,
+              "duration": 1.008
+            },
+            {
+              "at": 10960.966666857401,
+              "clockAt": 9.302666666666667,
+              "duration": 0.864
+            },
+            {
+              "at": 11825.066666285198,
+              "clockAt": 10.166666666666668,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 12
+      },
+      {
+        "path": "pipeline",
+        "at": "2026-11-05T06:41:05.823Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "行，今晚先说说，我听着。"
+            ],
+            "providerTiming": [
+              {
+                "asrMs": 529.173036000022,
+                "agentMs": 2421.031820000004,
+                "firstAudioMs": 403.2572359999758,
+                "ttsMs": 618.0680350000039,
+                "totalMs": 3588.7018169999938
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 4333,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 1815,
+              "phase": "connecting"
+            },
+            {
+              "at": 2134,
+              "phase": "speaking"
+            },
+            {
+              "at": 5291.799999237061,
+              "phase": "listening"
+            },
+            {
+              "at": 7355.5,
+              "phase": "transcribing"
+            },
+            {
+              "at": 8056.5,
+              "phase": "thinking"
+            },
+            {
+              "at": 10961,
+              "phase": "speaking"
+            },
+            {
+              "at": 13862.199999809265,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12653,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 1641.2999992370605,
+              "requestAt": 1454.2999992370605,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 2127.199999809265,
+              "requestAt": 1877.7999992370605,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 8052.299999237061,
+              "requestAt": 7373.099999427795,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "transcript",
+              "at": 8053.5,
+              "timing": {
+                "asrMs": 529.173036000022,
+                "elapsedMs": 542.4320249999873
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 10765.5,
+              "timing": {
+                "agentMs": 2421.031820000004,
+                "elapsedMs": 2967.1532930000103
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 10941.599999427795
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10941.599999427795,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11074.79999923706,
+              "bytes": 36096
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11074.79999923706,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 11110.599999427795,
+              "timing": {
+                "asrMs": 529.173036000022,
+                "agentMs": 2421.031820000004,
+                "firstAudioMs": 403.2572359999758,
+                "ttsMs": 618.0680350000039,
+                "totalMs": 3588.7018169999938
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 2132.7999992370605,
+              "clockAt": 0.2986666666666667,
+              "duration": 3.1463125
+            },
+            {
+              "at": 11014.766666094463,
+              "clockAt": 9.169333333333334,
+              "duration": 1.008
+            },
+            {
+              "at": 12022.93333276113,
+              "clockAt": 10.177333333333333,
+              "duration": 1.692
+            },
+            {
+              "at": 13715.133332570394,
+              "clockAt": 11.869333333333334,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 14
+      },
+      {
+        "path": "legacy",
+        "at": "2026-11-05T06:41:20.731Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "好，今晚先说说，我听着。"
+            ],
+            "providerTiming": [
+              {
+                "agentMs": 1663.4450290000532,
+                "firstAudioMs": 363.1778129999875,
+                "ttsMs": 517.680240000016,
+                "totalMs": 2186.4192779999576
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 3718,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 2075.199999809265,
+              "phase": "connecting"
+            },
+            {
+              "at": 2360.199999809265,
+              "phase": "speaking"
+            },
+            {
+              "at": 5521,
+              "phase": "listening"
+            },
+            {
+              "at": 7584,
+              "phase": "transcribing"
+            },
+            {
+              "at": 8320.300000190735,
+              "phase": "thinking"
+            },
+            {
+              "at": 10570.800000190735,
+              "phase": "speaking"
+            },
+            {
+              "at": 13120.800000190735,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12653,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 1585.1999998092651,
+              "requestAt": 1414.6000003814697,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 1914.6999998092651,
+              "requestAt": 1778.6999998092651,
+              "timing": null
+            },
+            {
+              "path": "/api/speech/transcribe",
+              "stage": "headers",
+              "at": 8311.300000190735,
+              "requestAt": 7600.800000190735,
+              "timing": "provider;dur=559.9, total;dur=573.3, upload;dur=11.4, admission;dur=1.7"
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 10126.39999961853,
+              "requestAt": 8318.800000190735,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 10127.5,
+              "timing": {
+                "agentMs": 1663.4450290000532,
+                "elapsedMs": 1665.8831779999891
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 10552.89999961853
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10552.89999961853,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10719.39999961853,
+              "bytes": 28416
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 10719.39999961853,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 10719.39999961853,
+              "timing": {
+                "agentMs": 1663.4450290000532,
+                "firstAudioMs": 363.1778129999875,
+                "ttsMs": 517.680240000016,
+                "totalMs": 2186.4192779999576
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 2359.199999809265,
+              "clockAt": 0.26666666666666666,
+              "duration": 3.1463125
+            },
+            {
+              "at": 10630,
+              "clockAt": 8.524000000000001,
+              "duration": 1.008
+            },
+            {
+              "at": 11640.566666285196,
+              "clockAt": 9.532,
+              "duration": 1.332
+            },
+            {
+              "at": 12972.866666475933,
+              "clockAt": 10.864,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 13
+      },
+      {
+        "path": "legacy",
+        "at": "2026-11-05T06:41:34.883Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "好，今晚先听你说。"
+            ],
+            "providerTiming": [
+              {
+                "agentMs": 1787.5251280000084,
+                "firstAudioMs": 402.00150000001304,
+                "ttsMs": 561.5775509999949,
+                "totalMs": 2354.333937999967
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 3983,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/speech/transcribe",
+            "status": 200
+          },
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 2797.300000190735,
+              "phase": "connecting"
+            },
+            {
+              "at": 3201,
+              "phase": "speaking"
+            },
+            {
+              "at": 6356.300000190735,
+              "phase": "listening"
+            },
+            {
+              "at": 8414.199999809265,
+              "phase": "transcribing"
+            },
+            {
+              "at": 9243,
+              "phase": "thinking"
+            },
+            {
+              "at": 11654.300000190735,
+              "phase": "speaking"
+            },
+            {
+              "at": 13839.39999961853,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12813,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 2290.699999809265,
+              "requestAt": 2151.800000190735,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 2990.199999809265,
+              "requestAt": 2634.800000190735,
+              "timing": null
+            },
+            {
+              "path": "/api/speech/transcribe",
+              "stage": "headers",
+              "at": 9236,
+              "requestAt": 8426.39999961853,
+              "timing": "provider;dur=655.3, total;dur=669.1, upload;dur=11.7, admission;dur=1.9"
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 11173.599999427795,
+              "requestAt": 9241.699999809265,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 11174.699999809265,
+              "timing": {
+                "agentMs": 1787.5251280000084,
+                "elapsedMs": 1789.8847819999792
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 11634.39999961853
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11634.39999961853,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11788.099999427795,
+              "bytes": 20736
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 11788.099999427795,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 11788.099999427795,
+              "timing": {
+                "agentMs": 1787.5251280000084,
+                "firstAudioMs": 402.00150000001304,
+                "ttsMs": 561.5775509999949,
+                "totalMs": 2354.333937999967
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 3199.800000190735,
+              "clockAt": 0.3893333333333333,
+              "duration": 3.1463125
+            },
+            {
+              "at": 11713.599999427795,
+              "clockAt": 8.892000000000001,
+              "duration": 1.008
+            },
+            {
+              "at": 12719.233332951866,
+              "clockAt": 9.900000000000002,
+              "duration": 0.972
+            },
+            {
+              "at": 13691.5333331426,
+              "clockAt": 10.872000000000002,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 14
+      },
+      {
+        "path": "pipeline",
+        "at": "2026-11-05T06:41:49.733Z",
+        "origin": "https://bread.163-7-7-42.sslip.io",
+        "synthetic": true,
+        "physicalMicrophone": false,
+        "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; no failures are injected; only the advertised call-pipeline flag is disabled for the legacy comparison. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One utterance per fresh call; paths are alternated externally.",
+        "turns": [
+          {
+            "turn": 1,
+            "injectedFailure": null,
+            "phase": "listening",
+            "warning": "",
+            "tracks": 1,
+            "liveTracks": 1,
+            "reply": [
+              "好，今晚你说，我听着。"
+            ],
+            "providerTiming": [
+              {
+                "asrMs": 538.6606929999543,
+                "agentMs": 2771.0603249999695,
+                "firstAudioMs": 438.07963299995754,
+                "ttsMs": 712.8402269999497,
+                "totalMs": 4041.878289999964
+              }
+            ],
+            "playCount": 3,
+            "waitMs": 4732,
+            "maxScheduledGapMs": 0
+          }
+        ],
+        "errors": [],
+        "requests": [
+          {
+            "path": "/api/agent/voice",
+            "status": 200
+          }
+        ],
+        "final": {
+          "microphoneReleased": true,
+          "contextClosed": true,
+          "phases": [
+            {
+              "at": 2651.0999994277954,
+              "phase": "connecting"
+            },
+            {
+              "at": 2850.3999996185303,
+              "phase": "speaking"
+            },
+            {
+              "at": 6016,
+              "phase": "listening"
+            },
+            {
+              "at": 8078.799999237061,
+              "phase": "transcribing"
+            },
+            {
+              "at": 8791.89999961853,
+              "phase": "thinking"
+            },
+            {
+              "at": 12068.699999809265,
+              "phase": "speaking"
+            },
+            {
+              "at": 14580.599999427795,
+              "phase": "listening"
+            }
+          ],
+          "uploads": [
+            {
+              "bytes": 12813,
+              "type": "audio/ogg"
+            }
+          ],
+          "wire": [
+            {
+              "path": "/api/capabilities",
+              "stage": "headers",
+              "at": 2093.5999994277954,
+              "requestAt": 1879.5999994277954,
+              "timing": null
+            },
+            {
+              "path": "/companion/3d/bread-phone.glb",
+              "stage": "headers",
+              "at": 2677.5999994277954,
+              "requestAt": 2414.3999996185303,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "headers",
+              "at": 8784.099999427795,
+              "requestAt": 8092.89999961853,
+              "timing": null
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "transcript",
+              "at": 8785.5,
+              "timing": {
+                "asrMs": 538.6606929999543,
+                "elapsedMs": 552.1935169999488
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "candidate",
+              "at": 11557.199999809265,
+              "timing": {
+                "agentMs": 2771.0603249999695,
+                "elapsedMs": 3326.030287999951
+              }
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_start",
+              "at": 12049.099999427795
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 12049.199999809265,
+              "bytes": 22332
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 12280,
+              "bytes": 27648
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "audio_chunk",
+              "at": 12280.099999427795,
+              "bytes": 3072
+            },
+            {
+              "path": "/api/agent/voice",
+              "stage": "done",
+              "at": 12280.099999427795,
+              "timing": {
+                "asrMs": 538.6606929999543,
+                "agentMs": 2771.0603249999695,
+                "firstAudioMs": 438.07963299995754,
+                "ttsMs": 712.8402269999497,
+                "totalMs": 4041.878289999964
+              }
+            }
+          ],
+          "plays": [
+            {
+              "at": 2849.2999992370605,
+              "clockAt": 0.18666666666666668,
+              "duration": 3.1463125
+            },
+            {
+              "at": 12127.79999923706,
+              "clockAt": 9.446666666666667,
+              "duration": 1.008
+            },
+            {
+              "at": 13139.43333276113,
+              "clockAt": 10.454666666666668,
+              "duration": 1.296
+            },
+            {
+              "at": 14435.833333333334,
+              "clockAt": 11.750666666666667,
+              "duration": 0.144
+            }
+          ]
+        },
+        "passed": true,
+        "elapsedSeconds": 15
+      }
+    ]
+  },
+  "modelTransportProbe": {
+    "report": [
+      {
+        "stream": false,
+        "headersMs": 5378,
+        "firstTextMs": 5379,
+        "endTextMs": 5379,
+        "totalMs": 5379,
+        "reply": "准备了一个月，换来的是拒绝，今晚不想听道理也正常。你想说，我就听着。",
+        "events": []
+      },
+      {
+        "stream": true,
+        "headersMs": 1680,
+        "firstTextMs": 1682,
+        "endTextMs": 2028,
+        "totalMs": 2029,
+        "reply": "准备了一个月，等来的是拒绝，这落差确实不好受。今晚我不提建议，你慢慢说。",
+        "events": [
+          {
+            "type": "message_start",
+            "ms": 1681
+          },
+          {
+            "type": "ping",
+            "ms": 1681
+          },
+          {
+            "type": "content_block_start",
+            "ms": 1682
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1682
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2025
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2026
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2026
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2026
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2027
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2028
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2028
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2028
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2028
+          },
+          {
+            "type": "content_block_stop",
+            "ms": 2028
+          },
+          {
+            "type": "message_delta",
+            "ms": 2029
+          },
+          {
+            "type": "message_stop",
+            "ms": 2029
+          }
+        ]
+      },
+      {
+        "stream": true,
+        "headersMs": 1673,
+        "firstTextMs": 1674,
+        "endTextMs": 2020,
+        "totalMs": 2054,
+        "reply": "准备了一个月，等来的还是拒绝，这口气确实难咽。今晚我不给建议，你慢慢说。",
+        "events": [
+          {
+            "type": "message_start",
+            "ms": 1673
+          },
+          {
+            "type": "ping",
+            "ms": 1673
+          },
+          {
+            "type": "content_block_start",
+            "ms": 1674
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1674
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1739
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1740
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1740
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1821
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1821
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1822
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1822
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1899
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 1899
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2018
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2019
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2019
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2019
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2019
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2019
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2020
+          },
+          {
+            "type": "content_block_delta",
+            "ms": 2020
+          },
+          {
+            "type": "content_block_stop",
+            "ms": 2020
+          },
+          {
+            "type": "message_delta",
+            "ms": 2020
+          },
+          {
+            "type": "message_stop",
+            "ms": 2020
+          }
+        ]
+      },
+      {
+        "stream": false,
+        "headersMs": 1521,
+        "firstTextMs": 1522,
+        "endTextMs": 1522,
+        "totalMs": 1522,
+        "reply": "准备了一个月还是被拒绝，这口气确实难咽。今晚我不提建议，你想说就说。",
+        "events": []
+      }
+    ]
+  },
+  "baselineBeforeImplementation": {
+    "at": "2026-11-05T00:32:09.105Z",
+    "origin": "https://bread.163-7-7-42.sslip.io",
+    "synthetic": true,
+    "physicalMicrophone": false,
+    "method": "One mobile-size Chrome call through public HTTPS and real ASR/model/TTS; the second and seventh ASR requests are deliberately failed in the browser. Actual AudioWorklet capture uses the first 1.35 seconds (one phrase) of a synthetic fixture. Proxy disabled. One 75-second foreground silence is included.",
+    "turns": [
+      {
+        "turn": 1,
+        "injectedFailure": null,
+        "phase": "listening",
+        "warning": "",
+        "tracks": 1,
+        "liveTracks": 1,
+        "reply": [
+          "好，今晚先听你说。"
+        ],
+        "providerTiming": [
+          {
+            "agentMs": 2282.736912999302,
+            "firstAudioMs": 294.30061900243163,
+            "ttsMs": 505.96335500106215,
+            "totalMs": 2800.0363240018487
+          }
+        ],
+        "playCount": 4,
+        "waitMs": 4994,
+        "maxScheduledGapMs": 0
+      },
+      {
+        "turn": 2,
+        "injectedFailure": null,
+        "phase": "listening",
+        "warning": "",
+        "tracks": 1,
+        "liveTracks": 1,
+        "reply": [
+          "好，今晚先听你说。"
+        ],
+        "providerTiming": [
+          {
+            "agentMs": 1365.2129679992795,
+            "firstAudioMs": 318.45171900093555,
+            "ttsMs": 566.8754130005836,
+            "totalMs": 1941.6229129992425
+          }
+        ],
+        "playCount": 4,
+        "waitMs": 4224,
+        "maxScheduledGapMs": 0
+      },
+      {
+        "turn": 3,
+        "injectedFailure": null,
+        "phase": "listening",
+        "warning": "",
+        "tracks": 1,
+        "liveTracks": 1,
+        "reply": [
+          "好，你说，我听着。"
+        ],
+        "providerTiming": [
+          {
+            "agentMs": 1626.4954859986901,
+            "firstAudioMs": 247.19988700002432,
+            "ttsMs": 553.9471400007606,
+            "totalMs": 2188.9773849993944
+          }
+        ],
+        "playCount": 4,
+        "waitMs": 3964,
+        "maxScheduledGapMs": 0
+      }
+    ],
+    "errors": [],
+    "requests": [
+      {
+        "path": "/api/speech/transcribe",
+        "status": 200
+      },
+      {
+        "path": "/api/agent/voice",
+        "status": 200
+      },
+      {
+        "path": "/api/speech/transcribe",
+        "status": 200
+      },
+      {
+        "path": "/api/agent/voice",
+        "status": 200
+      },
+      {
+        "path": "/api/speech/transcribe",
+        "status": 200
+      },
+      {
+        "path": "/api/agent/voice",
+        "status": 200
+      }
+    ],
+    "final": {
+      "microphoneReleased": true,
+      "contextClosed": true,
+      "phases": [
+        {
+          "at": 3571.800000190735,
+          "phase": "connecting"
+        },
+        {
+          "at": 4735.89999961853,
+          "phase": "speaking"
+        },
+        {
+          "at": 7898.60000038147,
+          "phase": "listening"
+        },
+        {
+          "at": 9962.10000038147,
+          "phase": "transcribing"
+        },
+        {
+          "at": 11030.5,
+          "phase": "thinking"
+        },
+        {
+          "at": 14228.199999809265,
+          "phase": "speaking"
+        },
+        {
+          "at": 16302.800000190735,
+          "phase": "listening"
+        },
+        {
+          "at": 18369.60000038147,
+          "phase": "transcribing"
+        },
+        {
+          "at": 19679.39999961853,
+          "phase": "thinking"
+        },
+        {
+          "at": 21857.199999809265,
+          "phase": "speaking"
+        },
+        {
+          "at": 23897.10000038147,
+          "phase": "listening"
+        },
+        {
+          "at": 25942.10000038147,
+          "phase": "transcribing"
+        },
+        {
+          "at": 26816.89999961853,
+          "phase": "thinking"
+        },
+        {
+          "at": 29193.5,
+          "phase": "speaking"
+        },
+        {
+          "at": 31417.60000038147,
+          "phase": "listening"
+        }
+      ],
+      "uploads": [
+        {
+          "bytes": 12653,
+          "type": "audio/ogg"
+        },
+        {
+          "bytes": 12813,
+          "type": "audio/ogg"
+        },
+        {
+          "bytes": 12812,
+          "type": "audio/ogg"
+        }
+      ],
+      "wire": [
+        {
+          "path": "/api/capabilities",
+          "stage": "headers",
+          "at": 2906.699999809265,
+          "requestAt": 2625.5,
+          "timing": null
+        },
+        {
+          "path": "/companion/3d/bread-phone.glb",
+          "stage": "headers",
+          "at": 4727,
+          "requestAt": 3880.300000190735,
+          "timing": null
+        },
+        {
+          "path": "/api/speech/transcribe",
+          "stage": "headers",
+          "at": 11020.5,
+          "requestAt": 9979.199999809265,
+          "timing": "provider;dur=705.2, total;dur=860.5, upload;dur=150.9, admission;dur=4.0"
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "headers",
+          "at": 13904.39999961853,
+          "requestAt": 11028.89999961853,
+          "timing": null
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "candidate",
+          "at": 13905.300000190735,
+          "timing": {
+            "agentMs": 2282.736912999302,
+            "elapsedMs": 2288.358330000192
+          }
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_start",
+          "at": 14212.300000190735
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 14212.300000190735,
+          "bytes": 6204
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 14297.39999961853,
+          "bytes": 16128
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 14363.800000190735,
+          "bytes": 18432
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 14510.10000038147,
+          "bytes": 3072
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "done",
+          "at": 14510.199999809265,
+          "timing": {
+            "agentMs": 2282.736912999302,
+            "firstAudioMs": 294.30061900243163,
+            "ttsMs": 505.96335500106215,
+            "totalMs": 2800.0363240018487
+          }
+        },
+        {
+          "path": "/api/speech/transcribe",
+          "stage": "headers",
+          "at": 19673.300000190735,
+          "requestAt": 18381,
+          "timing": "provider;dur=625.4, total;dur=715.5, upload;dur=86.3, admission;dur=3.6"
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "headers",
+          "at": 21239.800000190735,
+          "requestAt": 19678.39999961853,
+          "timing": null
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "candidate",
+          "at": 21240.800000190735,
+          "timing": {
+            "agentMs": 1365.2129679992795,
+            "elapsedMs": 1369.361535999924
+          }
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_start",
+          "at": 21568.800000190735
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 21568.800000190735,
+          "bytes": 6204
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 21851,
+          "bytes": 16128
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 21922.89999961853,
+          "bytes": 17664
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 21922.89999961853,
+          "bytes": 3072
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "done",
+          "at": 22325.10000038147,
+          "timing": {
+            "agentMs": 1365.2129679992795,
+            "firstAudioMs": 318.45171900093555,
+            "ttsMs": 566.8754130005836,
+            "totalMs": 1941.6229129992425
+          }
+        },
+        {
+          "path": "/api/speech/transcribe",
+          "stage": "headers",
+          "at": 26812.39999961853,
+          "requestAt": 25952,
+          "timing": "provider;dur=662.3, total;dur=684.4, upload;dur=18.9, admission;dur=3.0"
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "headers",
+          "at": 28716.10000038147,
+          "requestAt": 26816,
+          "timing": null
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "candidate",
+          "at": 28717.39999961853,
+          "timing": {
+            "agentMs": 1626.4954859986901,
+            "elapsedMs": 1630.1297289989889
+          }
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_start",
+          "at": 28998.5
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 28998.5,
+          "bytes": 6204
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 29190.39999961853,
+          "bytes": 16128
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 29364.5,
+          "bytes": 21504
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "audio_chunk",
+          "at": 29364.5,
+          "bytes": 3072
+        },
+        {
+          "path": "/api/agent/voice",
+          "stage": "done",
+          "at": 29364.5,
+          "timing": {
+            "agentMs": 1626.4954859986901,
+            "firstAudioMs": 247.19988700002432,
+            "ttsMs": 553.9471400007606,
+            "totalMs": 2188.9773849993944
+          }
+        }
+      ],
+      "plays": [
+        {
+          "at": 4735.199999809265,
+          "clockAt": 1.136,
+          "duration": 3.1463125
+        },
+        {
+          "at": 14282.066666285198,
+          "clockAt": 10.668000000000001,
+          "duration": 0.252
+        },
+        {
+          "at": 14538.933333714805,
+          "clockAt": 10.920000000000002,
+          "duration": 0.756
+        },
+        {
+          "at": 15291.899999618532,
+          "clockAt": 11.676000000000002,
+          "duration": 0.864
+        },
+        {
+          "at": 16156.100000381472,
+          "clockAt": 12.540000000000003,
+          "duration": 0.144
+        },
+        {
+          "at": 21915.89999961853,
+          "clockAt": 18.299999999999997,
+          "duration": 0.252
+        },
+        {
+          "at": 22168.30000019073,
+          "clockAt": 18.551999999999996,
+          "duration": 0.756
+        },
+        {
+          "at": 22922.76666704813,
+          "clockAt": 19.307999999999996,
+          "duration": 0.828
+        },
+        {
+          "at": 23750.966666857395,
+          "clockAt": 20.135999999999996,
+          "duration": 0.144
+        },
+        {
+          "at": 29252.60000038147,
+          "clockAt": 25.638666666666666,
+          "duration": 0.252
+        },
+        {
+          "at": 29504.899999618527,
+          "clockAt": 25.890666666666664,
+          "duration": 0.756
+        },
+        {
+          "at": 30263.833333333332,
+          "clockAt": 26.646666666666665,
+          "duration": 1.008
+        },
+        {
+          "at": 31272.133333524067,
+          "clockAt": 27.654666666666664,
+          "duration": 0.144
+        }
+      ]
+    },
+    "passed": true,
+    "elapsedSeconds": 32
+  },
+  "notes": [
+    "Synthetic audio; no physical microphone or hardware output-latency measurement.",
+    "Alternating comparison changes only advertised callPipeline capability, using the same deployed model, prompt and audio buffering. Three samples per path cannot establish tail latency.",
+    "Other-wait estimate subtracts server ASR provider, model and first-audio durations from browser end-of-input-to-scheduled-playback. It includes VAD, upload, transport, admission and browser scheduling, not network RTT alone.",
+    "Model transport experiment waits for complete JSON; first non-streaming request uses a cold connection. No promotion based on this small sample."
+  ]
+}
