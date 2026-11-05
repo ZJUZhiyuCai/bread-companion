@@ -1,0 +1,102 @@
+{
+  "readiness": true,
+  "manifest_verified": true,
+  "candidate": "/srv/bread-companion/releases/20261105-call-tail",
+  "previous": "/srv/bread-companion/releases/20261105-motion-opus",
+  "retained_static_files": 56,
+  "synthetic": true,
+  "physicalMicrophone": false,
+  "pipeline": [
+    {
+      "fixture": "short",
+      "events": [
+        "transcript",
+        "candidate",
+        "audio_start",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "done"
+      ],
+      "audioBytes": 41517,
+      "text": "今晚先说说",
+      "asrMs": 773,
+      "reply": "好，今晚先说说，我听着。",
+      "candidateMs": 4935,
+      "firstAudioMs": 5301,
+      "firstAudioBytes": 16749,
+      "timing": {
+        "asrMs": 707.270811,
+        "agentMs": 4160.015097,
+        "firstAudioMs": 367.5480170000001,
+        "ttsMs": 560.7016629999998,
+        "totalMs": 5459.036171
+      },
+      "totalMs": 5496
+    },
+    {
+      "fixture": "empathy-no-advice",
+      "events": [
+        "transcript",
+        "candidate",
+        "audio_start",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "done"
+      ],
+      "audioBytes": 100269,
+      "text": "我准备了整整一个月，还是被拒绝了。今晚不想听建议，只想有人听我说。",
+      "asrMs": 983,
+      "reply": "准备了一个月还是被拒，心里肯定不好受。今晚你慢慢说，我听着。",
+      "candidateMs": 2515,
+      "firstAudioMs": 3043,
+      "firstAudioBytes": 16749,
+      "timing": {
+        "asrMs": 969.5470320000004,
+        "agentMs": 1527.5668209999994,
+        "firstAudioMs": 528.952170999999,
+        "ttsMs": 816.2482390000005,
+        "totalMs": 3325.102775000001
+      },
+      "totalMs": 3331
+    },
+    {
+      "fixture": "negative-no-analysis",
+      "events": [
+        "transcript",
+        "candidate",
+        "audio_start",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "audio_chunk",
+        "done"
+      ],
+      "audioBytes": 87021,
+      "text": "我不是想放弃，我只是很累。别替我分析，我想先歇一会儿。",
+      "asrMs": 737,
+      "reply": "好，不分析，也不催你。累了就先歇着，我在这儿不打扰。",
+      "candidateMs": 2442,
+      "firstAudioMs": 2890,
+      "firstAudioBytes": 16749,
+      "timing": {
+        "asrMs": 725.4436530000003,
+        "agentMs": 1698.822591,
+        "firstAudioMs": 448.5578609999993,
+        "ttsMs": 1047.518872999999,
+        "totalMs": 3485.2066380000015
+      },
+      "totalMs": 3491
+    }
+  ],
+  "guards": [
+    409,
+    403,
+    403
+  ]
+}

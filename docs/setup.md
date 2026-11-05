@@ -60,3 +60,5 @@ MINIMAX_VOICE_SPEED=1
 ### 通话上传格式
 
 支持原生 Opus 的浏览器会在独立 Worker 中压缩语音，再交由原有 MiniMax 转写。不支持、尚未准备好或编码超过 250 ms 时自动使用 WAV。维护者可设置 `BREAD_OPUS_UPLOAD=off` 停止公告压缩能力；不需要用户配置。算法、许可与验证见 [上传与动效说明](open-source-improvements.md)。
+
+普通倾听电话默认通过一条请求完成转写、回复与语音。维护者可用 `BREAD_CALL_PIPELINE=off` 停止向新页面公告该能力；已打开的页面仍可完成请求。`BREAD_SPEECH_START_BUFFER=off` 可单独关闭首段音频合包。两项均不更换模型、声音或同理心提示词，详见 [通话链路与验证](call-tail.md)。

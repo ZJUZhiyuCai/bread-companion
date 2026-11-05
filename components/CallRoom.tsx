@@ -5,7 +5,7 @@ import { Check, Hand, LoaderCircle, Mic, MicOff, Phone, PhoneOff, RotateCcw, Tri
 import type { CallPhase, Message } from '@/domain/types';
 import { CallStage } from './CallStage';
 import { CALL_RUNNING, IDLE_CALL, callMeta } from './call';
-import { useDomId } from './hooks';
+import { useAfterimage, useDomId } from './hooks';
 import { formatClock } from './labels';
 import type { BreadVM } from './vm';
 
@@ -25,6 +25,15 @@ interface PrimaryKey {
 
 /** Phases 面包's own voice can be cut off from: speaking up here stops it and keeps the new sentence. */
 const CUTTABLE: CallPhase[] = ['transcribing', 'thinking', 'speaking'];
+
+/** Phases in which the person is simply waiting for 面包 to answer. They share one heading. */
+const WAITING: CallPhase[] = ['transcribing', 'thinking'];
+/**
+ * On a phone, a silence past two or three seconds starts to feel like the line has gone. Most turns are
+ * answered well before this; the long tail isn't. Past it, one quiet line says the true thing — still
+ * thinking — and goes the moment the phase does. It promises nothing about when.
+ */
+const LONG_WAIT_MS = 2600;
 
 /**
  * The voice call. The lights go down, the red phone on 面包's table is dialled and rings, and the
@@ -98,6 +107,19 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
     return () => window.clearTimeout(t);
   }, [cue]);
 
+  // One continuous wait (transcribing then thinking counts as one), timed from when it really began.
+  const waiting = WAITING.includes(phase);
+  const [longWait, setLongWait] = useState(false);
+  useEffect(() => {
+    setLongWait(false);
+    if (!waiting) return;
+    const t = window.setTimeout(() => setLongWait(true), LONG_WAIT_MS);
+    return () => window.clearTimeout(t);
+  }, [waiting]);
+
+  // The heading's previous words give way to the new ones in place, instead of a blank frame between.
+  const wasTitle = useAfterimage(meta.title, meta.title);
+
   const running = CALL_RUNNING.includes(phase);
   const canMute = call.active && phase !== 'connecting' && phase !== 'paused' && phase !== 'error';
 
@@ -147,12 +169,20 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
         <CallStage call={call} level={level} className="callroom__stage" />
 
         <div className="callroom__status">
-          {/* The words change inside a heading that stays put, so focus never drops when a phase does. */}
-          <h2 id={`${id}-h`} ref={headingRef} tabIndex={-1} className="callroom__phase">
-            <span key={meta.title} className="callroom__phase-text">
-              {meta.title}
-            </span>
-          </h2>
+          {/* The words change inside a heading that stays put, so focus never drops when a phase does.
+              The words it just had fade out on top of it, outside the heading and hidden from readers. */}
+          <div className="callroom__phase-wrap">
+            <h2 id={`${id}-h`} ref={headingRef} tabIndex={-1} className="callroom__phase">
+              <span key={meta.title} className="callroom__phase-text">
+                {meta.title}
+              </span>
+            </h2>
+            {wasTitle && (
+              <p key={wasTitle.n} className="callroom__phase-ghost" aria-hidden="true">
+                {wasTitle.value}
+              </p>
+            )}
+          </div>
           {(meta.hint || (phase === 'paused' && call.error)) && (
             <p className="callroom__hint">{phase === 'paused' && call.error ? call.error : meta.hint}</p>
           )}
@@ -192,6 +222,10 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               // Only once the line is open; while it is still ringing there is nothing to answer yet.
               !call.lastHeard && phase === 'listening' && <p className="cap cap--empty">开个头就好，比如“今天有点累”。</p>
             )}
+            {/* Last in the captions, so it never moves the words already there; the keys stay at the foot.
+                A note, like the heading, in 面包's words — but set small and plain, never in the subtitle
+                hand: nothing was said aloud, and a subtitle would claim it was. */}
+            {longWait && waiting && <p className="callroom__wait">还在想，再等我一下。</p>}
           </div>
         )}
 

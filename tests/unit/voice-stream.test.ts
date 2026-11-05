@@ -46,8 +46,9 @@ describe('checked reply and speech share one request', () => {
     const mp3 = vi.spyOn(speech, 'synthesize').mockResolvedValue(new Uint8Array([73, 68, 51]));
     const req = request(); req.headers.set('X-Bread-Audio', format);
     const events = (await (await POST(req)).text()).trim().split('\n').map(s => JSON.parse(s));
-    expect(events.map(e => e.type)).toEqual(['candidate', 'audio_start', 'audio_chunk', 'audio_chunk', 'done']);
-    expect(events.filter(e => e.type === 'audio_chunk').map(e => e.sequence)).toEqual([0, 1]);
+    expect(events.map(e => e.type)).toEqual(format === 'mp3-chunks-v1' ? ['candidate', 'audio_start', 'audio_chunk', 'done'] : ['candidate', 'audio_start', 'audio_chunk', 'audio_chunk', 'done']);
+    expect(events.filter(e => e.type === 'audio_chunk').map(e => e.sequence)).toEqual(format === 'mp3-chunks-v1' ? [0] : [0, 1]);
+    expect(Buffer.concat(events.filter(e => e.type === 'audio_chunk').map(e => Buffer.from(e.audio, 'base64')))).toEqual(Buffer.from([0, 0, 1, 0]));
     expect(pcm).toHaveBeenCalledTimes(1); expect(mp3).not.toHaveBeenCalled();
     resetLimitsForTest(); vi.stubEnv('BREAD_PCM_STREAM', 'off'); vi.stubEnv('BREAD_MP3_STREAM', 'off');
     const legacyReq = request(); legacyReq.headers.set('X-Bread-Audio', format);

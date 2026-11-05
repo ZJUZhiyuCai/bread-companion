@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useLayoutEffect, useState, type RefObject } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
 
 type ViewTransitionDocument = Document & {
@@ -91,6 +91,47 @@ export function useFlash(on: boolean, ms: number): boolean {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return flash;
+}
+
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
+/** How long a replaced line stays on as an afterimage. Longer than its fade (line-out in the CSS). */
+const AFTERIMAGE_MS = 420;
+/** A line that was up for less than this never becomes an afterimage: it was a flicker, not a line. */
+const AFTERIMAGE_SETTLE_MS = 260;
+
+/**
+ * The line that was just replaced, for as long as it takes to fade, so that a change of words is one
+ * line giving way to the next in place instead of a cut with a blank frame between them.
+ *
+ * The current value is never held back — it renders at once, exactly as the state says. This only adds
+ * a decorative, aria-hidden copy of the previous one. A state that passes through for a frame or two
+ * (clearing the box just before a reply starts) is never kept as an afterimage, so it never shows at
+ * all: the line before it simply keeps fading. `key` says when the words changed; `value` is whatever
+ * the afterimage needs to be drawn the way it was (its text, its tone).
+ */
+export function useAfterimage<T>(value: T, key: string): { value: T; n: number } | null {
+  const [ghost, setGhost] = useState<{ value: T; key: string; n: number } | null>(null);
+  const shown = useRef({ value, key, since: 0 });
+  const timer = useRef(0);
+  // Before paint, so the old line is never missing for a frame.
+  useIsoLayoutEffect(() => {
+    const cur = shown.current;
+    if (cur.key === key) {
+      cur.value = value;
+      return;
+    }
+    const now = performance.now();
+    if (now - cur.since >= AFTERIMAGE_SETTLE_MS) {
+      setGhost((g) => ({ value: cur.value, key: cur.key, n: (g?.n ?? 0) + 1 }));
+    }
+    shown.current = { value, key, since: now };
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setGhost(null), AFTERIMAGE_MS);
+  });
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  // Back to the words already fading out: show them once, not twice.
+  return ghost && ghost.key !== key ? { value: ghost.value, n: ghost.n } : null;
 }
 
 /** Textarea grows with its content up to `maxPx`, then scrolls. */

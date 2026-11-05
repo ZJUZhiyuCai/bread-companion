@@ -174,7 +174,10 @@ export class BrowserCallAudio implements CallAudioPort {
       const buffer = context.createBuffer(1, pcm.length, stream.sampleRate);
       buffer.getChannelData(0).set(pcm);
       const source = context.createBufferSource(); source.buffer = buffer; source.connect(context.destination); sources.add(source);
-      const start = Math.max(nextAt, context.currentTime + .06); nextAt = start + buffer.duration;
+      // Once playback is scheduled, an on-time next fragment belongs exactly at
+      // the previous sample boundary. A fresh 60 ms lead on every fragment used
+      // to insert avoidable gaps even when the tail was still playing.
+      const start = Math.max(nextAt, context.currentTime + (started ? .006 : .06)); nextAt = start + buffer.duration;
       const reference = resampleMono(pcm, stream.sampleRate, context.sampleRate);
       if (!started) this.echo.attach(reference, context.sampleRate, start);
       else this.echo.append(reference, context.sampleRate, start);

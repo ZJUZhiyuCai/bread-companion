@@ -58,6 +58,19 @@
   --set-pool: rgba(255, 249, 238, 0.75);
   /* the light 面包 sits in on a call: warmer than the wall, so it can be seen to change */
   --set-lamp: rgba(255, 228, 192, 0.62);
+  /*
+   * A pool of light on the floor. Light has no edge: the ellipse stays inside its own box (closest-side),
+   * so no box or rounded corner ever cuts it, and it falls off on an eased curve instead of a straight
+   * ramp, which on a flat wall shows as a cone with a faint rim. Brightest a little toward the lamp.
+   */
+  --pool-light: radial-gradient(
+    closest-side at 46% 48%,
+    var(--set-pool),
+    color-mix(in srgb, var(--set-pool) 80%, transparent) 30%,
+    color-mix(in srgb, var(--set-pool) 46%, transparent) 58%,
+    color-mix(in srgb, var(--set-pool) 14%, transparent) 82%,
+    transparent
+  );
 
   /* matte props in the same light: an ivory key, its edge, and a shadow cast down-right */
   --key-face: linear-gradient(to bottom, #fffefb, #f6efe4);
@@ -67,6 +80,12 @@
   --lacquer: #b8342b;
   --lacquer-hi: #cf4a3c;
   --lacquer-deep: #8e2620;
+  /*
+   * The red phone when it can't be used just now: the same object, a little quieter. One grade for every
+   * picture of it — live model, still, drawing — and never see-through: it stands in the set like 面包.
+   * Taking more colour out turns the lacquer a muddy brown, and that reads as a different phone.
+   */
+  --phone-quiet: saturate(0.62) brightness(0.97);
 
   /* paper you write on, and the table it lies on */
   --sheet: #fffefa;
@@ -122,6 +141,9 @@
 
   --focus: #356b91;
   --focus-ring: rgba(53, 107, 145, 0.2);
+  /* the writing surfaces' own focus: a crust edge and a little lamp light round it (see .composer) */
+  --write-edge: color-mix(in srgb, var(--crust) 76%, var(--line-strong));
+  --write-halo: color-mix(in srgb, var(--lamp) 42%, transparent);
 
   /* one quiet ink key for a primary action; never pure black, never a glossy plastic pill */
   --primary-bg: #51483c;
@@ -253,6 +275,7 @@
 
     --focus: #9ec4e8;
     --focus-ring: rgba(158, 196, 232, 0.26);
+    --write-halo: color-mix(in srgb, var(--lamp) 16%, transparent);
 
     --primary-bg: #efe4d4;
     --primary-bg-hover: #fff5e7;
@@ -1524,8 +1547,14 @@ html[data-plush='ready'] :is(.p-face, .pm-face) {
 .bread-mark[data-state='thinking'] .pm-look {
   transform: translate(22px, -18px);
 }
-.bread-mark[data-state='speaking'] {
-  animation: bob 0.9s ease-in-out infinite;
+/*
+ * Reading its own line aloud: the small face looks along the words beside it and holds there. It used
+ * to bob on a 0.9s beat for as long as the voice played; the mark under the words already says which
+ * line is being read, and a face that keeps hopping beside it is only restless.
+ */
+.bread-mark[data-state='speaking'] .pm-look {
+  /* as far as the iris can go and stay inside the glass (58 + 38 ≈ 96) */
+  transform: translate(32px, 20px);
 }
 
 /* ==========================================================================
@@ -1556,8 +1585,7 @@ html[data-plush='ready'] :is(.p-face, .pm-face) {
   bottom: -6%;
   z-index: -1;
   height: 22%;
-  border-radius: 50%;
-  background: radial-gradient(48% 50% at 42% 46%, var(--set-pool), transparent 100%);
+  background: var(--pool-light);
   pointer-events: none;
 }
 .nook .nook__phone {
@@ -1693,21 +1721,21 @@ html[data-plush='ready'] :is(.p-face, .pm-face) {
 :is(.phone-door__art, .phone-still).has-poster .rp-floor > ellipse:last-child {
   opacity: 0.45;
 }
-.phone-door.is-blocked .phone3d[data-state='ready'] {
-  opacity: 0.8;
-  filter: saturate(0.3);
-}
-.phone-door.is-blocked .phone-door__poster {
-  opacity: 0.8;
-  filter: saturate(0.3);
-}
 /*
- * A call that didn't go through: the phone is still the red phone, only quieter. Taking most of the
- * colour out turned the lacquer a muddy brown — a different object. Still, live model and drawing all
- * take the same grade, so nothing changes face when one hands over to another.
+ * A phone that can't be used just now — no call service, or a call that didn't go through — is still the
+ * red phone, only quieter (--phone-quiet), and still solid. The grade goes on the whole picture at once
+ * (still, drawing and live model together), so nothing changes face when one hands over to another, and
+ * nothing is graded twice. It comes on as a slow change of light when the check returns, not a cut.
+ * What it can't do is said in words beside it; the colour only agrees.
  */
+.phone-door__art,
+.phone-still {
+  transition: filter 0.6s var(--ease);
+}
+.phone-door.is-blocked .phone-door__art,
+.phone-still[data-pose='down'],
 .cstage[data-pose='down'] :is(.phone3d, .cstage__still, .cstage__phone) {
-  filter: saturate(0.62) brightness(0.97);
+  filter: var(--phone-quiet);
 }
 
 /* ==========================================================================
@@ -2009,9 +2037,6 @@ html[data-plush='ready'] :is(.p-face, .pm-face) {
 }
 .rp[data-pose='dialing'] .rp-redglow {
   animation: glow-breathe 2.2s 1.9s ease-in-out infinite;
-}
-.rp-svg[data-pose='down'] {
-  filter: saturate(0.3);
 }
 .rp[data-pose='down'] .rp-redglow {
   opacity: 0;
@@ -2396,8 +2421,7 @@ html[data-plush='ready'] :is(.p-face, .pm-face) {
   top: calc(var(--feet) - 46px);
   height: 150px;
   z-index: -2;
-  border-radius: 50%;
-  background: radial-gradient(50% 50% at 40% 46%, var(--set-pool), transparent 100%);
+  background: var(--pool-light);
   pointer-events: none;
 }
 /*
@@ -2642,11 +2666,11 @@ html[data-plush='wait'] .hello-bubble {
   transition: border-color 0.2s, box-shadow 0.3s var(--ease);
 }
 .first-note:focus-within {
-  border-color: color-mix(in srgb, var(--focus) 48%, var(--line-strong));
+  border-color: var(--write-edge);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
     3px 16px 32px -26px rgba(74, 54, 32, 0.4),
-    0 0 0 3px var(--focus-ring);
+    0 0 0 3px var(--write-halo);
 }
 .first-note__label {
   display: block;
@@ -2891,6 +2915,17 @@ html[data-plush='wait'] .hello-bubble {
   width: 11px;
   height: 11px;
   stroke-width: 1.7;
+  transition: fill 0.2s;
+}
+/*
+ * With nothing running, 停止 stays where it is and still works (Esc too), but it doesn't look like
+ * something is going on: pale ink and an open square. While 面包 is really busy it fills in and warms.
+ */
+.ctl--stop:not(.is-hot) {
+  color: var(--ink-3);
+}
+.ctl--stop:not(.is-hot) .lucide {
+  fill: none;
 }
 .ctl--stop.is-hot {
   border-color: color-mix(in srgb, var(--coral) 25%, transparent);
@@ -3267,13 +3302,13 @@ html[data-plush='wait'] .hello-bubble {
   height: 5px;
   border-radius: 50%;
   background: var(--crust-fill);
-  animation: dot 1.4s ease-in-out infinite;
+  animation: dot 1.8s ease-in-out infinite;
 }
 .dots span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.3s;
 }
 .dots span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.6s;
 }
 
 /* ---------- paper: tags & receipts ---------- */
@@ -3859,11 +3894,17 @@ html[data-plush='wait'] .hello-bubble {
     3px 16px 32px -26px rgba(74, 54, 32, 0.36);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+/*
+ * Where you write is focused most of the time, so its focus is the room's own warm edge rather than the
+ * one cold ring on the page: a crust-brown border (above 3:1 against the wall) and a faint lamp halo.
+ * The caret marks the place; buttons and links keep the blue ring.
+ */
 .composer:focus-within {
-  border-color: color-mix(in srgb, var(--focus) 48%, var(--line-strong));
+  border-color: var(--write-edge);
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--rim-light) 80%, transparent),
-    0 0 0 3px var(--focus-ring);
+    0 0 0 3px var(--write-halo),
+    3px 16px 32px -26px rgba(74, 54, 32, 0.36);
 }
 .composer__input {
   display: block;
@@ -4987,24 +5028,38 @@ html[data-plush='wait'] .hello-bubble {
   padding: 18px 22px 20px;
   border-right: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
   /*
-   * A narrow view into the same set as the first screen. In the first cut the floor ran from 面包's
-   * feet to the bottom of the panel and read as a tan slab beside the cream conversation; now the floor
-   * is where the light falls — a broad pool under 面包 (its feet land 257–283px down at every corner
-   * width) that reaches the phone below and fades back into the wall at the panel's edges and foot, so
-   * the corner and the conversation are one room. Painted on the panel's own box: no extra scroll.
+   * A narrow view into the same set as the first screen. 面包 sits on the floor at the foot of the
+   * corner (.companion__figure takes the free space above it), level with the writing pad and the
+   * newest words, so its eyes meet what you are writing instead of looking down at it from the top of
+   * the room; above it is only the wall and the key light. The floor is where the light falls: a broad
+   * pool hung from the panel's foot — 面包's feet land about 150px above it — fading back into the wall
+   * at the edges. With more than fits (short windows), the corner scrolls as before and nothing is cut.
    */
   background:
     radial-gradient(90% 34% at 10% 0%, var(--set-key), transparent 74%),
-    radial-gradient(80% 150px at 50% 340px, var(--set-floor), var(--set-floor) 45%, transparent 100%),
+    radial-gradient(
+      80% 160px at 50% calc(100% - 84px),
+      var(--set-floor),
+      var(--set-floor) 38%,
+      color-mix(in srgb, var(--set-floor) 56%, transparent) 66%,
+      color-mix(in srgb, var(--set-floor) 16%, transparent) 86%,
+      transparent
+    ),
     linear-gradient(to bottom, var(--set-wall-hi), var(--set-wall) 46%, var(--set-wall-lo));
   box-shadow: inset -1px 0 0 color-mix(in srgb, var(--rim-light) 34%, transparent);
 }
 .companion__figure {
   position: relative;
+  margin-top: auto;
   padding-top: 58px;
 }
-/* What 面包 says, as a subtitle above its head in its own hand — no bubble, no tail. */
-.companion__bubble {
+/*
+ * What 面包 says, as a subtitle above its head in its own hand — no bubble, no tail. When the line
+ * changes, the old words (.companion__ghost) fade first and the new ones come up a beat later in the same
+ * place: one line giving way to the next, with no blank frame and no slide.
+ */
+.companion__bubble,
+.companion__ghost {
   position: absolute;
   top: 0;
   left: 50%;
@@ -5019,10 +5074,18 @@ html[data-plush='wait'] .hello-bubble {
   letter-spacing: 0.03em;
   color: var(--ink);
   text-align: center;
-  transform: translateX(-50%);
-  animation: bubble-in-center 0.4s var(--ease) both;
+  text-wrap: balance;
+  translate: -50% 0;
 }
-.companion__bubble[data-state='error'] {
+.companion__bubble {
+  animation: line-in 0.42s 0.1s ease-out both;
+}
+.companion__ghost {
+  pointer-events: none;
+  animation: line-out 0.26s ease-in forwards;
+}
+.companion__bubble[data-state='error'],
+.companion__ghost[data-state='error'] {
   color: var(--amber);
 }
 .companion__scene {
@@ -5080,13 +5143,22 @@ html[data-plush='wait'] .hello-bubble {
   width: 48px;
   margin: -4px 0 -6px;
 }
+/* name above, the line below; the outgoing line shares the line's own cell, so it fades in place */
 .perch__line {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
   flex: 1;
   min-width: 0;
-  gap: 1px;
+  row-gap: 1px;
   line-height: 1.4;
+}
+.perch__name {
+  grid-area: 1 / 1;
+}
+.perch__say,
+.perch__ghost {
+  grid-area: 2 / 1;
 }
 .perch__name {
   font-size: 0.72rem;
@@ -5094,7 +5166,8 @@ html[data-plush='wait'] .hello-bubble {
   letter-spacing: 0.08em;
   color: var(--crust);
 }
-.perch__say {
+.perch__say,
+.perch__ghost {
   display: -webkit-box;
   overflow: hidden;
   font-family: var(--font-voice);
@@ -5104,7 +5177,13 @@ html[data-plush='wait'] .hello-bubble {
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  animation: settle-in 0.4s ease-out both;
+}
+.perch__say {
+  animation: line-in 0.42s 0.1s ease-out both;
+}
+.perch__ghost {
+  pointer-events: none;
+  animation: line-out 0.26s ease-in forwards;
 }
 
 /* ---------- the phone as a button ---------- */
@@ -5173,17 +5252,15 @@ html[data-plush='wait'] .hello-bubble {
 .phone-door.is-blocked .phone-door__btn {
   cursor: not-allowed;
 }
-/* When the call is unavailable the label's second line is the reason, which can wrap; reserve room for
-   it instead of letting the label sit on the heading below. */
-.entry__hero:has(.phone-door.is-blocked) {
-  margin-bottom: 1.75rem;
+/*
+ * Short labels break between phrases, never a character from the end (Phrases in Companion.tsx). A
+ * phrase longer than its line still wraps inside itself.
+ */
+.phrase {
+  display: inline-block;
 }
 .phone-door.is-pending .phone-door__btn {
   cursor: progress;
-}
-.phone-door.is-blocked .phone-door__phone {
-  filter: saturate(0.3);
-  opacity: 0.8;
 }
 .phone-door.is-blocked :is(.phone-door__title, .phone-door__sub) {
   color: var(--ink-2);
@@ -5249,6 +5326,19 @@ html[data-plush='wait'] .hello-bubble {
   font-size: 0.8rem;
   letter-spacing: 0.06em;
 }
+/*
+ * The label is always exactly two lines — the name, and either "用说的…" or why it can't be used — so the
+ * still life never has to make room when the check comes back: nothing on the first screen moves. The
+ * label may be wider than the phone; it stays centred under it.
+ */
+.phone-door--hero .phone-door__sub {
+  white-space: nowrap;
+}
+.phone-door--hero .phone-door__text {
+  width: max-content;
+  min-width: 100%;
+  max-width: calc(100vw - 32px);
+}
 .phone-door--hero.is-blocked .phone-door__title {
   color: var(--ink-2);
 }
@@ -5289,14 +5379,17 @@ html[data-plush='wait'] .hello-bubble {
   width: 96px;
   margin-block: -4px -2px;
 }
+/* Unavailable, it is the same object and its label, with no box drawn round it: the words say why. */
 .phone-door.is-blocked.phone-door--panel .phone-door__btn {
-  border-style: dashed;
-  border-color: var(--line-strong);
+  border-color: transparent;
   background: transparent;
   box-shadow: none;
 }
 .phone-door.is-blocked.phone-door--panel .phone-door__title {
   color: var(--ink-2);
+}
+.phone-door--panel .phone-door__sub {
+  text-wrap: balance;
 }
 
 /* Phones: an ivory key from the set with the same phone standing in it, and the word. */
@@ -5328,17 +5421,16 @@ html[data-plush='wait'] .hello-bubble {
 .call-pill:not(.is-blocked):hover .rp-redglow {
   opacity: 1;
 }
+/*
+ * A key that can't be pressed just now: the same ivory key, no longer lifted off the set — no shadow,
+ * a hairline edge, quieter words. Not a dashed placeholder; the phone in it keeps its colour (quieter).
+ */
 .call-pill.is-blocked {
-  border-style: dashed;
-  border-color: var(--line-strong);
-  background: var(--surface-2);
+  border-color: var(--key-edge);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
   color: var(--ink-3);
   box-shadow: none;
   cursor: not-allowed;
-}
-.call-pill.is-blocked .call-pill__phone {
-  filter: saturate(0.2);
-  opacity: 0.7;
 }
 .call-pill__hint {
   position: absolute;
@@ -5481,7 +5573,14 @@ html[data-plush='wait'] .hello-bubble {
   top: 74%;
   height: 30%;
   z-index: -1;
-  background: radial-gradient(50% 50% at 52% 46%, var(--set-floor), transparent 100%);
+  background: radial-gradient(
+    closest-side at 52% 50%,
+    var(--set-floor),
+    color-mix(in srgb, var(--set-floor) 78%, transparent) 34%,
+    color-mix(in srgb, var(--set-floor) 42%, transparent) 62%,
+    color-mix(in srgb, var(--set-floor) 12%, transparent) 84%,
+    transparent
+  );
   pointer-events: none;
 }
 .cstage__pool {
@@ -5613,7 +5712,15 @@ html[data-plush='wait'] .hello-bubble {
  * One short line per phase, in 面包's own voice — so in its hand. A step down from a headline: in a call
  * the eyes should be free to leave the screen, and what 面包 says (below) is the larger type.
  */
-.callroom__phase {
+/* the heading and the words it just had share one cell: the old words fade on top while the new come up */
+.callroom__phase-wrap {
+  display: grid;
+}
+.callroom__phase-wrap > * {
+  grid-area: 1 / 1;
+}
+.callroom__phase,
+.callroom__phase-ghost {
   font-family: var(--font-voice);
   font-size: clamp(1.18rem, 2vw, 1.4rem);
   font-weight: 400;
@@ -5624,10 +5731,26 @@ html[data-plush='wait'] .hello-bubble {
 .callroom__phase:focus {
   outline: none;
 }
-/* a new line turns over in place, softly, under a heading that never moves */
+/* a new line turns over in place, softly, under a heading that never moves — just after the old one goes */
 .callroom__phase-text {
   display: inline-block;
-  animation: phase-in 0.42s var(--ease-out) both;
+  animation: phase-in 0.42s 0.1s var(--ease-out) both;
+}
+.callroom__phase-ghost {
+  pointer-events: none;
+  animation: line-out 0.26s ease-in forwards;
+}
+/*
+ * A long wait, said plainly once it is long (CallRoom's LONG_WAIT_MS): small and pale, at the end of the
+ * captions so nothing above it moves, and gone the moment the phase changes. Not 面包's subtitle hand.
+ */
+.callroom__wait {
+  flex: none;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+  animation: line-in 0.6s ease-out both;
 }
 /* Only four phases say anything here, so no row is reserved: the space goes to the captions. */
 .callroom__hint {
@@ -6307,8 +6430,10 @@ body:has(dialog[open]) .callroom__pulse::after {
     font-size: 0.76rem;
     letter-spacing: 0.03em;
   }
+  /* the phone stands at the right edge here, so a label wider than it grows toward 面包, not off the page */
   .phone-door--hero .phone-door__text {
     padding: 4px 8px 5px;
+    align-self: flex-end;
   }
   .entry__content,
   .end__content {
@@ -6530,6 +6655,21 @@ body:has(dialog[open]) .callroom__pulse::after {
   }
 }
 
+/*
+ * Most phones (375–430 wide): the conversation bar needs portrait, AI stamp, two tools, 停止 and 结束 in a
+ * row, and with the name set beside the portrait it came to about 400px — 结束, the one way out of the
+ * evening, was cut off at the edge. The bar keeps the portrait, as the narrowest bars already do; the
+ * name stays for screen readers and in 面包's own line just below. The first screen keeps its full logo.
+ */
+@media (max-width: 440px) {
+  .topbar .brand-logo__type {
+    display: none;
+  }
+  .topbar__controls {
+    flex: none;
+  }
+}
+
 @media (max-width: 420px) {
   .entry {
     padding-inline: 16px;
@@ -6597,13 +6737,6 @@ body:has(dialog[open]) .callroom__pulse::after {
   html:is([data-text-size='l'], [data-text-size='xl']) .hello-bubble {
     top: -4.5rem;
     max-width: 100%;
-  }
-  /* The plaque can grow leftward while the phone and its fixed hit area stay put. */
-  .phone-door--hero .phone-door__text {
-    width: max-content;
-    min-width: 100%;
-    max-width: calc(100vw - 32px);
-    align-self: flex-end;
   }
 }
 
@@ -7107,14 +7240,18 @@ body:has(dialog[open]) .callroom__pulse::after {
     transform: none;
   }
 }
-@keyframes bubble-in-center {
+/*
+ * One line of words giving way to the next in the same place (useAfterimage): the old one fades out
+ * quickly, the new one comes up a beat later and a little slower. Opacity only — the words never slide.
+ */
+@keyframes line-in {
   from {
     opacity: 0;
-    transform: translate(-50%, 5px);
   }
+}
+@keyframes line-out {
   to {
-    opacity: 1;
-    transform: translate(-50%, 0);
+    opacity: 0;
   }
 }
 /* the open line's small ring: out from the dot and gone, on the compositor */
@@ -7166,15 +7303,6 @@ body:has(dialog[open]) .callroom__pulse::after {
     transform: translate(-50%, -50%) scale(0.92);
   }
 }
-@keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-1.5px);
-  }
-}
 @keyframes ring {
   from {
     transform: scale(0.7);
@@ -7195,15 +7323,14 @@ body:has(dialog[open]) .callroom__pulse::after {
     opacity: 0;
   }
 }
+/* "在想": the three dots take the light in turn, like a pencil resting between words — none of them hops */
 @keyframes dot {
   0%,
   100% {
     opacity: 0.25;
-    transform: translateY(0);
   }
   50% {
-    opacity: 1;
-    transform: translateY(-3px);
+    opacity: 0.95;
   }
 }
 /* down to a night light, not to dark */
