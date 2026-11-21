@@ -34,10 +34,10 @@ const postWith = (request: Request, providerFetch: typeof fetch) => withServerRu
 
 function controlledSse() {
   let writer!: ReadableStreamDefaultController<Uint8Array>;
-  const cancel = vi.fn();
-  const body = new ReadableStream<Uint8Array>({ start(c) { writer = c; }, cancel });
+  const cancel = vi.fn(), pull = vi.fn();
+  const body = new ReadableStream<Uint8Array>({ start(c) { writer = c; }, cancel, pull });
   return {
-    response: sse(body), cancel,
+    response: sse(body), cancel, pull,
     send(text: string, fragmentSize = 4096) {
       const bytes = encode.encode(text);
       for (let at = 0; at < bytes.length; at += fragmentSize) writer.enqueue(bytes.subarray(at, at + fragmentSize));
@@ -90,7 +90,7 @@ describe('sentence voice orchestration', () => {
     });
     const response = await postWith(req(), provider);
     const events = responseEvents(response.body!);
-    model.send(openAiText('{"assistantText":"' + utterance1), 7);
+    model.send(openAiText('{"assistantText":"' + utterance1 + utterance2[0]), 7);
     expect(await events.next()).toMatchObject({ type: 'delta', text: utterance1 });
     speech.send(voiceReply(1, [1, 0]), 11);
     expect(await events.next()).toMatchObject({ type: 'audio_start', format: 'pcm-s16le', sampleRate: 32000, channels: 1 });
@@ -99,7 +99,7 @@ describe('sentence voice orchestration', () => {
     expect(() => availableSlots('call', 3)).toThrow();
     expect(() => availableSlots('tts', 3)).toThrow();
 
-    model.send(openAiText(utterance2 + '","supportGuidance":false}') + 'data: [DONE]\n\n');
+    model.send(openAiText(utterance2.slice(1) + '","supportGuidance":false}') + 'data: [DONE]\n\n');
     model.close();
     expect(await events.next()).toMatchObject({ type: 'candidate', candidate: { assistantText: utterance1 + utterance2, findings: [], serviceMode: 'real' } });
     await vi.waitFor(() => expect(() => availableSlots('call', 3)).not.toThrow());
@@ -142,6 +142,7 @@ describe('sentence voice orchestration', () => {
       return sse(voiceReply(1, tag.slice(0, 5), 'mp3') + voiceReply(2, [...tag.slice(5), ...frame], 'mp3'));
     });
     const events = await allEvents(await postWith(req(turn, 'mp3-chunks-v1'), provider));
+    expect(events[0].type).toBe('candidate');
     expect(events.filter(e => e.type === 'delta').map(e => e.text)).toEqual([opener, question]);
     expect(events.filter(e => e.type === 'audio_start')).toEqual([{ type: 'audio_start', requestId: turn.requestId, format: 'mp3', sampleRate: 32000, channels: 1 }]);
     const audio = events.filter(e => e.type === 'audio_chunk');
@@ -149,6 +150,27 @@ describe('sentence voice orchestration', () => {
     expect(Buffer.concat(audio.map(e => Buffer.from(e.audio, 'base64')))).toEqual(Buffer.from([...tag, ...frames[0], ...frames[1]]));
     expect(events.find(e => e.type === 'candidate').candidate.interviewUpdate).toMatchObject({ stage: 'question', question });
     expect(events.at(-1).type).toBe('done');
+  });
+
+  it.each(['debrief', 'findings only'])('never speaks an unauthorized interview %s, even with sentence-stream opt-in', async kind => {
+    const input = interview();
+    Object.assign(input.context.interview!, { stage: 'question', round: 1, currentQuestion: '如何验证结果？' });
+    const answer = {
+      assistantText: '这一场提前结束。我们现在复盘。',
+      interviewUpdate: kind === 'debrief' ? { stage: 'debrief' } : { stage: 'follow_up', question: '怎么验证？' },
+      findings: [{ id: 'f1', kind: 'unknown', text: '招聘结果未知。' }],
+      ...(kind === 'debrief' ? { card: { type: 'review', title: '提前复盘', sections: [{ key: '未知', text: '招聘结果未知。', findingIds: ['f1'] }] } } : {}),
+    };
+    const tts = vi.fn(), serialized = JSON.stringify(answer);
+    const provider = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/t2a_v2')) { tts(); return sse(voiceReply(2, [1, 0])); }
+      if (JSON.parse(String(init?.body)).stream) return sse(openAiText(serialized) + 'data: [DONE]\n\n');
+      return Response.json({ choices: [{ message: { content: serialized } }] });
+    });
+    const events = await allEvents(await postWith(req(input), provider));
+    expect(events.map(e => e.type)).toEqual(['error']);
+    expect(events[0].error).toMatchObject({ stage: 'agent', code: 'INVALID_MODEL_OUTPUT' });
+    expect(tts).not.toHaveBeenCalled();
   });
 
   it('cancels both streaming bodies and frees both leases when the browser cancels playback', async () => {
@@ -159,7 +181,7 @@ describe('sentence voice orchestration', () => {
     });
     const body = (await postWith(req(), provider)).body!;
     const events = responseEvents(body);
-    model.send(openAiText('{"assistantText":"这份等待挺难熬的。'));
+    model.send(openAiText('{"assistantText":"这份等待挺难熬的。还'));
     expect(await events.next()).toMatchObject({ type: 'delta' });
     speech.send(voiceReply(1, [1, 0]));
     expect(await events.next()).toMatchObject({ type: 'audio_start' });
@@ -176,7 +198,7 @@ describe('sentence voice orchestration', () => {
     const model = controlledSse(), speech = controlledSse();
     const provider = vi.fn(async (url: RequestInfo | URL) => String(url).endsWith('/chat/completions') ? model.response : speech.response);
     const events = responseEvents((await postWith(req(), provider)).body!);
-    model.send(openAiText('{"assistantText":"这份等待挺难熬的。'));
+    model.send(openAiText('{"assistantText":"这份等待挺难熬的。还'));
     expect(await events.next()).toMatchObject({ type: 'delta' });
     speech.send(voiceReply(1, [1, 0]));
     expect(await events.next()).toMatchObject({ type: 'audio_start' });
@@ -193,6 +215,83 @@ describe('sentence voice orchestration', () => {
     expect(speech.cancel).toHaveBeenCalledOnce();
     expect(provider).toHaveBeenCalledTimes(2);
     expect(() => availableSlots('call', 3)).not.toThrow(); expect(() => availableSlots('tts', 3)).not.toThrow();
+  });
+
+  it('reports broken synthesis while the model is still running and skips queued and later sentences', async () => {
+    const model = controlledSse(), speech = controlledSse();
+    const first = '这份等待挺难熬的。', second = '可以先让自己休息一下。', third = '等准备好了再聊。';
+    const tts = vi.fn(), input = listening();
+    let agentSignal!: AbortSignal, speechSignal!: AbortSignal;
+    const provider = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/chat/completions')) { agentSignal = init!.signal!; return model.response; }
+      speechSignal = init!.signal!;
+      tts(JSON.parse(String(init?.body)).text);
+      return speech.response;
+    });
+    const events = responseEvents((await postWith(req(input), provider)).body!);
+    model.send(openAiText('{"assistantText":"' + first + second + third[0]));
+    expect(await events.next()).toMatchObject({ type: 'delta', text: first });
+    speech.send(voiceReply(1, [1, 0]));
+    expect(await events.next()).toMatchObject({ type: 'audio_start' });
+    expect(await events.next()).toMatchObject({ type: 'audio_chunk' });
+    speech.send(sseData({ base_resp: { status_code: 1 } }));
+    expect(await events.next()).toMatchObject({ type: 'error', error: { stage: 'synthesize', code: 'PROVIDER_UNAVAILABLE', retryable: true, requestId: input.requestId } });
+    expect(speechSignal.aborted).toBe(true);
+    expect(agentSignal.aborted).toBe(false);
+    await vi.waitFor(() => expect(() => availableSlots('tts', 3)).not.toThrow());
+    model.send(openAiText(third.slice(1) + '","supportGuidance":false}') + 'data: [DONE]\n\n');
+    model.close();
+    expect(await events.next()).toMatchObject({ type: 'candidate', candidate: { assistantText: first + second + third } });
+    expect(await events.next()).toBeUndefined();
+    expect(tts).toHaveBeenCalledExactlyOnceWith(first);
+  });
+
+  it('reports TTS admission failure before the candidate and sends no later speech', async () => {
+    const model = controlledSse();
+    const held = Array.from({ length: 3 }, () => acquireBudget('tts'));
+    const provider = vi.fn(async (url: RequestInfo | URL) => String(url).endsWith('/chat/completions') ? model.response : sse(voiceReply(2, [1, 0])));
+    try {
+      const events = responseEvents((await postWith(req(), provider)).body!);
+      model.send(openAiText('{"assistantText":"这份等待挺难熬的。还'));
+      expect(await events.next()).toMatchObject({ type: 'error', error: { stage: 'synthesize', code: 'RATE_LIMITED', retryable: true } });
+      held.forEach(release => release());
+      model.send(openAiText('可以慢慢说。"}') + 'data: [DONE]\n\n');
+      model.close();
+      expect(await events.next()).toMatchObject({ type: 'candidate' });
+      expect(await events.next()).toBeUndefined();
+      expect(provider).toHaveBeenCalledOnce();
+    } finally { held.forEach(release => release()); }
+  });
+
+  it.each([true, false])('holds text past the normal limit until supportGuidance=%s is validated', async supportGuidance => {
+    const model = controlledSse(), texts: string[] = [];
+    const first = '字'.repeat(70) + '。', second = '话'.repeat(48) + '。';
+    const provider = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/chat/completions')) return model.response;
+      texts.push(JSON.parse(String(init?.body)).text);
+      return sse(voiceReply(2, [1, 0]));
+    });
+    const events = responseEvents((await postWith(req(), provider)).body!);
+    model.send(openAiText('{"assistantText":"' + first + second[0]));
+    expect(await events.next()).toMatchObject({ type: 'delta', text: first });
+    expect(await events.next()).toMatchObject({ type: 'audio_start' });
+    expect(await events.next()).toMatchObject({ type: 'audio_chunk' });
+    const before = model.pull.mock.calls.length;
+    model.send(openAiText(second.slice(1) + '",'));
+    await vi.waitFor(() => expect(model.pull.mock.calls.length).toBeGreaterThan(before));
+    expect(texts).toEqual([first]);
+    model.send(openAiText('"supportGuidance":' + supportGuidance + '}') + 'data: [DONE]\n\n');
+    model.close();
+    if (supportGuidance) {
+      expect(await events.next()).toMatchObject({ type: 'candidate', candidate: { assistantText: first + second, supportGuidance: true } });
+      expect(await events.next()).toMatchObject({ type: 'delta', text: second });
+      expect(await events.next()).toMatchObject({ type: 'audio_chunk', sequence: 1 });
+      expect(await events.next()).toMatchObject({ type: 'done' });
+    } else {
+      expect(await events.next()).toMatchObject({ type: 'error', error: { stage: 'agent', code: 'INVALID_MODEL_OUTPUT' } });
+    }
+    expect(await events.next()).toBeUndefined();
+    expect(texts).toEqual(supportGuidance ? [first, second] : [first]);
   });
 
   it('repairs an unsafe first sentence once before any TTS, then synthesizes only the checked replacement', async () => {

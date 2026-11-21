@@ -1,14 +1,15 @@
 'use client';
 
 import { BookmarkPlus, Briefcase, MessageCircle, ScanText, Shuffle, SlidersHorizontal, Target } from 'lucide-react';
-import type { InterviewState, InterviewStyle } from '@/domain/types';
+import type { Card, InterviewState, InterviewStyle } from '@/domain/types';
 import { useDomId } from './hooks';
-import { DOING_META, INTERVIEW_STYLE_LABEL, interviewRoundLabel } from './labels';
+import { DOING_META, INTERVIEW_STYLE_LABEL, interviewRoundLabel, isLocked } from './labels';
 import type { AssistMode, BreadVM } from './vm';
 
 interface ModeBarProps {
   vm: BreadVM;
   canAct: boolean;
+  debriefCard: Card | null;
   /** Offers appear only after the user has said something — never on a first, plain vent. */
   show: boolean;
   onAssist: (mode: AssistMode) => void;
@@ -29,7 +30,7 @@ const OFFERS: { mode: AssistMode; label: string; icon: typeof BookmarkPlus; hint
  * a ticket when practicing, and a few small invitations.
  */
 export function ModeBar(props: ModeBarProps) {
-  const { vm, canAct, show, onAssist, onBackToTalk, onAdjustPractice, onInterviewCall } = props;
+  const { vm, canAct, debriefCard, show, onAssist, onBackToTalk, onAdjustPractice, onInterviewCall } = props;
   const { state: { mode, selectedQuestion, practiceCriteria, interview }, busy, currentCard } = vm;
   const hasCard = !!currentCard;
   const practicing = mode === 'practice' && !!selectedQuestion;
@@ -39,7 +40,7 @@ export function ModeBar(props: ModeBarProps) {
   return (
     <div className="modebar">
       {interviewing ? (
-        <InterviewTicket vm={vm} interview={interviewing} canAct={canAct} onCall={onInterviewCall} onExit={onBackToTalk} />
+        <InterviewTicket vm={vm} interview={interviewing} debriefCard={debriefCard} canAct={canAct} onCall={onInterviewCall} onExit={onBackToTalk} />
       ) : practicing ? (
         <section className="ticket" aria-labelledby="ticket-k">
           <div className="ticket__main">
@@ -113,15 +114,17 @@ export function ModeBar(props: ModeBarProps) {
   );
 }
 
-function InterviewTicket({ vm, interview, canAct, onCall, onExit }: {
+function InterviewTicket({ vm, interview, debriefCard, canAct, onCall, onExit }: {
   vm: BreadVM;
   interview: InterviewState;
+  debriefCard: Card | null;
   canAct: boolean;
   onCall?: () => void;
   onExit: () => void;
 }) {
   const id = useDomId('interview-ticket');
   const debrief = interview.stage === 'debrief';
+  const cardLocked = !!debriefCard && isLocked(debriefCard.validity);
   const { busy } = vm;
 
   return (
@@ -137,6 +140,11 @@ function InterviewTicket({ vm, interview, canAct, onCall, onExit }: {
         <div className="ticket__actions">
           <InterviewStyleToggle style={interview.style} onChange={vm.setInterviewStyle} disabled={busy || debrief} />
           <div className="ticket__interview-actions">
+            {debrief && (!debriefCard || cardLocked) && (
+              <button type="button" className="pill pill--warm" disabled={busy} onClick={() => void vm.requestInterviewDebrief()}>
+                {cardLocked ? '重新复盘' : '重试复盘'}
+              </button>
+            )}
             <button type="button" className="pill pill--warm" disabled={busy} onClick={() => void (debrief ? vm.startInterview() : vm.requestInterviewDebrief())}>
               {debrief ? '再练一场' : '收尾复盘'}
             </button>

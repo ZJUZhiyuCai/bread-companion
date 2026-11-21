@@ -67,6 +67,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   // The stage changes before the request finishes. A card from an earlier turn can still be current.
   if (!debrief && state.currentCardId !== cardBeforeDebriefId) setCardBeforeDebriefId(state.currentCardId);
   const debriefCard = debrief && currentCard?.type === 'review' && currentCard.id !== cardBeforeDebriefId ? currentCard : null;
+  const debriefCardLocked = !!debriefCard && isLocked(debriefCard.validity);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -360,6 +361,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
               debriefCard={debriefCard}
               onHangup={vm.hangupCall}
               onOpenDebriefCard={() => {
+                if (!debriefCard || debriefCardLocked) return;
                 vm.hangupCall();
                 openTray('card');
               }}
@@ -412,6 +414,7 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
                 <ModeBar
                   vm={vm}
                   canAct={canAct}
+                  debriefCard={debriefCard}
                   show={hasTalked && !['requesting_mic', 'recording', 'recorded', 'transcribing'].includes(activity) && !vm.transcriptDraft}
                   onAssist={assist}
                   onBackToTalk={backToTalk}

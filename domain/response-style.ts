@@ -2,11 +2,11 @@ import type { InterviewUpdate, TurnRequest } from './types';
 import { interviewNeedsDebrief } from './policy';
 
 /** Enforce observable output constraints. This is not a general empathy/safety classifier. */
-export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode' | 'channel'> & Partial<Pick<TurnRequest, 'context' | 'userMessage'>>, supportGuidance = false, interviewStage?: InterviewUpdate['stage']): string[] {
+export function responseStyleErrors(text: string, input: Pick<TurnRequest, 'mode' | 'channel'> & Partial<Pick<TurnRequest, 'context' | 'userMessage'>>, supportGuidance = false, interviewStage?: InterviewUpdate['stage'], maxLength?: number): string[] {
   const errors: string[] = [];
   const interviewQA = !supportGuidance && input.mode === 'interview' && interviewStage !== 'debrief' && !interviewNeedsDebrief(input.context?.interview);
-  const max = supportGuidance ? 240 : input.mode === 'listen' ? (input.channel === 'call' ? 100 : 180)
-    : interviewQA ? (input.channel === 'call' ? 160 : 260) : 240;
+  const max = maxLength ?? (supportGuidance ? 240 : input.mode === 'listen' ? (input.channel === 'call' ? 100 : 180)
+    : interviewQA ? (input.channel === 'call' ? 160 : 260) : 240);
   if ([...text].length > max) errors.push(`STYLE_LENGTH_MAX_${max}`);
   if (!supportGuidance && input.mode === 'listen' && input.context?.preferences?.questions === 'avoid' && /[？?]/.test(text) && !/(?:可以问|问我(?:一个|个)?问题)/.test(input.userMessage ?? '')) errors.push('STYLE_RESPECT_NO_QUESTIONS');
   if ((text.match(/[？?]/g) ?? []).length > (interviewQA ? 2 : 1)) errors.push(interviewQA ? 'STYLE_TWO_QUESTIONS' : 'STYLE_ONE_QUESTION');

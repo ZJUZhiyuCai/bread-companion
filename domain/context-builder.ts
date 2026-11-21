@@ -1,6 +1,6 @@
-import type { InterviewState, Message, SessionState, Source, SourceSegment, TurnRequest } from './types';
+import type { SessionState, Source, SourceSegment, TurnRequest } from './types';
 import { segments } from './evidence';
-import { interviewNeedsDebrief, isActionOnly } from './policy';
+import { interviewNeedsDebrief } from './policy';
 import { conversationPreferences } from './preferences';
 
 export const CONTEXT_LIMITS = { historyBytes: 8000, wireBytes: 36000, rejectionBytes: 10000, segments: 6 } as const;
@@ -10,28 +10,11 @@ export function materialSources(state: SessionState): Source[] {
   return state.sources.filter(s => !utterances.has(s.id) && s.label !== '本次请求');
 }
 export function requestSegments(input: TurnRequest): SourceSegment[] {
-  return input.context.sourceSegments ?? selectSegments(input.context.sources, input.userMessage);
-}
-
-/** Locate answers using the questions actually asked in the current interview. */
-export function interviewAnswerMessages<T extends Pick<Message, 'role' | 'text'>>(messages: T[], interview: InterviewState): T[] {
-  const questions = [...interview.notes.map(note => note.question), interview.currentQuestion].filter(Boolean);
-  let start = -1;
-  for (const question of questions) {
-    start = messages.findLastIndex(m => m.role === 'assistant' && m.text.includes(question));
-    if (start >= 0) break;
-  }
-  if (start < 0) return [];
-  let awaitingAnswer = false;
-  return messages.slice(start).filter(m => {
-    if (m.role === 'assistant') {
-      awaitingAnswer = questions.some(q => m.text.includes(q));
-      return false;
-    }
-    if (!awaitingAnswer || isActionOnly(m.text)) return false;
-    awaitingAnswer = false;
-    return true;
-  });
+  const { sourceSegments, sources, interview } = input.context;
+  if (sourceSegments) return sourceSegments;
+  const evidence = input.mode === 'interview' && interviewNeedsDebrief(interview)
+    ? sources.filter(s => s.confirmed && interview?.answerSourceIds?.includes(s.id)) : sources;
+  return selectSegments(evidence, input.userMessage);
 }
 
 export function buildTurn(state: SessionState, userMessage: string, runId: string, requestId: string): TurnRequest {
@@ -40,14 +23,12 @@ export function buildTurn(state: SessionState, userMessage: string, runId: strin
   const omitAnalysis = rejectedFindings.length > 0 || state.findings.some(f => f.validity === 'stale');
   const interview = state.mode === 'interview' && state.interview ? {
     ...state.interview, focusPoints: state.interview.focusPoints.slice(0, 2), notes: state.interview.notes.slice(-6),
+    answerSourceIds: (state.interview.answerSourceIds ?? []).slice(-12),
   } : undefined;
   const debrief = interview && interviewNeedsDebrief(interview);
   const materials = debrief ? [] : materialSources(state);
-  const users = debrief ? interviewAnswerMessages(state.messages, interview) : state.messages.filter(m => m.role === 'user');
-  const last = state.messages.at(-1);
-  if (debrief && interview.currentQuestion && last?.role === 'user' && last.text === userMessage && !isActionOnly(userMessage)) users.push(last);
-  const recentIds = new Set(users.slice(-12).map(m => m.sourceId));
-  const recentSources = state.sources.filter(s => recentIds.has(s.id) && s.label !== '本次请求');
+  const recentIds = new Set(debrief ? interview.answerSourceIds : state.messages.filter(m => m.role === 'user').slice(-12).map(m => m.sourceId));
+  const recentSources = state.sources.filter(s => recentIds.has(s.id) && s.label !== '本次请求' && (!debrief || s.confirmed));
   const card = state.cards.find(c => c.id === state.currentCardId);
   const findingIds = new Set(card?.sections.flatMap(s => s.findingIds));
   const linkedIds = new Set(state.findings.filter(f => findingIds.has(f.id) && !['stale', 'disputed'].includes(f.validity)).flatMap(f => f.evidenceRefs.map(r => r.sourceId)));

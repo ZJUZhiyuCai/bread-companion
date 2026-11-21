@@ -32,6 +32,7 @@ export interface InterviewState {
   currentQuestion: string;
   focusPoints: string[];
   notes: InterviewNote[];
+  answerSourceIds?: string[];
 }
 export interface InterviewUpdate {
   stage: 'question' | 'follow_up' | 'debrief';

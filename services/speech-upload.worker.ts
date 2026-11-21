@@ -1,4 +1,5 @@
 import { AudioSample, AudioSampleSource, BufferTarget, OggOutputFormat, Output, Quality } from 'mediabunny';
+import { INTERVIEW_ASR_SECONDS, pcmWavBytes } from '@/domain/speech-limits';
 
 // Native Opus runs in this dedicated worker. Mediabunny owns framing, encoder delay and Ogg muxing.
 async function initialize() {
@@ -13,7 +14,7 @@ self.onmessage = async ({ data }: MessageEvent<{ id: number; wav: ArrayBuffer }>
   try {
     const view = new DataView(wav), tag = (at: number) => view.getUint32(at, false);
     // Only the canonical WAV produced by our microphone adapter; unknown files keep their original path.
-    if (wav.byteLength < 44 || wav.byteLength > 44 + 65 * 32000 || tag(0) !== 0x52494646 || tag(8) !== 0x57415645 || tag(12) !== 0x666d7420 || view.getUint32(16, true) !== 16 || view.getUint16(20, true) !== 1 || view.getUint16(22, true) !== 1 || view.getUint32(24, true) !== 16000 || view.getUint16(34, true) !== 16 || tag(36) !== 0x64617461 || view.getUint32(40, true) !== wav.byteLength - 44 || (wav.byteLength - 44) % 2) throw new Error('format');
+    if (wav.byteLength < 44 || wav.byteLength > pcmWavBytes(INTERVIEW_ASR_SECONDS) || tag(0) !== 0x52494646 || tag(8) !== 0x57415645 || tag(12) !== 0x666d7420 || view.getUint32(16, true) !== 16 || view.getUint16(20, true) !== 1 || view.getUint16(22, true) !== 1 || view.getUint32(24, true) !== 16000 || view.getUint16(34, true) !== 16 || tag(36) !== 0x64617461 || view.getUint32(40, true) !== wav.byteLength - 44 || (wav.byteLength - 44) % 2) throw new Error('format');
     const target = new BufferTarget(), source = new AudioSampleSource({ codec: 'opus', quality: new Quality({ bitrate: 64000 }) });
     output = new Output({ format: new OggOutputFormat(), target }); output.addAudioTrack(source);
     await output.start();

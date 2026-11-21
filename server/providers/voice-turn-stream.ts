@@ -1,7 +1,7 @@
 import type { TurnCandidate, TurnRequest } from '@/domain/types';
 import { withAbort } from '@/lib/abort';
 import { admit } from '@/server/admission';
-import { AppError } from '@/server/errors';
+import { AppError, asAppError } from '@/server/errors';
 import { timeoutSignal } from '@/server/limits';
 import { providerFetch } from '@/server/provider-fetch';
 import { withCircuit } from '@/server/resilience';
@@ -42,15 +42,32 @@ export async function streamVoiceTurn({ req, input, signal, format, bufferMp3, a
   Promise<{ candidate: TurnCandidate; providerMs: number } | null> {
   const stop = new AbortController();
   const live = AbortSignal.any([signal, stop.signal]);
+  const speechStop = new AbortController();
   const agentSignal = timeoutSignal(live, agentTimeout), agentStart = performance.now();
   const { requestId } = input;
+  const normalMax = input.mode === 'interview' ? 160 : 100;
+  const deferredSentences: string[] = [];
+  let speechChars = 0;
   let lease: Promise<Release> | undefined, tail: Promise<void> | undefined, speechSignal: AbortSignal;
   let speechRelease: Promise<void> | undefined;
+  let speechFailed = false, speechErrorSent = false;
   let firstSentenceMs: number | undefined, firstAudioMs: number | undefined;
   let speechStart = 0, speechEnd = 0, sequence = 0, audioBytes = 0;
 
   function releaseSpeech() {
     return speechRelease ??= lease?.then(release => release(), () => {}) ?? Promise.resolve();
+  }
+
+  function failSpeech(error: unknown) {
+    if (live.aborted || speechErrorSent) return;
+    speechFailed = true;
+    speechStop.abort();
+    void releaseSpeech().catch(() => {});
+    const err = asAppError(error);
+    const stage = 'synthesize';
+    if (err.status >= 500) console.warn(JSON.stringify({ event: 'request_failed', requestId, stage, code: err.code, status: err.status }));
+    speechErrorSent = true;
+    send({ type: 'error', error: { code: err.code, userMessage: err.message, retryable: err.retryable, requestId, stage } });
   }
 
   async function speak(sentence: string) {
@@ -77,17 +94,24 @@ export async function streamVoiceTurn({ req, input, signal, format, bufferMp3, a
   }
 
   function enqueue(sentence: string) {
+    if (speechFailed) return;
     if (!tail) {
       firstSentenceMs = performance.now() - agentStart;
-      speechSignal = timeoutSignal(live, speechTimeout);
+      speechSignal = timeoutSignal(AbortSignal.any([live, speechStop.signal]), speechTimeout);
       lease = admit(req, 'tts', requestId, speechSignal);
       tail = lease.then(() => { speechStart = performance.now(); return speak(sentence); });
     } else {
-      tail = tail.then(() => speak(sentence));
+      tail = tail.then(() => { if (!speechFailed) return speak(sentence); });
     }
-    // A speech failure can precede the candidate. Free speech capacity, then let
-    // the model finish checking the text so it can still be delivered.
-    void tail.catch(releaseSpeech).catch(() => {});
+    tail = tail.catch(failSpeech);
+  }
+
+  function queueSentence(sentence: string) {
+    speechChars += Array.from(sentence).length;
+    // Interview stages and card fields arrive after assistantText. Wait for the
+    // complete candidate before any interview speech can reach the client.
+    if (input.mode === 'interview' || speechChars > normalMax) deferredSentences.push(sentence);
+    else enqueue(sentence);
   }
 
   const prefixError = () => new ModelOutputError('上次回复的口播前缀未通过安全或格式检查。使用自然短句，去掉 Markdown、动作、指责和无依据的承诺。');
@@ -101,41 +125,43 @@ export async function streamVoiceTurn({ req, input, signal, format, bufferMp3, a
           if (text) {
             prefix += text;
             if (!isSafeVoicePrefix(prefix, input)) throw prefixError();
-            for (const sentence of sentences.push(text)) enqueue(sentence);
+            for (const sentence of sentences.push(text)) queueSentence(sentence);
           }
           if (extractor.complete && !fieldComplete) {
             fieldComplete = true;
-            for (const sentence of sentences.finish()) enqueue(sentence);
+            for (const sentence of sentences.finish()) queueSentence(sentence);
             // The JSON tail can continue after the last sentence. Speech
             // capacity becomes available as soon as that sentence drains.
-            if (tail) void tail.then(releaseSpeech, () => {}).catch(() => {});
+            if (tail && !deferredSentences.length) void tail.then(releaseSpeech, () => {}).catch(() => {});
           }
         }
         const result = parseModelCandidate(extractor.raw, input);
         const errors = modelCandidateErrors(result, input);
-        if (!result.assistantText.trim()) errors.push('STYLE_EMPTY');
+        if (!/[\p{L}\p{N}]/u.test(result.assistantText)) errors.push('STYLE_EMPTY');
         if (extractor.complete && result.assistantText !== prefix) errors.push('STYLE_STREAM_TEXT_MISMATCH');
         if (errors.length) throw candidateOutputError(errors);
-        if (!isSafeVoicePrefix(result.assistantText, input, result.supportGuidance, result.interviewUpdate?.stage)) throw prefixError();
+        if (!isSafeVoicePrefix(result.assistantText, input, result.supportGuidance ?? false, result.interviewUpdate?.stage)) throw prefixError();
         return result;
       } catch (error) {
         // One repair is available before any TTS admission. Once audio work has
         // started, a replacement answer could contradict already played speech.
         agentSignal.throwIfAborted();
         if (tail || !(error instanceof ModelOutputError)) throw error;
+        deferredSentences.length = 0;
         const repaired = await new RealProvider().generate(input, agentSignal, error);
-        if (!repaired.assistantText.trim() || !isSafeVoicePrefix(repaired.assistantText, input, repaired.supportGuidance, repaired.interviewUpdate?.stage)) throw prefixError();
+        if (!/[\p{L}\p{N}]/u.test(repaired.assistantText) || !isSafeVoicePrefix(repaired.assistantText, input, repaired.supportGuidance ?? false, repaired.interviewUpdate?.stage)) throw prefixError();
         return repaired;
       }
     });
     live.throwIfAborted();
     const providerMs = performance.now() - agentStart;
-    if (!tail) return { candidate, providerMs };
+    if (!tail && !deferredSentences.length) return { candidate, providerMs };
     send({ type: 'candidate', candidate, timing: { agentMs: providerMs, elapsedMs: performance.now() - started } });
+    for (const sentence of deferredSentences) enqueue(sentence);
     await releaseAgent();
     await tail;
     await releaseSpeech();
-    send({ type: 'done', requestId, timing: { asrMs, firstSentenceMs, firstAudioMs, agentMs: providerMs, ttsMs: speechEnd - speechStart, totalMs: performance.now() - started } });
+    if (!speechFailed) send({ type: 'done', requestId, timing: { asrMs, firstSentenceMs, firstAudioMs, agentMs: providerMs, ttsMs: speechEnd - speechStart, totalMs: performance.now() - started } });
     return null;
   } finally {
     stop.abort();

@@ -68,7 +68,9 @@ function voiceExchange(init: RequestInit, input: TurnRequest | null, seed?: Call
     response: new Response(body, { headers: { 'Content-Type': 'application/x-ndjson' } }), close: () => writer.close() };
 }
 
-async function setup({ merged = true, hold = false } = {}) {
+async function setup({ merged = true, hold = false, beforeTranscript, failDebrief = false }: {
+  merged?: boolean; hold?: boolean; beforeTranscript?: Promise<void>; failDebrief?: boolean;
+} = {}) {
   const audio = new AudioFake();
   const caps: Capabilities = {
     agent: { mode: 'mock', label: 'test agent', configured: true },
@@ -85,12 +87,17 @@ async function setup({ merged = true, hold = false } = {}) {
     if (text === undefined) throw new Error('No fixture transcript was queued');
     return text;
   };
+  const debriefFailure = (input: TurnRequest | null) => {
+    if (!failDebrief || input?.context.interview?.stage !== 'debrief') return;
+    failDebrief = false;
+    return Response.json({ error: { code: 'PROVIDER_UNAVAILABLE', userMessage: '暂时没接上。', retryable: true, requestId: input.requestId, stage: 'agent' } }, { status: 502 });
+  };
   const fetcher: typeof fetch = async (url, init) => {
     if (url === '/api/capabilities') return Response.json(caps);
     if (url === '/api/agent/turn') {
       const input: TurnRequest = JSON.parse(String(init?.body));
       turns.push(input);
-      return Response.json(mockCandidate(input));
+      return debriefFailure(input) ?? Response.json(mockCandidate(input));
     }
     if (url === '/api/speech/synthesize') {
       syntheses.push(JSON.parse(String(init?.body)).text);
@@ -99,6 +106,7 @@ async function setup({ merged = true, hold = false } = {}) {
     if (url === '/api/speech/transcribe') {
       const form = init?.body as FormData;
       uploads.push({ profile: form.get('profile'), file: form.get('file') as File });
+      await beforeTranscript;
       return Response.json({ requestId: form.get('requestId'), text: nextTranscript() });
     }
     if (url === '/api/agent/voice') {
@@ -108,7 +116,12 @@ async function setup({ merged = true, hold = false } = {}) {
       const input: TurnRequest | null = seed ? completeCallSeed(seed, text!) : JSON.parse(String(init?.body));
       const exchange = voiceExchange(init!, input, seed);
       voices.push(exchange);
-      if (seed) exchange.send({ type: 'transcript', requestId: seed.requestId, text });
+      const failure = debriefFailure(input);
+      if (failure) { exchange.close(); return failure; }
+      if (seed) {
+        await beforeTranscript;
+        exchange.send({ type: 'transcript', requestId: seed.requestId, text });
+      }
       if (!input) { exchange.send({ type: 'transcript_done', requestId: seed!.requestId }); exchange.close(); }
       else if (!hold) exchange.finish();
       return exchange.response;
@@ -147,14 +160,16 @@ describe('interview actions on the live call', () => {
     expect(h.voices[1].seed?.sources.some(source => source.label.startsWith('粘贴的材料'))).toBe(true);
     expect(h.voices[1].headers.get('X-Bread-Voice-Stream')).toBe('sentence-v1');
     expect(h.view().state.interview).toMatchObject({ round: 3, stage: 'follow_up' });
+    const beforeStyle = h.view().state.interview!;
     await h.say('严格一点');
     expect(h.voices[3].input).toBeNull();
-    expect(h.voices[4].input?.context.interview?.style).toBe('realistic');
-    expect(h.view().state.interview?.style).toBe('realistic');
+    expect(h.voices).toHaveLength(4);
+    expect(h.view().state.interview).toEqual({ ...beforeStyle, style: 'realistic' });
+    expect(h.view().call.caption).toBe('好，接下来我换真实深挖的方式问你，这题你接着答就好。');
     expect(h.view().state.sources.find(source => source.text === '严格一点')?.label).toBe('本次请求');
 
     await h.view().requestInterviewDebrief();
-    const debrief = h.voices[5];
+    const debrief = h.voices[4];
     expect(debrief.seed).toBeUndefined();
     expect(debrief.input).toMatchObject({ mode: 'interview', channel: 'call', context: { interview: { stage: 'debrief' } } });
     expect(debrief.headers.get('X-Bread-Voice-Stream')).toBeNull();
@@ -172,12 +187,12 @@ describe('interview actions on the live call', () => {
     expect(h.audio.play.mock.lastCall?.[3]).toBeUndefined();
     expect(h.turns).toEqual([]);
     expect(h.uploads).toEqual([]);
-    expect(h.syntheses).toEqual([]);
+    expect(h.syntheses).toEqual(['好，接下来我换真实深挖的方式问你，这题你接着答就好。']);
 
     h.view().exitInterviewToListen();
     expect(h.view().state.interview).toBeNull();
     expect(h.view().state.mode).toBe('listen');
-    expect(h.view().call).toMatchObject({ active: true, phase: 'listening' });
+    expect(h.view().call).toMatchObject({ active: true, phase: 'listening', caption: '', captionPreview: false, lastHeard: '' });
     expect(h.audio.setProfile.mock.calls).toEqual([['interview'], ['chat']]);
     expect(h.audio.open).toHaveBeenCalledOnce();
     expect(h.audio.close).not.toHaveBeenCalled();
@@ -214,6 +229,8 @@ describe('interview actions on the live call', () => {
     await h.say('严格一点');
     expect(h.view().state.interview).toMatchObject({ currentQuestion: question, round: 1, stage: 'question', style: 'realistic' });
     expect(h.voices).toHaveLength(1);
+    expect(h.view().state.interview?.answerSourceIds).toEqual([]);
+    expect(h.syntheses).toHaveLength(1);
     await h.say(answer1);
     expect(h.uploads.map(upload => upload.profile)).toEqual(['interview', 'interview']);
     expect(h.voices[1].seed).toBeUndefined();
@@ -221,6 +238,66 @@ describe('interview actions on the live call', () => {
     expect(h.voices[1].headers.get('X-Bread-Voice-Stream')).toBeNull();
     expect(h.view().state.interview?.stage).toBe('debrief');
     expect(h.view().currentCard?.type).toBe('review');
+  });
+
+  it('keeps a pending transcript when the style changes and replaces only its old speculative reply', async () => {
+    const ready = deferred<void>(), h = await setup({ beforeTranscript: ready.promise });
+    await h.view().startInterview({ startCall: true });
+    h.utter(answer1);
+    await vi.waitFor(() => expect(h.voices).toHaveLength(2));
+    const original = h.voices[1];
+    expect(original.seed?.interview?.style).toBe('gentle');
+    expect(h.view().call.phase).toBe('transcribing');
+    h.view().setInterviewStyle('realistic');
+    expect(original.signal.aborted).toBe(false);
+    expect(h.view().call.phase).toBe('transcribing');
+    ready.resolve();
+    await vi.waitFor(() => expect(h.view().call).toMatchObject({ phase: 'listening', lastHeard: answer1 }));
+    expect(original.signal.aborted).toBe(true);
+    expect(h.voices).toHaveLength(3);
+    expect(h.voices[2].seed).toBeUndefined();
+    expect(h.voices[2].input).toMatchObject({ userMessage: answer1, context: { interview: { style: 'realistic', round: 1 } } });
+    const { interview, messages } = h.view().state;
+    expect(interview).toMatchObject({ style: 'realistic', round: 2, currentQuestion: expect.stringContaining('指标') });
+    expect(interview?.answerSourceIds).toEqual([messages.find(m => m.text === answer1)?.sourceId]);
+    expect(messages.filter(m => m.text === answer1)).toHaveLength(1);
+    expect(h.uploads).toEqual([]);
+  });
+
+  it('acknowledges a typed style command locally and uses the new style on the actual answer', async () => {
+    const h = await setup();
+    await h.view().startInterview();
+    const beforeStyle = h.view().state.interview!;
+    await h.c.send('严格一点');
+    expect(h.turns).toHaveLength(1);
+    expect(h.view().state.interview).toEqual({ ...beforeStyle, style: 'realistic' });
+    expect(h.view().state.sources.at(-1)).toMatchObject({ label: '本次请求', text: '严格一点' });
+    expect(h.view().state.messages.at(-1)).toMatchObject({ role: 'assistant', text: expect.stringContaining('这题你接着答') });
+    await h.c.send(answer1);
+    expect(h.turns[1].context.interview).toMatchObject({ style: 'realistic', round: 1 });
+    expect(h.view().state.interview?.round).toBe(2);
+  });
+
+  it.each([true, false])('retries a failed manual debrief with the same evidence (live call %s)', async inCall => {
+    const h = await setup({ failDebrief: true });
+    await h.view().startInterview({ startCall: inCall });
+    if (inCall) await h.say(answer1);
+    else await h.c.send(answer1);
+    const answers = h.view().state.interview?.answerSourceIds;
+    await h.view().requestInterviewDebrief();
+    expect(h.view().state.interview).toMatchObject({ round: 2, stage: 'debrief', answerSourceIds: answers });
+    expect(h.view().currentCard).toBeNull();
+    const failed = inCall ? h.voices.at(-1)?.input : h.turns.at(-1);
+    expect(failed?.context.sourceSegments?.map(s => s.text)).toEqual([answer1]);
+    await h.view().requestInterviewDebrief();
+    const retried = inCall ? h.voices.at(-1)?.input : h.turns.at(-1);
+    expect(retried?.requestId).not.toBe(failed?.requestId);
+    expect(retried?.context.sourceSegments).toEqual(failed?.context.sourceSegments);
+    expect(h.view().currentCard).toMatchObject({ type: 'review', validity: 'draft' });
+    if (inCall) {
+      expect(h.view().call).toMatchObject({ active: true, phase: 'listening', inputWarning: '' });
+      expect(h.audio.open).toHaveBeenCalledOnce();
+    }
   });
 
   it('keeps setMode, setPractice and assist in the call, including practice ASR', async () => {
@@ -313,6 +390,25 @@ describe('interview actions on the live call', () => {
     expect(h.audio.play).not.toHaveBeenCalled();
   });
 
+  it.each(['error', 'paused'])('resumes the opening interview after %s and plays the first question', async phase => {
+    const h = await setup(), permission = deferred<boolean>();
+    if (phase === 'error') h.audio.open.mockRejectedValueOnce(new DOMException('Microphone denied', 'NotAllowedError'));
+    else h.audio.open.mockImplementationOnce(() => permission.promise);
+    const opening = h.view().startInterview({ startCall: true });
+    if (phase === 'paused') h.c.pauseForBackground();
+    await opening;
+    permission.resolve(true);
+    expect(h.view().call.phase).toBe(phase);
+    expect(h.view().state.interview?.stage).toBe('opening');
+    expect(h.voices).toEqual([]);
+    await h.view().resumeCall();
+    expect(h.view().state.interview).toMatchObject({ stage: 'question', round: 1 });
+    expect(h.view().call).toMatchObject({ phase: 'listening', caption: expect.stringContaining(h.view().state.interview!.currentQuestion) });
+    expect(h.audio.open).toHaveBeenCalledTimes(2);
+    expect(h.audio.play).toHaveBeenCalledOnce();
+    expect(h.voices).toHaveLength(1);
+  });
+
   it('replaces a greeting still waiting for mic permission with Round 1', async () => {
     const h = await setup(), permission = deferred<boolean>();
     h.audio.open.mockImplementationOnce(() => permission.promise);
@@ -386,17 +482,20 @@ describe('ownership of sentence playback', () => {
     if (['barge-in', 'mute', 'style change', 'exit'].includes(action)) expect(h.audio.close).not.toHaveBeenCalled();
   });
 
-  it.each(['invalid candidate', 'agent error', 'early TTS error'])('stops early playback and recovers the call on %s', async kind => {
+  it.each(['invalid candidate', 'agent error', 'early TTS error', 'TTS quota error'])('stops early playback and recovers the call on %s', async kind => {
     const h = await setup({ hold: true });
     await h.c.startCall();
     const opening = h.c.startInterview();
     const voice = h.voices[0], candidate: TurnCandidate = mockCandidate(voice.input!);
     voice.firstSentence(candidate.assistantText);
     await vi.waitFor(() => expect(h.view().call.phase).toBe('speaking'));
+    const synthesisFailed = kind === 'early TTS error' || kind === 'TTS quota error';
+    const earlierStops = h.audio.stopPlayback.mock.calls.length;
     if (kind === 'invalid candidate') voice.send({ type: 'candidate', candidate: { ...candidate, epoch: candidate.epoch + 1 } });
-    else voice.send({ type: 'error', error: { requestId: voice.requestId, stage: kind === 'agent error' ? 'agent' : 'synthesize', userMessage: '声音暂时没接上。' } });
-    if (kind === 'early TTS error') {
+    else voice.send({ type: 'error', error: { requestId: voice.requestId, stage: synthesisFailed ? 'synthesize' : 'agent', code: kind === 'TTS quota error' ? 'RATE_LIMITED' : 'PROVIDER_UNAVAILABLE', userMessage: '声音暂时没接上。' } });
+    if (synthesisFailed) {
       await vi.waitFor(() => expect(h.view().call).toMatchObject({ phase: 'thinking', caption: '', captionPreview: false }));
+      expect(h.audio.stopPlayback.mock.calls.length).toBeGreaterThan(earlierStops);
       expect(h.audio.play.mock.lastCall![1].aborted).toBe(true);
       expect(voice.signal.aborted).toBe(false);
       voice.send({ type: 'candidate', candidate });
@@ -405,8 +504,8 @@ describe('ownership of sentence playback', () => {
     expect(h.view().call.phase).toBe('listening');
     expect(h.view().call.captionPreview).toBe(false);
     expect(h.audio.play.mock.lastCall![1].aborted).toBe(true);
-    if (kind === 'early TTS error') {
-      expect(h.view().call.inputWarning).toContain('声音没播完');
+    if (synthesisFailed) {
+      expect(h.view().call.inputWarning).toBe('这句声音没播完，文字回复还在，可以继续说。');
       expect(h.view().call.caption).toBe(candidate.assistantText);
       expect(h.view().state.messages.at(-1)?.text).toBe(candidate.assistantText);
     } else {

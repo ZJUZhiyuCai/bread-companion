@@ -5,16 +5,19 @@ import { withAbort } from '@/lib/abort';
 import { maxOpusBytes, validateOpus } from './opus-upload';
 import { providerFetch } from '@/server/provider-fetch';
 import { readAudioEnvelope } from '@/server/audio-envelope';
+import { CHAT_ASR_SECONDS, INTERVIEW_ASR_SECONDS, WAV_BYTES_PER_SECOND, pcmWavBytes } from '@/domain/speech-limits';
 
-export const CHAT_ASR_SECONDS = 65;
-export const INTERVIEW_ASR_SECONDS = 125;
+export { CHAT_ASR_SECONDS, INTERVIEW_ASR_SECONDS };
+export const SPEECH_UPLOAD_METADATA_BYTES = 8192;
+const WAV_OVERHEAD_BYTES = 4096;
+const maxWavBytes = (seconds: number) => pcmWavBytes(seconds) + WAV_OVERHEAD_BYTES;
+export const CHAT_AUDIO_BYTES = maxWavBytes(CHAT_ASR_SECONDS);
 
 /** The profile arrives in the form. Use the bounded interview envelope while
- * reading it and apply the selected profile's duration during media validation. */
-export function readSpeechUpload(req: Request, metadataBytes = 8192) {
-  const interviewBytes = Math.max(44 + INTERVIEW_ASR_SECONDS * 32000, maxOpusBytes(INTERVIEW_ASR_SECONDS));
-  const chatWavBytes = 44 + CHAT_ASR_SECONDS * 32000;
-  return readAudioEnvelope(req, metadataBytes + interviewBytes - chatWavBytes);
+ * reading it and apply the selected profile's limits during media validation. */
+export function readSpeechUpload(req: Request, metadataBytes = SPEECH_UPLOAD_METADATA_BYTES) {
+  const interviewBytes = Math.max(maxWavBytes(INTERVIEW_ASR_SECONDS), maxOpusBytes(INTERVIEW_ASR_SECONDS));
+  return readAudioEnvelope(req, interviewBytes + metadataBytes);
 }
 export async function synthesize(text: string, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<Uint8Array> {
   const c = config();
@@ -27,26 +30,28 @@ export async function synthesize(text: string, signal: AbortSignal, fetcher: typ
   signal.throwIfAborted(); return new Uint8Array(Buffer.from(hex, 'hex'));
 }
 const accepted = new Set(['audio/wav', 'audio/x-wav']);
-export function validateAudio(file: File) {
-  if (!accepted.has(file.type.split(';')[0]) || file.size < 44 || file.size > 10 * 1024 * 1024) throw new AppError('UNSUPPORTED_MEDIA', 415);
+export function validateAudio(file: File, maxSeconds = CHAT_ASR_SECONDS) {
+  if (!accepted.has(file.type.split(';')[0]) || file.size < 44 || file.size > maxWavBytes(maxSeconds)) throw new AppError('UNSUPPORTED_MEDIA', 415);
 }
 export async function validateWav(file: File, maxSeconds = CHAT_ASR_SECONDS) {
-  validateAudio(file);
+  validateAudio(file, maxSeconds);
   // The browser adapter always sends this exact format. Verify real bytes and duration before billing ASR.
-  const bytes = await file.arrayBuffer(); const view = new DataView(bytes); const text = (start: number, end: number) => new TextDecoder().decode(bytes.slice(start, end));
-  if (text(0,4) !== 'RIFF' || text(8,12) !== 'WAVE' || view.getUint32(4,true) !== bytes.byteLength - 8) throw new AppError('UNSUPPORTED_MEDIA',415);
-  let offset = 12, format = false, duration = 0;
+  const bytes = await file.arrayBuffer(); const view = new DataView(bytes);
+  const decoder = new TextDecoder(), text = (offset: number) => decoder.decode(new Uint8Array(bytes, offset, 4));
+  if (text(0) !== 'RIFF' || text(8) !== 'WAVE' || view.getUint32(4,true) !== bytes.byteLength - 8) throw new AppError('UNSUPPORTED_MEDIA',415);
+  let offset = 12, format = false, dataBytes = 0;
   while (offset + 8 <= bytes.byteLength) {
-    const type = text(offset,offset+4); const size = view.getUint32(offset+4,true); const start = offset+8;
-    if (start + size > bytes.byteLength) throw new AppError('UNSUPPORTED_MEDIA',415);
+    const type = text(offset); const size = view.getUint32(offset+4,true); const start = offset+8;
+    offset = start + size + (size % 2);
+    if (offset > bytes.byteLength) throw new AppError('UNSUPPORTED_MEDIA',415);
     if (type === 'fmt ') {
       if (size < 16 || view.getUint16(start,true) !== 1 || view.getUint16(start+2,true) !== 1 || view.getUint32(start+4,true) !== 16000 || view.getUint16(start+14,true) !== 16) throw new AppError('UNSUPPORTED_MEDIA',415);
       format = true;
     }
-    if (type === 'data') duration += size / 32000;
-    offset = start + size + (size % 2);
+    if (type === 'data') dataBytes += size;
+    if (offset - dataBytes > WAV_OVERHEAD_BYTES) throw new AppError('UNSUPPORTED_MEDIA',415);
   }
-  if (!format || duration <= 0 || duration > maxSeconds) throw new AppError('UNSUPPORTED_MEDIA',415);
+  if (!format || !dataBytes || dataBytes > maxSeconds * WAV_BYTES_PER_SECOND || offset !== bytes.byteLength) throw new AppError('UNSUPPORTED_MEDIA',415);
 }
 export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = providerFetch, maxSeconds = CHAT_ASR_SECONDS): Promise<string> {
   const c = config();

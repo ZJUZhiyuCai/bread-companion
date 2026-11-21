@@ -77,11 +77,9 @@ export class CallController {
     this.patch({ active: true, phase: 'connecting' });
     if (!this.state.active) return;
     this.clock = setInterval(() => { if (this.state.active) this.patch({ elapsedSeconds: Math.floor((Date.now() - this.startedAt) / 1000) }); }, 1000);
-    const connecting = this.connect(greeting);
-    if (firstReply) await this.triggerTurn(firstReply);
-    await connecting;
+    await this.connect(greeting, firstReply);
   }
-  private async connect(greeting = '') {
+  private async connect(greeting = '', firstReply?: CallReplyTask) {
     this.turnWarning = '';
     const generation = ++this.generation;
     let openingTurn = this.turn;
@@ -113,6 +111,10 @@ export class CallController {
       this.audio.stopDialTone?.();
       if (openingTurn !== this.turn) {
         if (!this.pending) this.listen(true);
+        return;
+      }
+      if (firstReply) {
+        await this.triggerTurn(firstReply);
         return;
       }
       if (greeting) {
@@ -156,6 +158,9 @@ export class CallController {
     if (!this.state.active) return;
     this.cancelTurn(true); this.clearAudio();
     if (!this.connection && !['paused', 'error'].includes(this.state.phase)) this.listen(true);
+  }
+  clearCaptions() {
+    if (this.state.active) this.patch({ caption: '', captionPreview: false, lastHeard: '' });
   }
   previewTurn(signal: AbortSignal, caption: string) {
     if (this.ownsTurn(signal) && ['thinking', 'speaking'].includes(this.state.phase)) this.patch({ caption, captionPreview: true });
@@ -222,7 +227,7 @@ export class CallController {
       }
     } catch (e) {
       if (valid()) {
-        if (e instanceof CallServiceError && e.requiresReconnect) this.fail(e);
+        if (stage !== 'speech' && e instanceof CallServiceError && e.requiresReconnect) this.fail(e);
         else this.recoverTurn(stage);
       }
     }
@@ -263,9 +268,9 @@ export class CallController {
     this.cancelTurn(); this.clearAudio(); this.closeAudio();
     this.patch({ phase: 'paused', level: 0, heardSpeech: false, error: reason });
   };
-  resume = async () => {
+  resume = async (firstReply?: CallReplyTask) => {
     if (!this.state.active || !['paused', 'error'].includes(this.state.phase)) return;
-    await this.connect();
+    await this.connect('', firstReply);
   };
   hangup = () => {
     if (!this.state.active) return;

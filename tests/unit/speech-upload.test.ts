@@ -5,9 +5,9 @@ import { encodeWav } from '@/services/media-controller';
 import { validateOpus } from '@/server/providers/opus-upload';
 import { transcribe } from '@/server/providers/speech';
 import { getCapabilities } from '@/server/config';
-import { BlobSource, BufferTarget, EncodedAudioPacketSource, EncodedPacket, EncodedPacketSink, Input, OGG, OggOutputFormat, Output } from 'mediabunny';
+import { BlobSource, BufferTarget, EncodedAudioPacketSource, EncodedPacket, EncodedPacketSink, Input, OGG, OggOutputFormat, Output, type AudioSample } from 'mediabunny';
 
-const original = () => new File([encodeWav(new Float32Array(16000).fill(.12))], 'speech.wav', { type: 'audio/wav' });
+const original = (seconds = 1) => new File([encodeWav(new Float32Array(16000 * seconds).fill(.12))], 'speech.wav', { type: 'audio/wav' });
 const ogg = () => new File([readFileSync('tests/fixtures/voice-input.opus')], 'speech.ogg', { type: 'audio/ogg' });
 class FakeWorker {
   onmessage: ((e: { data: unknown }) => void) | null = null;
@@ -36,6 +36,47 @@ describe('optional speech upload', () => {
     await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledOnce());
     worker.emit({ id: worker.postMessage.mock.calls[0][0].id, bytes: await ogg().arrayBuffer() });
     expect((await result).type).toBe('audio/ogg'); expect(await file.arrayBuffer()).toEqual(bytes); upload.stop();
+  });
+  it('sends up to 125 seconds to the encoder and keeps longer WAVs local', async () => {
+    const { worker, upload } = setup(), file = original(125), oversized = original(126);
+    worker.emit({ type: 'ready' });
+    const signal = new AbortController().signal;
+    const result = upload.encode(file, signal);
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledOnce());
+    const { id, wav } = worker.postMessage.mock.calls[0][0];
+    expect(wav.byteLength).toBe(44 + 125 * 32000);
+    worker.emit({ id, bytes: await ogg().arrayBuffer() });
+    expect((await result).type).toBe('audio/ogg');
+    expect(await upload.encode(oversized, signal)).toBe(oversized);
+    expect(worker.postMessage).toHaveBeenCalledOnce();
+    upload.stop();
+  });
+
+  it('encodes all WAV frames at the worker boundary and declines an overlong upload', async () => {
+    const bytes = await ogg().arrayBuffer();
+    const postMessage = vi.fn(), add = vi.fn(async (_sample: AudioSample) => {});
+    const worker = { postMessage, onmessage: null as null | ((event: { data: { id: number; wav: ArrayBuffer } }) => Promise<void>) };
+    vi.stubGlobal('self', worker);
+    vi.stubGlobal('AudioEncoder', { isConfigSupported: async () => ({ supported: true }) });
+    vi.doMock('mediabunny', async importOriginal => ({
+      ...await importOriginal<typeof import('mediabunny')>(),
+      AudioSampleSource: class { add = add; },
+      BufferTarget: class { buffer = bytes; },
+      Output: class {
+        state = 'pending';
+        addAudioTrack() {}
+        async start() { this.state = 'started'; }
+        async finalize() { this.state = 'finalized'; }
+      },
+    }));
+    try {
+      await import('@/services/speech-upload.worker');
+      await worker.onmessage!({ data: { id: 1, wav: await original(125).arrayBuffer() } });
+      await worker.onmessage!({ data: { id: 2, wav: await original(126).arrayBuffer() } });
+      expect(add).toHaveBeenCalledOnce();
+      expect(add.mock.calls[0][0].numberOfFrames).toBe(125 * 16000);
+      expect(postMessage.mock.calls).toEqual([[{ type: 'ready' }], [{ id: 1, bytes }, { transfer: [bytes] }], [{ id: 2 }]]);
+    } finally { vi.doUnmock('mediabunny'); }
   });
   it('bounds encoder stalls, terminates the job and disables repeated waiting for this controller', async () => {
     vi.useFakeTimers(); const { worker, upload } = setup(), file = original(); worker.emit({ type: 'ready' });

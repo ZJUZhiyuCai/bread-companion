@@ -3,8 +3,8 @@ import type { SessionState, Source, TurnRequest } from './types';
 import { idSchema, interviewStateSchema, sourceSchema, turnRequestSchema } from './schemas';
 import { buildTurn, materialSources } from './context-builder';
 import { conversationPreferences } from './preferences';
-import { explicitIntent, interviewControlIntent, isActionOnly } from './policy';
-import { initialState, uid } from './reducer';
+import { explicitIntent, interviewControlIntent, interviewNeedsDebrief, isActionOnly } from './policy';
+import { initialState, reducer, uid } from './reducer';
 
 // A bounded snapshot for listening and interview answers. Voice commands return
 // to the controller, which owns mode, style and debrief transitions.
@@ -41,7 +41,10 @@ export function createCallSeed(state: SessionState): CallSeed | null {
   const materials = materialSources(state);
   if (!interview && (state.cards.length || state.findings.length || state.selectedQuestion || materials.length)) return null;
   if (materials.length > 4) return null;
-  const recentUsers = state.messages.filter(m => m.role === 'user').slice(-12);
+  const users = state.messages.filter(m => m.role === 'user');
+  const recentUsers = interviewNeedsDebrief(interview)
+    ? users.filter(m => m.sourceId && interview?.answerSourceIds?.includes(m.sourceId))
+    : users.slice(-12);
   const ids = new Set([...recentUsers, ...state.messages.slice(-16)].map(m => m.id));
   const sourceIds = new Set(recentUsers.map(m => m.sourceId));
   const seed = { sessionId: state.sessionId, epoch: state.epoch, contextRevision: state.contextRevision,
@@ -58,10 +61,9 @@ export function completeCallSeed(seed: CallSeed, rawText: string): TurnRequest |
   if (!text || explicitIntent(text) || interviewControlIntent(text) || isCallHangup(text)) return null;
   const state: SessionState = { ...initialState(), sessionId: seed.sessionId, started: true, epoch: seed.epoch,
     mode: seed.mode ?? 'listen', interview: seed.interview ?? null,
-    contextRevision: seed.contextRevision + 1,
-    messages: [...seed.messages, { id: 'pending_transcript', role: 'user', text, sourceId: seed.sourceId }],
-    sources: [...seed.sources, callSource(text, seed.sourceId)] };
-  const request = { ...buildTurn(state, text, seed.runId, seed.requestId), channel: 'call' as const };
+    contextRevision: seed.contextRevision, messages: seed.messages, sources: seed.sources };
+  const answered = reducer(state, { type: 'USER', text, source: callSource(text, seed.sourceId) });
+  const request = { ...buildTurn(answered, text, seed.runId, seed.requestId), channel: 'call' as const };
   // Explicit preferences may predate the bounded history. The current statement
   // can override them; a quoted statement cannot.
   request.context.preferences = { ...seed.preferences, ...conversationPreferences([{ role: 'user', text }]) };

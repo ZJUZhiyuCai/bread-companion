@@ -61,6 +61,7 @@ function requestTurnStream(fetcher: typeof fetch, input: TurnRequest | null, par
   let pcm: SpeechChunks | undefined;
   let preview = '', speechFailed = false, earlyAudio = false;
   const failSpeech = (error: unknown) => {
+    if (speechFailed) return;
     speechFailed = true;
     pcm?.fail(error); audio.reject(error); audioDone.reject(error);
   };
@@ -92,6 +93,7 @@ function requestTurnStream(fetcher: typeof fetch, input: TurnRequest | null, par
         if (event.type === 'error' && event.error?.requestId === requestId) {
           const error = callServiceError(event.error);
           if (event.error.stage !== 'synthesize' || !input || speechFailed) throw error;
+          // Stop playback now. A candidate can still arrive on this response.
           failSpeech(error);
           complete = !!checked;
           return;

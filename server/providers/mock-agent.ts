@@ -1,7 +1,7 @@
 import type { Card, Finding, SourceSegment, TurnCandidate, TurnRequest } from '@/domain/types';
-import { interviewAnswerMessages, requestSegments } from '@/domain/context-builder';
+import { requestSegments } from '@/domain/context-builder';
 import { normalizeFindingText } from '@/domain/evidence';
-import { farewellReply, interviewControlIntent, interviewNeedsDebrief, isActionOnly, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
+import { farewellReply, interviewNeedsDebrief, isActionOnly, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
 import type { AgentProvider } from './agent';
 
 const interviewQuestions = [
@@ -31,13 +31,10 @@ const answerDetail = /人工检查|对照组|通过标准|埋点|缓存|灰度|�
 
 function mockInterview(input: TurnRequest, base: TurnCandidate, evidence: SourceSegment[]): TurnCandidate {
   const { interview, recentMessages } = input.context;
-  if (interviewNeedsDebrief(interview) || interviewControlIntent(input.userMessage) === 'debrief') {
-    const answers = interview ? interviewAnswerMessages(recentMessages, interview).map(m => m.text) : [];
-    const answering = !!interview?.currentQuestion && !isActionOnly(input.userMessage);
-    if (answering) answers.push(input.userMessage);
-    const source = evidence.find(s => s.confirmed && s.origin === 'user_recollection' && s.label !== '本次请求'
-      && !s.label.startsWith('粘贴的材料') && answers.some(answer => answer.includes(s.text)));
-    const quote = source ? Array.from(source.text).slice(0, 100).join('') : '';
+  if (interviewNeedsDebrief(interview)) {
+    const answering = interview?.stage !== 'debrief' && !!interview?.currentQuestion && !isActionOnly(input.userMessage);
+    const source = evidence.find(s => s.confirmed && s.label !== '本次请求' && interview?.answerSourceIds?.includes(s.sourceId) && s.text.trim());
+    const quote = source ? Array.from(source.text.trim()).slice(0, 100).join('') : '';
     const refs = source ? [{ sourceId: source.sourceId, sourceRevision: source.sourceRevision, segmentId: source.segmentId, quote }] : [];
     const detail = quote.match(answerDetail)?.[0];
     const fact: Finding = { id: base.runId + '_answer', kind: 'reported_fact', text: (detail ? '你在回答里提到了' + detail + '。原话是：' : '这次回答的原话：') + quote, evidenceRefs: refs, validity: 'draft' };

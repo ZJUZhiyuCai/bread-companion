@@ -10,7 +10,7 @@ import { AppError, asAppError } from '@/server/errors';
 import { assertAppRequest, errorResponse, NO_STORE, readJson } from '@/server/http';
 import { timeoutSignal } from '@/server/limits';
 import { synthesizeStream } from '@/server/providers/speech-stream';
-import { CHAT_ASR_SECONDS, INTERVIEW_ASR_SECONDS, readSpeechUpload, synthesize, transcribe } from '@/server/providers/speech';
+import { CHAT_ASR_SECONDS, INTERVIEW_ASR_SECONDS, SPEECH_UPLOAD_METADATA_BYTES, readSpeechUpload, synthesize, transcribe } from '@/server/providers/speech';
 import { bufferSpeechStart } from '@/server/providers/speech-buffer';
 import { localAgentReply } from '@/server/providers/real-agent';
 import { streamVoiceTurn } from '@/server/providers/voice-turn-stream';
@@ -35,9 +35,12 @@ export async function POST(req: Request) {
     assertAppRequest(req);
     let input: TurnRequest | null = null, seed: CallSeed | undefined, file: File | undefined;
     if (req.headers.get('content-type')?.startsWith('multipart/form-data;')) {
-      const form = await readSpeechUpload(req, CALL_SEED_BYTES + 8192), rawSeed = form.get('seed'), audio = form.get('file');
+      const metadataBytes = CALL_SEED_BYTES + SPEECH_UPLOAD_METADATA_BYTES;
+      const { form, byteLength } = await readSpeechUpload(req, metadataBytes);
+      const rawSeed = form.get('seed'), audio = form.get('file');
       if (form.getAll('seed').length !== 1 || form.getAll('file').length !== 1 || typeof rawSeed !== 'string'
         || new TextEncoder().encode(rawSeed).length > CALL_SEED_BYTES || !(audio instanceof File)) throw new AppError('INVALID_INPUT');
+      if (byteLength - audio.size > metadataBytes) throw new AppError('INVALID_INPUT', 413);
       try { seed = callSeedSchema.parse(JSON.parse(rawSeed)); } catch { throw new AppError('INVALID_INPUT'); }
       requestId = seed.requestId; file = audio;
     } else {
@@ -79,6 +82,7 @@ export async function POST(req: Request) {
             let turn;
             if (streamed && c.agentProvider === 'real' && c.sentenceStream && req.headers.get('X-Bread-Voice-Stream') === 'sentence-v1'
               && turnLane(input) === 'call' && !input.context.rejectedFindings?.length && !localAgentReply(input)) {
+              // Interview speech waits for the stage and card checks in streamVoiceTurn.
               turn = await streamVoiceTurn({ req, input, signal, format, bufferMp3, agentTimeout, speechTimeout: c.speechTimeout, started,
                 asrMs, releaseAgent: releaseLane, send: event => { send(event); if (event.type === 'candidate') stage = 'synthesize'; } });
               if (!turn) return;

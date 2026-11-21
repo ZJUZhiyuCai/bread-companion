@@ -33,7 +33,9 @@ const replyWav = Buffer.from(encodeWav(Float32Array.from({ length: sampleRate },
   0.06 * Math.sin(2 * Math.PI * 213 * i / sampleRate),
 )));
 
-async function setup(page: Page, { transcripts = [], voice = true }: { transcripts?: string[]; voice?: boolean } = {}) {
+async function setup(page: Page, { transcripts = [], voice = true, failFirstDebrief = false }: {
+  transcripts?: string[]; voice?: boolean; failFirstDebrief?: boolean;
+} = {}) {
   const stats = { turns: [] as TurnRequest[], synthesized: [] as string[], uploads: 0 };
   await page.addInitScript((wav) => {
     const w = window as TestWindow;
@@ -73,7 +75,13 @@ async function setup(page: Page, { transcripts = [], voice = true }: { transcrip
     await route.fulfill({ json: caps });
   });
   await page.route('**/api/agent/turn', async (route) => {
-    stats.turns.push(route.request().postDataJSON());
+    const turn: TurnRequest = route.request().postDataJSON();
+    stats.turns.push(turn);
+    if (failFirstDebrief && turn.context.interview?.stage === 'debrief') {
+      failFirstDebrief = false;
+      await route.fulfill({ status: 502, json: { error: { code: 'PROVIDER_UNAVAILABLE', userMessage: '暂时没接上。', retryable: true } } });
+      return;
+    }
     await route.continue();
   });
   await page.route('**/api/speech/transcribe', async (route) => {
@@ -198,6 +206,7 @@ test('the entry opens directly to a spoken interview question and exits to liste
   await expect(page.locator('.session')).toHaveAttribute('data-mode', 'listen');
   await expect(room).toHaveAttribute('data-phase', 'listening');
   await expect(room.locator('.call-interview')).toHaveCount(0);
+  await expect(room.locator('.cap--bread, .cap--you')).toHaveCount(0);
   await expect(room.getByRole('button', { name: START_INTERVIEW, exact: true })).toBeVisible();
   expect(await microphone(page)).toEqual(mic);
 });
@@ -240,16 +249,55 @@ test('the 320×700 reduced-motion captions and question card keep the call keys 
 
     const toggle = room.getByRole('button', { name: '面试题卡', exact: true });
     await toggle.press('Enter');
-    await expect(room.getByRole('button', { name: '回到字幕', exact: true })).toBeFocused();
-    await expect(room.getByRole('button', { name: '回到字幕', exact: true })).toHaveAttribute('aria-expanded', 'true');
+    const back = room.getByRole('button', { name: '回到字幕', exact: true });
+    await expect(back).toHaveAttribute('aria-expanded', 'true');
     const panel = room.locator('.call-interview--compact');
+    await expect(panel).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(panel.getByRole('button', { name: '温和陪练', exact: true })).toBeFocused();
     await expect(panel.getByText(FIRST_QUESTION, { exact: true })).toBeVisible();
     await expect(panel).toHaveCSS('overflow-y', 'auto');
     await auditPhone(page, '.call-interview--compact');
 
-    await room.getByRole('button', { name: '回到字幕', exact: true }).click();
+    await back.press('Enter');
     await expect(room.locator('.callroom__captions')).toBeVisible();
+    await expect(toggle).toBeFocused();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   }
+});
+
+test('a failed debrief can be retried on the same call and a disputed card can be rebuilt', async ({ page }) => {
+  const stats = await setup(page, { transcripts: [ANSWER], failFirstDebrief: true });
+  await page.goto('/');
+  await page.getByRole('button', { name: ENTRY_INTERVIEW, exact: true }).click();
+  const room = page.locator('.callroom'), panel = room.locator('.call-interview');
+  await expect(room).toHaveAttribute('data-phase', 'listening');
+  const mic = await liveMic(page);
+  await speak(page);
+  await expect(room.locator('.callroom__mode-pill')).toHaveText('模拟面试 · 第 2/4 轮');
+  await expect(room).toHaveAttribute('data-phase', 'listening');
+  await panel.getByRole('button', { name: '收尾复盘', exact: true }).click();
+  const retry = panel.getByRole('button', { name: '重试复盘', exact: true });
+  await expect(retry).toBeEnabled();
+  await expect(panel.getByRole('button', { name: '再练一场', exact: true })).toBeVisible();
+  await retry.click();
+  await expect(panel.locator('.call-interview__card')).toContainText(ANSWER);
+  expect(await microphone(page)).toEqual(mic);
+  const debriefs = stats.turns.filter(turn => turn.context.interview?.stage === 'debrief');
+  expect(debriefs).toHaveLength(2);
+  expect(debriefs[1].context.sourceSegments).toEqual(debriefs[0].context.sourceSegments);
+
+  const openCard = panel.getByRole('button', { name: '查看并保存复盘卡', exact: true });
+  await openCard.click();
+  const tray = page.getByRole('complementary', { name: '今晚的卡片与材料' });
+  await tray.locator('.finding').filter({ hasText: ANSWER }).first().getByRole('button', { name: '我不这么看' }).click();
+  await tray.getByRole('button', { name: '对，我不认同' }).click();
+  await page.locator('.ticket--interview').getByRole('button', { name: '改用电话练', exact: true }).click();
+  await expect(room).toHaveAttribute('data-phase', 'listening');
+  await expect(panel).toContainText('引用的材料或判断已改动，这张复盘卡需要重新整理。');
+  await expect(openCard).toHaveCount(0);
+  await panel.getByRole('button', { name: '重新复盘', exact: true }).click();
+  await expect(openCard).toBeVisible();
 });
 
 test('the entry falls back to a complete text interview when voice is unavailable', async ({ page }) => {

@@ -52,9 +52,9 @@ describe('sentence boundaries and prefix checks', () => {
   it('emits a substantial first clause, then complete sentences and a residual tail', () => {
     const buffer = new SentenceBuffer();
     expect(buffer.push('嗯，')).toEqual([]);
-    expect(buffer.push('等了很长时间才收到这么简短的一句回复，')).toEqual(['嗯，等了很长时间才收到这么简短的一句回复，']);
-    expect(buffer.push(' 这一下还挺难受的。我也听到了；')).toEqual([' 这一下还挺难受的。', '我也听到了；']);
-    expect(buffer.push('嗯')).toEqual([]);
+    expect(buffer.push('等了很长时间才收到这么简短的一句回复，')).toEqual([]);
+    expect(buffer.push(' 这一下还挺难受的。我也听到了；')).toEqual(['嗯，等了很长时间才收到这么简短的一句回复，', ' 这一下还挺难受的。']);
+    expect(buffer.push('嗯')).toEqual(['我也听到了；']);
     expect(buffer.finish()).toEqual(['嗯']);
     expect(buffer.finish()).toEqual([]);
   });
@@ -62,9 +62,21 @@ describe('sentence boundaries and prefix checks', () => {
   it('waits for six visible characters and keeps later soft punctuation within the sentence', () => {
     const buffer = new SentenceBuffer();
     expect(buffer.push('好。')).toEqual([]);
-    expect(buffer.push('你慢慢说！')).toEqual(['好。你慢慢说！']);
-    expect(buffer.push('今天等了很久才知道消息，的确挺不好受的。')).toEqual(['今天等了很久才知道消息，的确挺不好受的。']);
-    expect(buffer.push('   ')).toEqual([]);
+    expect(buffer.push('你慢慢说！')).toEqual([]);
+    expect(buffer.push('今天等了很久才知道消息，的确挺不好受的。')).toEqual(['好。你慢慢说！']);
+    expect(buffer.push('   ')).toEqual(['今天等了很久才知道消息，的确挺不好受的。']);
+    expect(buffer.finish()).toEqual([]);
+  });
+
+  it('attaches closing punctuation across provider deltas and never emits punctuation-only speech', () => {
+    const buffer = new SentenceBuffer();
+    expect(buffer.push('她说：“今天就先到这里。')).toEqual([]);
+    expect(buffer.push('”』）')).toEqual([]);
+    expect(buffer.push(')]')).toEqual([]);
+    expect(buffer.push('我们也该休息了！')).toEqual(['她说：“今天就先到这里。”』）)]']);
+    expect(buffer.push('！ ！！！...”')).toEqual(['我们也该休息了！！']);
+    expect(buffer.finish()).toEqual([]);
+    expect(buffer.push('！？！？！？ )))')).toEqual([]);
     expect(buffer.finish()).toEqual([]);
   });
 
@@ -79,6 +91,15 @@ describe('sentence boundaries and prefix checks', () => {
   it('allows a factual correction within a plain reply and respects question preferences', () => {
     expect(isSafeVoicePrefix('不是说你又出了问题，我刚才理解错了。', listening)).toBe(true);
     expect(isSafeVoicePrefix('你想从哪里说起？', { ...listening, context: { ...listening.context, preferences: { questions: 'avoid' } } })).toBe(false);
+  });
+
+  it.each([['listen', 100], ['interview', 160]] as const)('allows a long %s prefix until the support flag is known', (mode, max) => {
+    const input = { ...listening, mode };
+    expect(isSafeVoicePrefix('字'.repeat(max), input, false)).toBe(true);
+    expect(isSafeVoicePrefix('字'.repeat(max + 1), input, false)).toBe(false);
+    expect(isSafeVoicePrefix('字'.repeat(240), input)).toBe(true);
+    expect(isSafeVoicePrefix('字'.repeat(240), input, true)).toBe(true);
+    expect(isSafeVoicePrefix('字'.repeat(241), input)).toBe(false);
   });
 });
 
@@ -103,6 +124,12 @@ describe('ID3v2 stripping', () => {
     for (const bytes of [u8(73, 68, 51), u8(73, 68, 51, 3, 0, 0, 0, 0, 0, 4, 1), u8(73, 68, 51, 3, 0, 0, 0x80, 0, 0, 1)]) {
       await expect(collect(stripId3v2Header(audio(bytes)))).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' });
     }
+  });
+
+  it.each([1, 2, 9])('rejects a leading %i-byte partial ID3v2 header at EOF', async length => {
+    const partial = u8(73, 68, 51, 3, 0, 0, 0, 0, 0, 1).slice(0, length);
+    const stream = stripId3v2Header(audio(...Array.from(partial, byte => u8(byte))));
+    await expect(stream.next()).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' });
   });
 });
 

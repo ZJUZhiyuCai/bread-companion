@@ -1,5 +1,6 @@
 import type { Activity, Card, EndSnapshot, InterviewState, InterviewStyle, InterviewUpdate, Mode, RunToken, SessionState, Source, TurnCandidate } from './types';
 import { cardCanConfirm, evidenceSnapshots, linkedFindings } from './evidence';
+import { interviewNeedsDebrief } from './policy';
 
 export function uid(prefix = 'id'): string { return `${prefix}_${globalThis.crypto.randomUUID()}`; }
 export function initialState(sessionId = uid('session'), caseId = uid('case')): SessionState {
@@ -8,7 +9,7 @@ export function initialState(sessionId = uid('session'), caseId = uid('case')): 
 type InterviewOptions = Partial<Pick<InterviewState, 'style' | 'role' | 'topic' | 'maxRounds'>>;
 function openInterview({ style = 'gentle', role = '', topic = '', maxRounds = 4 }: InterviewOptions = {}): InterviewState {
   return { style, stage: 'opening', role: role.trim().slice(0, 80), topic: topic.trim().slice(0, 120), round: 0,
-    maxRounds: Math.min(6, Math.max(1, Math.trunc(Number.isNaN(maxRounds) ? 4 : maxRounds))), currentQuestion: '', focusPoints: [], notes: [] };
+    maxRounds: Math.min(6, Math.max(1, Math.trunc(Number.isNaN(maxRounds) ? 4 : maxRounds))), currentQuestion: '', focusPoints: [], notes: [], answerSourceIds: [] };
 }
 function advanceInterview(interview: InterviewState, update: InterviewUpdate): InterviewState {
   const { roundNote, stage, role = interview.role, topic = interview.topic } = update;
@@ -17,7 +18,7 @@ function advanceInterview(interview: InterviewState, update: InterviewUpdate): I
       ...(roundNote.strength ? { strength: roundNote.strength } : {}), ...(roundNote.gap ? { gap: roundNote.gap } : {}) }].slice(-6)
     : interview.notes;
   const revised = { ...interview, stage, role, topic, notes };
-  if (stage === 'debrief') return revised;
+  if (stage === 'debrief') return { ...revised, currentQuestion: '', focusPoints: [] };
   return { ...revised, round: Math.min(interview.maxRounds, interview.round + 1),
     currentQuestion: update.question ?? '', focusPoints: update.focusPoints?.slice(0, 2) ?? [] };
 }
@@ -47,6 +48,7 @@ export type Event =
   | { type: 'REQUEST_INTERVIEW_DEBRIEF' }
   | { type: 'EXIT_INTERVIEW' }
   | { type: 'USER'; text: string; source: Source }
+  | { type: 'ASSISTANT'; text: string }
   | { type: 'RUN'; runId: string; activity: Activity }
   | { type: 'ACTIVITY'; token: RunToken; activity: Activity }
   | { type: 'CANDIDATE'; candidate: TurnCandidate }
@@ -86,13 +88,24 @@ export function reducer(state: SessionState, event: Event): SessionState {
     case 'SET_INTERVIEW_STYLE': return state.interview ? replaceInterview(state, state.mode, { ...state.interview, style: event.style }) : state;
     case 'REQUEST_INTERVIEW_DEBRIEF': return state.interview ? replaceInterview(state, state.mode, { ...state.interview, stage: 'debrief' }) : state;
     case 'EXIT_INTERVIEW': return replaceInterview(state, 'listen', null);
-    case 'USER': return { ...state, messages: [...state.messages, { id: uid('message'), role: 'user', text: event.text, sourceId: event.source.id }], sources: [...state.sources, event.source], contextRevision: state.contextRevision + 1 };
+    case 'USER': {
+      const { source, text } = event;
+      let { interview } = state;
+      if (state.mode === 'interview' && interview?.currentQuestion && (interview.stage === 'question' || interview.stage === 'follow_up') && source.label !== '本次请求') {
+        const previousIds = interview.answerSourceIds ?? [];
+        interview = { ...interview, answerSourceIds: [...previousIds.filter(id => id !== source.id), source.id].slice(-12) };
+      }
+      return { ...state, interview, messages: [...state.messages, { id: uid('message'), role: 'user', text, sourceId: source.id }], sources: [...state.sources, source], contextRevision: state.contextRevision + 1 };
+    }
+    case 'ASSISTANT': return { ...state, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: event.text }] };
     case 'RUN': return { ...state, activeRunId: event.runId, activity: event.activity };
     case 'ACTIVITY': return isCurrent(state, event.token) ? { ...state, activity: event.activity } : state;
     case 'FINISH': return isCurrent(state, event.token) ? { ...state, activeRunId: null, activity: event.activity ?? 'idle' } : state;
     case 'CANDIDATE': {
       if (!isCurrent(state, event.candidate)) return state;
       const c = event.candidate;
+      if (state.mode === 'interview' && state.interview && !interviewNeedsDebrief(state.interview)
+        && (c.interviewUpdate?.stage === 'debrief' || c.findings.length || c.cardDraft)) return state;
       const nextRevision = Math.max(0, ...state.cards.map(v => v.revision)) + 1;
       const card = c.cardDraft ? { ...c.cardDraft, caseId: state.caseId, revision: nextRevision, parentRevision: currentCard(state)?.revision ?? null } : undefined;
       const interview = c.supportGuidance ? null : state.mode === 'interview' && state.interview && c.interviewUpdate

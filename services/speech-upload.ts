@@ -1,3 +1,5 @@
+import { INTERVIEW_ASR_SECONDS, pcmWavBytes } from '@/domain/speech-limits';
+
 /** Optional, local-only compression. A cold/unsupported/slow encoder never blocks a call. */
 export class SpeechUpload {
   private worker: Worker | null = null;
@@ -26,7 +28,7 @@ export class SpeechUpload {
     signal.throwIfAborted();
     // Already listening while the worker loads; don't wait for another network fetch to upload speech.
     this.warm();
-    if (!this.worker || !this.ready || this.pending || file.size < 8192 || file.size > 44 + 65 * 32000) return file;
+    if (!this.worker || !this.ready || this.pending || file.size < 8192 || file.size > pcmWavBytes(INTERVIEW_ASR_SECONDS)) return file;
     const worker = this.worker, wav = await file.arrayBuffer(); signal.throwIfAborted();
     if (this.worker !== worker || this.pending) return file;
     const bytes = await new Promise<ArrayBuffer | undefined>(resolve => {

@@ -80,34 +80,38 @@ export class SentenceBuffer {
   private pending = '';
   private length = 0;
   private first = true;
+  private boundary = false;
+  private hasSpeech = false;
 
   push(text: string): string[] {
     const ready: string[] = [];
     for (const char of text) {
+      // Wait for one character of lookahead, even across provider deltas.
+      if (this.boundary && !/[。！？!?;；”’」』"'）)\]]/.test(char)) ready.push(...this.finish());
       this.pending += char;
       if (!/\s/u.test(char)) this.length++;
-      if ((this.length >= 6 && /[。！？!?;；]/.test(char)) || (this.first && this.length >= 18 && /[，,、]/.test(char))) {
-        ready.push(this.pending);
-        this.pending = '';
-        this.length = 0;
-        this.first = false;
-      }
+      this.hasSpeech ||= /[\p{L}\p{N}]/u.test(char);
+      this.boundary ||= this.hasSpeech && ((this.length >= 6 && /[。！？!?;；]/.test(char))
+        || (this.first && this.length >= 18 && /[，,、]/.test(char)));
     }
     return ready;
   }
 
   finish(): string[] {
-    const rest = this.pending;
+    const ready = this.hasSpeech ? [this.pending] : [];
+    if (ready.length) this.first = false;
     this.pending = '';
     this.length = 0;
-    return rest.trim() ? [rest] : [];
+    this.hasSpeech = false;
+    this.boundary = false;
+    return ready;
   }
 }
 
 /** Check all decoded speech so far. A split cannot hide an earlier opener,
  * forbidden phrase, unmatched stage direction or accumulating style limit. */
 export function isSafeVoicePrefix(text: string, input: TurnRequest, supportGuidance?: boolean, interviewStage?: InterviewUpdate['stage']): boolean {
-  return !responseStyleErrors(text, input, supportGuidance, interviewStage).length
+  return !responseStyleErrors(text, input, supportGuidance, interviewStage, supportGuidance === undefined ? 240 : undefined).length
     && !/`|\*|!\[|\[[^\]\n]*]\(|^\s*>\s|(?:^|\s)_[^_\s]/m.test(text)
     && !/[（(](?:叹气|微笑|拥抱|抱住|摸头|轻声|温柔地)/.test(text);
 }
@@ -148,6 +152,5 @@ export async function* stripId3v2Header(source: AsyncIterable<Uint8Array>): Asyn
       }
     }
   }
-  if (skip || length >= 3) throw invalidMp3();
-  if (length) yield header.slice(0, length);
+  if (skip || (!audioStarted && length > 0)) throw invalidMp3();
 }

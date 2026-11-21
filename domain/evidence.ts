@@ -9,6 +9,7 @@ export function segments(source: Source): { id: string; text: string }[] {
   return result;
 }
 export function locateEvidence(sources: Source[], ref: EvidenceRef, requireConfirmed = false): boolean {
+  if (!ref.quote.trim()) return false;
   const source = sources.find(s => s.id === ref.sourceId && s.revision === ref.sourceRevision);
   return !!source && (!requireConfirmed || source.confirmed) && segments(source).some(s => s.id === ref.segmentId && s.text.includes(ref.quote));
 }
@@ -41,15 +42,16 @@ export function validateCandidate(candidate: TurnCandidate, input: TurnRequest):
   if (preparingPractice && !candidate.supportGuidance && !candidate.practiceSetup) errors.push('PRACTICE_SETUP_REQUIRED');
   if (preparingPractice && (candidate.findings.length || candidate.cardDraft)) errors.push('PRACTICE_ANSWER_REQUIRED');
   const interviewUpdate = candidate.interviewUpdate;
+  const debriefExpected = input.mode === 'interview' && interviewNeedsDebrief(input.context.interview);
   if (interviewUpdate && (input.mode !== 'interview' || candidate.supportGuidance)) errors.push('INTERVIEW_UPDATE_NOT_REQUESTED');
   if (input.mode === 'interview' && !candidate.supportGuidance) {
     if (!interviewUpdate) errors.push('INTERVIEW_UPDATE_REQUIRED');
-    const debrief = interviewNeedsDebrief(input.context.interview);
-    if (debrief && interviewUpdate && interviewUpdate.stage !== 'debrief') errors.push('INTERVIEW_DEBRIEF_REQUIRED');
-    if (debrief || interviewUpdate?.stage === 'debrief') {
+    if (debriefExpected) {
+      if (interviewUpdate?.stage !== 'debrief') errors.push('INTERVIEW_DEBRIEF_REQUIRED');
       if (candidate.cardDraft && candidate.cardDraft.type !== 'review') errors.push('MODE_VIOLATION');
     } else {
-      if (interviewUpdate && !interviewUpdate.question?.trim()) errors.push('INTERVIEW_QUESTION_REQUIRED');
+      if (interviewUpdate?.stage === 'debrief') errors.push('INTERVIEW_DEBRIEF_NOT_REQUESTED');
+      else if (interviewUpdate && !interviewUpdate.question?.trim()) errors.push('INTERVIEW_QUESTION_REQUIRED');
       if (candidate.findings.length || candidate.cardDraft) errors.push('INTERVIEW_QA_NO_CARD');
     }
   }
@@ -60,11 +62,20 @@ export function validateCandidate(candidate: TurnCandidate, input: TurnRequest):
   if (candidate.supportGuidance && (candidate.findings.length || candidate.cardDraft)) errors.push('SUPPORT_MODE_VIOLATION');
   if (new Set(candidate.findings.map(f => f.id)).size !== candidate.findings.length) errors.push('DUPLICATE_FINDING');
   const requireConfirmed = input.mode === 'review' || input.mode === 'practice' || input.mode === 'interview';
+  const { sourceSegments, sources } = input.context;
+  const answerIds = debriefExpected ? new Set(input.context.interview?.answerSourceIds ?? []) : null;
+  const allowedSource = (sourceId: string, label: string) => !answerIds || (answerIds.has(sourceId) && label !== '本次请求');
+  const allowedSources = answerIds ? sources.filter(s => allowedSource(s.id, s.label)) : sources;
   for (const f of candidate.findings) {
     if (f.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');
     if (['reported_fact', 'inference'].includes(f.kind) && !f.evidenceRefs.length) errors.push('EVIDENCE_REQUIRED');
     if (f.kind === 'practice_suggestion' && !f.evidenceRefs.length && !/通用|材料有限|材料不足/.test(f.text)) errors.push('EVIDENCE_REQUIRED');
-    for (const ref of f.evidenceRefs) if (!(input.context.sourceSegments ? input.context.sourceSegments.some(s => s.sourceId === ref.sourceId && s.sourceRevision === ref.sourceRevision && s.segmentId === ref.segmentId && s.text.includes(ref.quote) && (!requireConfirmed || s.confirmed)) : locateEvidence(input.context.sources, ref, requireConfirmed))) errors.push('EVIDENCE_MISMATCH');
+    for (const ref of f.evidenceRefs) {
+      const matched = sourceSegments ? ref.quote.trim().length > 0 && sourceSegments.some(s => s.sourceId === ref.sourceId
+        && s.sourceRevision === ref.sourceRevision && s.segmentId === ref.segmentId && s.text.includes(ref.quote)
+        && (!requireConfirmed || s.confirmed) && allowedSource(s.sourceId, s.label)) : locateEvidence(allowedSources, ref, requireConfirmed);
+      if (!matched) errors.push('EVIDENCE_MISMATCH');
+    }
   }
   if (candidate.cardDraft) {
     if (candidate.cardDraft.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');

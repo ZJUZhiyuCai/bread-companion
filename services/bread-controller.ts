@@ -17,6 +17,7 @@ import { createCallSeed, completeCallSeed, isCallHangup, type CallSeed } from '@
 import { withAbort } from '@/lib/abort';
 import { CALL_GREETING } from '@/domain/call-greeting';
 import { embeddedCallGreeting } from '@/domain/call-greeting-audio';
+import { pcmWavBytes } from '@/domain/speech-limits';
 import { callServiceError } from './call-error';
 import { SpeechUpload } from './speech-upload';
 import { networkDelayMs } from './network-timing';
@@ -25,6 +26,10 @@ import { CALL_TURN_PROFILES } from './voice-activity';
 const WELCOME = '今晚，先不用把一切想清楚。你可以慢慢说，也可以只是坐一会儿。这里是面包，一个 AI 交流助手。我们可以聊这次面试，也可以只说说现在的感受。想停的时候，随时停。';
 const INTERVIEW_OPENING = '开始模拟面试。';
 const INTERVIEW_DEBRIEF = '复盘这场模拟面试。';
+const INTERVIEW_STYLE_REPLY: Record<InterviewStyle, string> = {
+  gentle: '好，接下来我温和一点陪你练，这题你接着答就好。',
+  realistic: '好，接下来我换真实深挖的方式问你，这题你接着答就好。',
+};
 
 export class BreadController {
   private state = initialState();
@@ -52,19 +57,26 @@ export class BreadController {
       cancelReply: () => { this.stopWork(); if (this.call.active) { this.error = ''; this.publish(); } },
       transcribe: async (file, signal) => {
         // A profile change can leave a longer answer already buffered by the old VAD.
-        const extended = this.callProfile === 'interview' || file.size > 44 + CALL_TURN_PROFILES.chat.maxSeconds * 32000;
+        const extended = this.callProfile === 'interview' || file.size > pcmWavBytes(CALL_TURN_PROFILES.chat.maxSeconds);
         if (this.capabilities?.asr.opusUpload) file = await this.speechUpload.encode(file, signal);
         signal.throwIfAborted();
         const seed = this.capabilities?.asr.callPipeline && this.capabilities.tts.turnStream
           && !interviewNeedsDebrief(this.state.interview) && (!extended || this.state.mode === 'interview') ? createCallSeed(this.state) : null;
         if (seed) {
           this.callController.cancelTurnOnMute(signal);
-          const stream = requestAudioTurn(this.voiceFetcher, seed, file, signal, this.voiceOptions(signal));
+          const pipelineAbort = new AbortController();
+          const stream = requestAudioTurn(this.voiceFetcher, seed, file, AbortSignal.any([signal, pipelineAbort.signal]), this.voiceOptions(signal));
           const pipeline = { seed, stream, signal };
           this.preparedCallPipeline = pipeline;
           try {
             const text = await stream.transcript; signal.throwIfAborted();
-            if (!completeCallSeed(seed, text) && this.preparedCallPipeline === pipeline) this.preparedCallPipeline = null;
+            if (this.preparedCallPipeline === pipeline) {
+              // Keep the transcript when a style change invalidated the speculative reply.
+              if (seed.epoch !== this.state.epoch || seed.contextRevision !== this.state.contextRevision) {
+                this.preparedCallPipeline = null;
+                pipelineAbort.abort();
+              } else if (!completeCallSeed(seed, text)) this.preparedCallPipeline = null;
+            }
             return text;
           } catch (error) {
             if (this.preparedCallPipeline === pipeline) this.preparedCallPipeline = null;
@@ -118,7 +130,7 @@ export class BreadController {
   }
   private buildView(): BreadViewModel {
     return { state: this.state, capabilities: this.capabilities, connectionError: this.connectionError, connectionChecking: !!this.capabilityRequest, refreshCapabilities: this.refreshCapabilities, currentCard: currentCard(this.state), savedCases: this.savedCases, notice: this.notice, error: this.error, transcriptDraft: this.transcriptDraft, recordedSeconds: this.recordedSeconds, canRetry: this.canRetry(), retryLastTurn: this.retryLastTurn,
-      call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.callController.resume,
+      call: this.call, startCall: this.startCall, hangupCall: this.hangupCall, toggleCallMute: this.callController.toggleMute, interruptCall: this.callController.interrupt, finishCallTurn: this.callController.finish, resumeCall: this.resumeCall,
       startInterview: this.startInterview, setInterviewStyle: this.setInterviewStyle, requestInterviewDebrief: this.requestInterviewDebrief, exitInterviewToListen: this.exitInterviewToListen,
       busy: !['idle', 'paused', 'error', 'recorded'].includes(this.state.activity), start: this.start, send: this.send, assist: this.assist, addMaterial: this.addMaterial, setMode: this.setMode, stop: this.stop, end: this.end, reset: this.reset, addSource: this.addSource, correctSource: this.correctSource, confirmSource: this.confirmSource, rejectFinding: this.rejectFinding, editCard: this.editCard, confirmCard: this.confirmCard, saveCard: this.saveCard, exportCard: this.exportCard, refreshSaved: this.refreshSaved, deleteSaved: this.deleteSaved, importSaved: this.importSaved, resumeSaved: this.resumeSaved, setPractice: this.setPractice, startRecording: this.startRecording, finishRecording: this.finishRecording, transcribeRecorded: this.transcribeRecorded, cancelRecording: this.cancelRecording, setTranscriptDraft: this.setTranscriptDraft, sendTranscript: this.sendTranscript, speak: this.speak, clearNotice: this.clearNotice, dismissNotice: this.dismissNotice };
   }
@@ -156,6 +168,7 @@ export class BreadController {
   pauseForBackground = () => { if (this.call.active) this.callController.pause('页面已切到后台，麦克风与播放都暂停了。回来后可以继续。'); else if (['requesting_mic', 'recording', 'preparing_speech', 'speaking'].includes(this.state.activity)) this.stop(); };
   end = () => { this.hangupCall(); this.dispatch({ type: 'END' }); this.cancelResources(); this.transcriptDraft = ''; this.notice = ''; this.error = ''; this.publish(); };
   reset = () => { this.hangupCall(); this.artifactVersion++; this.stop(); this.transcriptDraft = ''; this.error = ''; this.notice = ''; this.dispatch({ type: 'REPLACE', state: initialState() }); };
+  private askFirstInterviewQuestion = (signal: AbortSignal) => this.recordTurn(INTERVIEW_OPENING, true, signal);
   startCall = async () => {
     if (this.call.active || this.state.lifecycle !== 'active') return;
     if (!this.capabilities?.asr.available || !this.capabilities?.tts.available || !this.capabilities.agent.configured) { this.fail(new Error('语音连接暂时不可用，可以先打字聊。')); return; }
@@ -164,9 +177,10 @@ export class BreadController {
     if (this.capabilities.asr.opusUpload) this.speechUpload.warm();
     this.callController.setProfile(this.callProfile);
     const interview = this.state.interview;
-    await this.callController.start(interview ? '' : CALL_GREETING.text,
-      interview?.stage === 'opening' ? signal => this.recordTurn(INTERVIEW_OPENING, true, signal) : undefined);
+    await this.callController.start(interview ? '' : CALL_GREETING.text, interview?.stage === 'opening' ? this.askFirstInterviewQuestion : undefined);
   };
+  resumeCall = () => this.callController.resume(this.state.mode === 'interview' && this.state.interview?.stage === 'opening'
+    ? this.askFirstInterviewQuestion : undefined);
   hangupCall = () => { this.callController.hangup(); this.speechUpload.stop(); };
   private cancelForModeChange() {
     if (this.call.active) this.callController.cancelPendingTurn();
@@ -178,13 +192,13 @@ export class BreadController {
     const inCall = this.call.active;
     this.cancelForModeChange();
     this.dispatch({ type: 'START_INTERVIEW', ...options });
-    if (inCall) await this.callController.triggerTurn(signal => this.recordTurn(INTERVIEW_OPENING, true, signal));
+    if (inCall) await this.callController.triggerTurn(this.askFirstInterviewQuestion);
     else if (startCall) await this.startCall();
     else await this.recordTurn(INTERVIEW_OPENING, true);
   };
   setInterviewStyle = (style: InterviewStyle) => {
-    if (this.state.lifecycle !== 'active' || !this.state.interview) return;
-    this.cancelForModeChange();
+    if (this.state.lifecycle !== 'active' || !this.state.interview || this.state.interview.style === style) return;
+    if (this.call.phase !== 'transcribing') this.cancelForModeChange();
     this.dispatch({ type: 'SET_INTERVIEW_STYLE', style });
   };
   requestInterviewDebrief = async () => {
@@ -198,6 +212,7 @@ export class BreadController {
   exitInterviewToListen = () => {
     if (this.state.lifecycle !== 'active' || !this.state.interview) return;
     this.cancelForModeChange();
+    this.callController.clearCaptions();
     this.dispatch({ type: 'EXIT_INTERVIEW' });
   };
   setMode = (mode: Mode) => {
@@ -222,8 +237,14 @@ export class BreadController {
     const control = !intent && this.state.mode === 'interview' ? interviewControlIntent(text) : null;
     if (!this.state.started && intent !== 'interview') this.start(intent || this.state.mode);
     let transition: Event | undefined;
+    let localReply: string | undefined;
     if (control === 'debrief') transition = { type: 'REQUEST_INTERVIEW_DEBRIEF' };
-    else if (control) transition = { type: 'SET_INTERVIEW_STYLE', style: control };
+    else if (control) {
+      transition = { type: 'SET_INTERVIEW_STYLE', style: control };
+      const interview = this.state.interview;
+      if (interview?.stage === 'debrief') localReply = '好，面试风格已调整。';
+      else if (interview && interview.stage !== 'opening' && interview.currentQuestion) localReply = INTERVIEW_STYLE_REPLY[control];
+    }
     else if (intent === 'interview') transition = { type: 'START_INTERVIEW' };
     else if (intent === 'listen' && this.state.interview) transition = { type: 'EXIT_INTERVIEW' };
     else if (intent === 'practice') transition = { type: 'PREPARE_PRACTICE' };
@@ -234,17 +255,19 @@ export class BreadController {
       if (channel === 'call') throw error;
       this.fail(error); return null;
     }
-    // A style request at the last question leaves it open for the actual answer.
-    return this.recordTurn(text, actionRequest || !!control, signal,
-      !control || control === 'debrief' || !interviewNeedsDebrief(this.state.interview));
+    return this.recordTurn(text, actionRequest || !!control, signal, localReply);
   }
-  private async recordTurn(text: string, actionRequest: boolean, signal?: AbortSignal, generate = true): Promise<CallReply> {
+  private async recordTurn(text: string, actionRequest: boolean, signal?: AbortSignal, localReply?: string): Promise<CallReply> {
     signal?.throwIfAborted();
     this.error = '';
     const pipeline = this.preparedCallPipeline;
     const source: Source = { id: pipeline && pipeline.signal === signal ? pipeline.seed.sourceId : uid('source'), revision: 1, origin: 'user_recollection', label: actionRequest || isActionOnly(text) ? '本次请求' : this.state.mode === 'practice' ? '本次练习回答' : '我说的话', text, confirmed: true };
     this.dispatch({ type: 'USER', text, source });
-    return generate ? this.requestTurn(text, signal) : null;
+    if (localReply) {
+      this.dispatch({ type: 'ASSISTANT', text: localReply });
+      return localReply;
+    }
+    return this.requestTurn(text, signal);
   }
   assist = async (mode: Exclude<Mode, 'listen'>, direction = '') => {
     const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。', interview: INTERVIEW_OPENING };

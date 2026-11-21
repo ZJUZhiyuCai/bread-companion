@@ -5,7 +5,7 @@ import { locateEvidence, validateCandidate } from '@/domain/evidence';
 import { explicitIntent, interviewControlIntent, isActionOnly } from '@/domain/policy';
 import { currentCard, initialState, isCurrent, reducer } from '@/domain/reducer';
 import { responseStyleErrors } from '@/domain/response-style';
-import { candidateSchema, interviewStateSchema, interviewUpdateSchema, modelContentSchema, turnRequestSchema } from '@/domain/schemas';
+import { candidateSchema, evidenceSchema, interviewStateSchema, interviewUpdateSchema, modelContentSchema, turnRequestSchema } from '@/domain/schemas';
 import type { SessionState, Source, TurnCandidate, TurnRequest } from '@/domain/types';
 import { systemPrompt } from '@/prompts/agent';
 import { mockCandidate } from '@/server/providers/mock-agent';
@@ -69,7 +69,8 @@ describe('interview domain and mock progression', () => {
     expect(realistic.candidate.assistantText).toMatch(/关键假设.*发现/);
     expect(realistic.state.interview!.round).toBe(3);
     const final = takeTurn(realistic.state, '我接了监控，发现失败率从百分之五降到了百分之一。');
-    expect(final.state.interview).toMatchObject({ stage: 'debrief', round: 3, currentQuestion: realistic.state.interview!.currentQuestion });
+    expect(final.state.interview).toMatchObject({ stage: 'debrief', round: 3, currentQuestion: '', focusPoints: [] });
+    expect(final.state.interview!.answerSourceIds).toEqual(final.state.sources.filter(s => s.label === '我说的话').map(s => s.id));
     expect(final.state.interview!.notes.map(note => note.round)).toEqual([1, 2, 3]);
     expect(final.candidate.findings.map(f => f.kind)).toEqual(['reported_fact', 'unknown', 'practice_suggestion']);
     expect(final.candidate.cardDraft).toMatchObject({ type: 'review', title: '这场模拟的小复盘', validity: 'draft' });
@@ -101,11 +102,41 @@ describe('interview domain and mock progression', () => {
     const first = takeTurn(start(), '模拟面试').state;
     const answered = takeTurn(first, '我通过回滚解决了一次线上故障。').state;
     const restarted = reducer(answered, { type: 'START_INTERVIEW', role: '前端工程师', topic: '页面性能' });
+    expect(restarted.interview?.answerSourceIds).toEqual([]);
     const newQuestion = takeTurn(restarted, '模拟面试').state;
     expect(newQuestion.interview!.currentQuestion).toBe(first.interview!.currentQuestion);
     const debrief = takeTurn(reducer(newQuestion, { type: 'REQUEST_INTERVIEW_DEBRIEF' }), '结束面试');
     expect(debrief.input.context.sourceSegments).toEqual([]);
     expect(debrief.candidate.findings.every(f => f.evidenceRefs.length === 0)).toBe(true);
+  });
+
+  it('uses all available confirmed answers from this simulation without the assistant history or post-debrief remarks', () => {
+    const first = takeTurn(start(2), '开始模拟面试').state;
+    const answer1 = '我比较了开启缓存前后的加载时间。', answer2 = '我用日志核对了指标。';
+    const second = takeTurn(first, answer1).state;
+    const final = takeTurn(second, answer2).state;
+    const afterwards = addUtterance(final, '谢谢');
+    expect(afterwards.interview?.answerSourceIds).toEqual(final.interview?.answerSourceIds);
+    const withRejection = { ...afterwards, rejectedFindings: [{ text: '之前的判断', mode: 'interview' as const, sources: [], needsAcknowledgement: true }] };
+    const { input, candidate } = takeTurn(reducer(withRejection, { type: 'REQUEST_INTERVIEW_DEBRIEF' }), '复盘这场模拟面试');
+    expect(input.context.recentMessages.every(m => m.role === 'user')).toBe(true);
+    expect(input.context.sourceSegments?.map(s => s.text)).toEqual([answer2, answer1]);
+    expect(candidate.findings[0].evidenceRefs[0].quote).toBe(answer2);
+
+    const withoutConfirmation = { ...withRejection, sources: withRejection.sources.map(s => s.text === answer2 ? { ...s, confirmed: false } : s) };
+    expect(buildTurn(withoutConfirmation, '复盘这场模拟面试', 'run_retry', 'req_retry').context.sourceSegments?.map(s => s.text)).toEqual([answer1]);
+  });
+
+  it('records only open questions, de-duplicates answers, and keeps the last twelve IDs', () => {
+    const opening = addUtterance(start(), '还没问到问题。');
+    expect(opening.interview?.answerSourceIds).toEqual([]);
+    let active = takeTurn(opening, '开始模拟面试').state;
+    const ids = Array.from({ length: 14 }, (_, at) => `answer_${at}`);
+    for (const id of ids) active = reducer(active, { type: 'USER', text: id, source: callSource(id, id) });
+    active = addUtterance(active, '严格一点');
+    expect(active.interview?.answerSourceIds).toEqual(ids.slice(-12));
+    const repeated = reducer(active, { type: 'USER', text: ids[2], source: callSource(ids[2], ids[2]) });
+    expect(repeated.interview?.answerSourceIds).toEqual([...ids.slice(3), ids[2]]);
   });
 
   it('preserves the support escape hatch and clears all interview context', () => {
@@ -125,6 +156,9 @@ describe('interview protocol and evidence', () => {
     expect(interviewStateSchema.safeParse({ ...interview, maxRounds: 7 }).success).toBe(false);
     expect(interviewStateSchema.safeParse({ ...interview, round: 5 }).success).toBe(false);
     expect(interviewStateSchema.safeParse({ ...interview, notes: [{ round: 1, question: '问什么？', confirmed: true }] }).success).toBe(false);
+    expect(interviewStateSchema.parse({ ...interview, answerSourceIds: undefined }).answerSourceIds).toEqual([]);
+    expect(interviewStateSchema.safeParse({ ...interview, answerSourceIds: Array(13).fill('answer') }).success).toBe(false);
+    expect(interviewStateSchema.safeParse({ ...interview, answerSourceIds: ['invalid id'] }).success).toBe(false);
     expect(interviewUpdateSchema.safeParse({ stage: 'opening' }).success).toBe(false);
     expect(interviewUpdateSchema.safeParse({ stage: 'question', focusPoints: ['一', '二', '三'] }).success).toBe(false);
     expect(turnRequestSchema.safeParse({ ...input, mode: 'listen' }).success).toBe(false);
@@ -135,14 +169,22 @@ describe('interview protocol and evidence', () => {
   });
 
   it('requires the next question and blocks premature cards, unsolicited updates and resuming after the round limit', () => {
-    const { input, candidate, state } = takeTurn(start(1), '模拟面试');
+    const { input, candidate, state, running } = takeTurn(start(1), '模拟面试');
     const { candidate: review, input: debriefInput } = takeTurn(state, '我补了一组缓存命中率的监控。');
     expect(validateCandidate({ ...candidate, interviewUpdate: undefined }, input)).toContain('INTERVIEW_UPDATE_REQUIRED');
     expect(validateCandidate({ ...candidate, interviewUpdate: { stage: 'question', question: '  ' } }, input)).toContain('INTERVIEW_QUESTION_REQUIRED');
     expect(validateCandidate({ ...candidate, cardDraft: review.cardDraft }, input)).toContain('INTERVIEW_QA_NO_CARD');
+    const premature = { ...candidate, interviewUpdate: { stage: 'debrief' as const } };
+    expect(validateCandidate(premature, input)).toContain('INTERVIEW_DEBRIEF_NOT_REQUESTED');
+    const prematureCard = { ...premature, cardDraft: review.cardDraft, findings: review.findings };
+    expect(validateCandidate(prematureCard, input)).toEqual(expect.arrayContaining(['INTERVIEW_DEBRIEF_NOT_REQUESTED', 'INTERVIEW_QA_NO_CARD']));
+    expect(reducer(running, { type: 'CANDIDATE', candidate: prematureCard })).toBe(running);
+    expect(reducer(running, { type: 'CANDIDATE', candidate: { ...candidate, cardDraft: review.cardDraft } })).toBe(running);
+    expect(mockCandidate({ ...input, userMessage: '结束模拟面试' }).interviewUpdate?.stage).toBe('question');
     expect(validateCandidate({ ...candidate, supportGuidance: true }, input)).toContain('INTERVIEW_UPDATE_NOT_REQUESTED');
     expect(validateCandidate(candidate, { ...input, mode: 'listen' })).toContain('INTERVIEW_UPDATE_NOT_REQUESTED');
     expect(validateCandidate({ ...review, interviewUpdate: candidate.interviewUpdate }, debriefInput)).toContain('INTERVIEW_DEBRIEF_REQUIRED');
+    expect(validateCandidate({ ...review, interviewUpdate: undefined }, debriefInput)).toContain('INTERVIEW_DEBRIEF_REQUIRED');
   });
 
   it('checks real evidence, confirmation, unsupported sections, card type, and rejected findings in a debrief', () => {
@@ -154,6 +196,8 @@ describe('interview protocol and evidence', () => {
     const unconfirmed = structuredClone(input);
     unconfirmed.context.sourceSegments![0].confirmed = false;
     expect(validateCandidate(candidate, unconfirmed)).toContain('EVIDENCE_MISMATCH');
+    const unrelated = { ...input, context: { ...input.context, interview: { ...input.context.interview!, answerSourceIds: [] } } };
+    expect(validateCandidate(candidate, unrelated)).toContain('EVIDENCE_MISMATCH');
     const card = structuredClone(candidate);
     card.cardDraft!.type = 'note';
     card.cardDraft!.sections[0].findingIds = [];
@@ -162,6 +206,21 @@ describe('interview protocol and evidence', () => {
     input.context.rejectedFindings = [{ text: ' ' + candidate.findings[0].text + '！', sources: [], mode: 'interview' }];
     expect(validateCandidate(candidate, input)).toContain('REJECTED_FINDING_REPEATED');
     expect(validateCandidate(mockCandidate(input), input)).toEqual([]);
+  });
+
+  it.each(['', ' ', '\t\n', '\u3000'])('rejects the blank quote %j in schemas and both evidence lookup paths', quote => {
+    const state = takeTurn(start(1), '模拟面试').state;
+    const result = takeTurn(state, '我做了 \t\n\u3000 缓存测试。');
+    const candidate = structuredClone(result.candidate);
+    const ref = candidate.findings[0].evidenceRefs[0];
+    expect(evidenceSchema.parse({ ...ref, quote: ' 缓存' }).quote).toBe(' 缓存');
+    expect(locateEvidence(result.state.sources, { ...ref, quote: ' 缓存' }, true)).toBe(true);
+    ref.quote = quote;
+    expect(evidenceSchema.safeParse(ref).success).toBe(false);
+    expect(locateEvidence(result.state.sources, ref, true)).toBe(false);
+    expect(validateCandidate(candidate, result.input)).toContain('EVIDENCE_MISMATCH');
+    const raw = { ...result.input, context: { ...result.input.context, sourceSegments: undefined, sources: result.state.sources } };
+    expect(validateCandidate(candidate, raw)).toContain('EVIDENCE_MISMATCH');
   });
 
   it('budgets full interview snapshots and reserves the actual latest answer ahead of pasted material', () => {

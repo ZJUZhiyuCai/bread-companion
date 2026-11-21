@@ -16,7 +16,7 @@ export const originSchema = z.enum(['source_quote', 'user_recollection', 'explic
 export const validitySchema = z.enum(['draft', 'confirmed', 'stale', 'disputed']);
 export const sourceSchema = z.strictObject({ id: idSchema, revision: z.int().min(1), origin: originSchema, label: z.string().max(100), text: z.string().min(1).max(20000), confirmed: z.boolean() });
 export const sourceSegmentSchema = z.strictObject({ sourceId: idSchema, sourceRevision: z.int().min(1), segmentId: idSchema, origin: originSchema, label: z.string().max(100), text: z.string().min(1).max(1000).refine(s => Array.from(s).length <= 500), confirmed: z.boolean() }).refine(s => s.segmentId.startsWith(`${s.sourceId}:r${s.sourceRevision}:s`) && /^\d+$/.test(s.segmentId.slice(`${s.sourceId}:r${s.sourceRevision}:s`.length)));
-export const evidenceSchema = z.strictObject({ sourceId: idSchema, sourceRevision: z.int().min(1), segmentId: idSchema, quote: z.string().min(1).max(1000) });
+export const evidenceSchema = z.strictObject({ sourceId: idSchema, sourceRevision: z.int().min(1), segmentId: idSchema, quote: z.string().min(1).max(1000).refine(s => s.trim().length > 0) });
 export const findingSchema = z.strictObject({ id: idSchema, kind: z.enum(['reported_fact', 'inference', 'unknown', 'practice_suggestion']), text: z.string().min(1).max(1500), evidenceRefs: z.array(evidenceSchema).max(6), validity: validitySchema });
 export const sectionSchema = z.strictObject({ key: z.string().min(1).max(80), text: z.string().max(3000), findingIds: z.array(idSchema).max(12), userEdited: z.boolean().optional() });
 export const cardSchema = z.strictObject({ id: idSchema, caseId: idSchema, revision: z.int().min(1), parentRevision: z.int().min(1).nullable(), titleUserEdited: z.boolean().optional(), type: z.enum(['note', 'review']), title: z.string().min(1).max(100), sections: z.array(sectionSchema).max(10), validity: validitySchema, createdAt: z.iso.datetime(), serviceMode: z.enum(['mock', 'real']) });
@@ -46,6 +46,7 @@ export const interviewStateSchema = z.strictObject({
   currentQuestion: interviewQuestion,
   focusPoints: interviewFocusPoints,
   notes: z.array(interviewNoteSchema).max(6),
+  answerSourceIds: z.array(idSchema).max(12).default([]),
 }).refine(v => v.round <= v.maxRounds, { message: 'Round exceeds interview limit' });
 export const interviewUpdateSchema = z.strictObject({
   stage: interviewStageSchema.exclude(['opening']),
