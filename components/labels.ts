@@ -4,6 +4,8 @@ import type {
   EvidenceRef,
   EvidenceSnapshot,
   Finding,
+  InterviewState,
+  InterviewStyle,
   Mode,
   Origin,
   SavedCase,
@@ -54,6 +56,15 @@ export const DOING_META: Record<Mode, string | null> = {
   practice: '在练一题',
   interview: '在模拟面试',
 };
+
+export const INTERVIEW_STYLE_LABEL: Record<InterviewStyle, string> = {
+  gentle: '温和陪练',
+  realistic: '真实深挖',
+};
+
+export function interviewRoundLabel({ round, maxRounds }: Pick<InterviewState, 'round' | 'maxRounds'>): string {
+  return `第 ${Math.max(1, round)}/${maxRounds} 轮`;
+}
 
 export const ORIGIN_META: Record<Origin, { label: string; desc: string }> = {
   source_quote: { label: '你放进来的材料', desc: '你粘贴的原文。确实是你提交的文字，不代表外部事实已核实' },

@@ -2,18 +2,21 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, Hand, LoaderCircle, Mic, MicOff, Phone, PhoneOff, RotateCcw, TriangleAlert } from 'lucide-react';
-import type { CallPhase, Message } from '@/domain/types';
+import type { CallPhase, Card, InterviewState, Message } from '@/domain/types';
 import { CallStage } from './CallStage';
+import { InterviewStyleToggle } from './ModeBar';
 import { CALL_RUNNING, IDLE_CALL, callMeta } from './call';
 import { useAfterimage, useDomId } from './hooks';
-import { formatClock } from './labels';
+import { INTERVIEW_STYLE_LABEL, formatClock, interviewRoundLabel, sectionLabel } from './labels';
 import type { BreadVM } from './vm';
 
 interface CallRoomProps {
   vm: BreadVM;
   /** Wide screens keep the transcript open beside the call. */
   wide: boolean;
+  debriefCard: Card | null;
   onHangup: () => void;
+  onOpenDebriefCard: () => void;
 }
 
 interface PrimaryKey {
@@ -22,6 +25,8 @@ interface PrimaryKey {
   onPress?: () => void;
   tone: 'go' | 'soft' | 'wait';
 }
+
+type MobileView = 'captions' | 'interview' | 'log';
 
 /** Phases 面包's own voice can be cut off from: speaking up here stops it and keeps the new sentence. */
 const CUTTABLE: CallPhase[] = ['transcribing', 'thinking', 'speaking'];
@@ -46,13 +51,16 @@ const LONG_WAIT_MS = 2600;
  * The words are set like film subtitles: 面包's line large and centred, yours small and pale above it.
  * Who said which stays in the markup for screen readers; on screen the type itself tells them apart.
  */
-export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
+export function CallRoom({ vm, wide, debriefCard, onHangup, onOpenDebriefCard }: CallRoomProps) {
   const call = vm.call ?? IDLE_CALL;
   const { phase } = call;
-  const meta = callMeta(call);
+  const { mode, messages } = vm.state;
+  const interview = mode === 'interview' ? vm.state.interview : null;
+  const inInterview = interview !== null;
+  const meta = callMeta(call, mode);
   const id = useDomId('callroom');
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const [showLog, setShowLog] = useState(false);
+  const [mobileView, setMobileView] = useState<MobileView>('captions');
   const [announce, setAnnounce] = useState('');
   // 面包 was just cut off mid-sentence; shown for a beat, without words.
   const [caught, setCaught] = useState(false);
@@ -61,11 +69,14 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
   const cueSpent = useRef(false);
   const prevPhase = useRef(phase);
   const cutAt = useRef(0);
-  const messages = vm.state.messages;
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
   }, []);
+
+  useEffect(() => {
+    if (!inInterview) setMobileView((view) => view === 'interview' ? 'captions' : view);
+  }, [inInterview]);
 
   // One quiet line per phase. The reply itself is heard, so captions are not read out a second time.
   useEffect(() => {
@@ -121,7 +132,38 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
   const wasTitle = useAfterimage(meta.title, meta.title);
 
   const running = CALL_RUNNING.includes(phase);
-  const canMute = call.active && phase !== 'connecting' && phase !== 'paused' && phase !== 'error';
+  const canMute = call.active && running && phase !== 'connecting';
+  const canStartInterview = mode === 'listen' && canMute;
+  const compactView = wide || (!interview && mobileView === 'interview') ? 'captions' : mobileView;
+  const question = interview?.currentQuestion || '正在准备这一题…';
+  const debrief = interview?.stage === 'debrief';
+
+  const focusCaptions = () => {
+    setMobileView('captions');
+    headingRef.current?.focus({ preventScroll: true });
+  };
+  const startInterview = () => {
+    focusCaptions();
+    void vm.startInterview();
+  };
+
+  const interviewPanelId = `${id}-interview`;
+  const interviewPanel = interview && (
+    <CallInterviewPanel
+      id={interviewPanelId}
+      vm={vm}
+      interview={interview}
+      question={question}
+      canControl={canMute}
+      compact={!wide}
+      debriefCard={debriefCard}
+      onOpenDebriefCard={onOpenDebriefCard}
+      onExit={() => {
+        focusCaptions();
+        vm.exitInterviewToListen();
+      }}
+    />
+  );
 
   // 插话 stays in the middle slot, keyboard-reachable, same size as always — but quiet now. It is the
   // way round a noisy room or a hands-free moment, not the way to interrupt.
@@ -150,7 +192,7 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
 
   return (
     <section
-      className={`callroom ${wide ? 'callroom--wide' : ''} ${showLog && !wide ? 'is-log' : ''} ${caught ? 'is-caught' : ''}`}
+      className={`callroom ${wide ? 'callroom--wide' : ''} ${compactView === 'log' ? 'is-log' : ''} ${caught ? 'is-caught' : ''}`}
       data-phase={phase}
       aria-labelledby={`${id}-h`}
     >
@@ -164,6 +206,11 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               {formatClock(call.elapsedSeconds)}
             </time>
           </p>
+          {interview && (
+            <p className="callroom__mode-pill">
+              {debrief ? '模拟复盘' : `模拟面试 · ${interviewRoundLabel(interview)}`}
+            </p>
+          )}
         </header>
 
         <CallStage call={call} level={level} className="callroom__stage" />
@@ -197,10 +244,13 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
           )}
         </div>
 
-        {showLog && !wide ? (
+        {compactView === 'log' ? (
           <CallLog messages={messages} compact />
+        ) : compactView === 'interview' ? (
+          interviewPanel
         ) : (
-          <div className="callroom__captions">
+          <div className="callroom__captions" tabIndex={0}>
+            {!wide && interview && !debrief && <p className="callroom__question-hint">本轮题目 · {question}</p>}
             {/* A new line is a new subtitle and comes up as one; a line that grows keeps its place. */}
             {call.lastHeard && (
               <p key={lineKey(call.lastHeard)} className="cap cap--you">
@@ -213,14 +263,14 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               // vanishing, so it reads as interrupted. Cut off while thinking, there is no line — the light says it.
               <p
                 key={lineKey(call.caption)}
-                className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''}`}
+                className={`cap cap--bread ${phase === 'speaking' ? 'is-live' : ''} ${caught ? 'is-cut' : ''} ${call.captionPreview ? 'is-preview' : ''}`}
               >
                 <span className="cap__who">面包</span>
                 <span className="cap__text">{call.caption}</span>
               </p>
             ) : (
               // Only once the line is open; while it is still ringing there is nothing to answer yet.
-              !call.lastHeard && phase === 'listening' && <p className="cap cap--empty">开个头就好，比如“今天有点累”。</p>
+              !interview && !call.lastHeard && phase === 'listening' && <p className="cap cap--empty">开个头就好，比如“今天有点累”。</p>
             )}
             {/* Last in the captions, so it never moves the words already there; the keys stay at the foot.
                 A note, like the heading, in 面包's words — but set small and plain, never in the subtitle
@@ -259,14 +309,30 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
               暂停
             </button>
           )}
+          {!wide && canStartInterview && (
+            <button type="button" className="callroom__link callroom__link--interview" onClick={startInterview}>
+              开始语音模拟面试
+            </button>
+          )}
+          {!wide && interview && (
+            <button
+              type="button"
+              className="callroom__link callroom__link--interview"
+              onClick={() => setMobileView((view) => view === 'interview' ? 'captions' : 'interview')}
+              aria-expanded={compactView === 'interview'}
+              aria-controls={compactView === 'interview' ? interviewPanelId : undefined}
+            >
+              {compactView === 'interview' ? '回到字幕' : '面试题卡'}
+            </button>
+          )}
           {!wide && (
             <button
               type="button"
               className="callroom__link"
-              onClick={() => setShowLog((v) => !v)}
-              aria-expanded={showLog}
+              onClick={() => setMobileView((view) => view === 'log' ? 'captions' : 'log')}
+              aria-expanded={compactView === 'log'}
             >
-              {showLog ? '回到字幕' : `文字记录${messages.length ? `（${messages.length}）` : ''}`}
+              {compactView === 'log' ? '回到字幕' : `文字记录${messages.length ? `（${messages.length}）` : ''}`}
             </button>
           )}
           {phase === 'listening' && !call.heardSpeech && (
@@ -282,6 +348,13 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
 
       {wide && (
         <aside className="callroom__side">
+          {canStartInterview && (
+            <div className="call-bridge">
+              <p>缓过来了的话，也可以顺手练一段</p>
+              <button type="button" className="pill pill--warm" onClick={startInterview}>开始语音模拟面试</button>
+            </div>
+          )}
+          {interviewPanel}
           <CallLog messages={messages} />
         </aside>
       )}
@@ -289,6 +362,87 @@ export function CallRoom({ vm, wide, onHangup }: CallRoomProps) {
       <p className="sr-only" aria-live="polite">
         {announce}
       </p>
+    </section>
+  );
+}
+
+interface CallInterviewPanelProps {
+  id: string;
+  vm: BreadVM;
+  interview: InterviewState;
+  question: string;
+  canControl: boolean;
+  compact: boolean;
+  debriefCard: Card | null;
+  onOpenDebriefCard: () => void;
+  onExit: () => void;
+}
+
+function CallInterviewPanel({ id, vm, interview, question, canControl, compact, debriefCard, onOpenDebriefCard, onExit }: CallInterviewPanelProps) {
+  const debrief = interview.stage === 'debrief';
+  const canAdvance = canControl && !(debrief && vm.busy);
+  return (
+    <section id={id} className={`call-interview${compact ? ' call-interview--compact' : ''}`} aria-labelledby={`${id}-status`} tabIndex={0}>
+      <h3 id={`${id}-status`} className="call-interview__status">
+        {interviewRoundLabel(interview)} · {debrief ? '赛后复盘' : INTERVIEW_STYLE_LABEL[interview.style]}
+      </h3>
+      <InterviewStyleToggle style={interview.style} onChange={vm.setInterviewStyle} disabled={!canControl || debrief || interview.stage === 'opening'} />
+      {!debrief && (
+        <div className="call-interview__prompt">
+          <p className="call-interview__question">{question}</p>
+          {interview.focusPoints.length > 0 && (
+            <p className="call-interview__focus">
+              <span>留意</span>
+              {interview.focusPoints.map((point, index) => <span key={index} className="call-interview__tag">{point}</span>)}
+            </p>
+          )}
+        </div>
+      )}
+      {interview.notes.length > 0 && (
+        <details className="call-interview__notes">
+          <summary>最近的答题记录</summary>
+          <ul>
+            {interview.notes.slice(-2).reverse().map((note, index) => (
+              <li key={`${note.round}-${index}`}>
+                <strong>第 {note.round} 轮</strong>
+                {note.strength && <p>{note.strength}</p>}
+                {note.gap && <p>{note.gap}</p>}
+                {!note.strength && !note.gap && <p>{note.question}</p>}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      {debriefCard && (
+        <div className="call-interview__card">
+          <h4>{debriefCard.title}</h4>
+          <dl>
+            {debriefCard.sections.slice(0, 3).map((section, index) => (
+              <div key={index}>
+                <dt>{sectionLabel(section.key)}</dt>
+                <dd>{section.text}</dd>
+              </div>
+            ))}
+          </dl>
+          <button type="button" className="pill pill--warm" onClick={onOpenDebriefCard} aria-describedby={`${id}-debrief-action`}>
+            查看并保存复盘卡
+          </button>
+          <span className="sr-only" id={`${id}-debrief-action`}>打开复盘卡会结束这通电话。</span>
+        </div>
+      )}
+      <div className="call-interview__actions">
+        <button
+          type="button"
+          className="pill pill--warm"
+          aria-disabled={!canAdvance || undefined}
+          onClick={() => {
+            if (canAdvance) void (debrief ? vm.startInterview() : vm.requestInterviewDebrief());
+          }}
+        >
+          {debrief ? '再练一场' : '收尾复盘'}
+        </button>
+        <button type="button" className="pill pill--plain" onClick={onExit}>回到聊聊</button>
+      </div>
     </section>
   );
 }

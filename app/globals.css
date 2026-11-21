@@ -2599,8 +2599,7 @@ html[data-plush='wait'] .hello-bubble {
   color: var(--sheet);
 }
 
-/* For later: sorting it out, and what was kept. Present, reachable, never first — just two lines of type. */
-/* both links hang from one baseline: the second's small print falls below it rather than lifting it */
+/* The footer links share a baseline, with descriptions below their titles. */
 .entry__later {
   display: flex;
   flex-wrap: wrap;
@@ -3853,6 +3852,51 @@ html[data-plush='wait'] .hello-bubble {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.ticket--interview .ticket__main {
+  max-block-size: 24dvh;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+}
+.ticket--interview .ticket__main:focus-visible {
+  outline-offset: -2px;
+}
+.ticket--interview .ticket__kicker {
+  color: var(--ink-2);
+}
+.ticket--interview .ticket__actions {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ticket__interview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.interview-style {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.interview-style__choice[aria-pressed='true'],
+.interview-style__choice[aria-pressed='true']:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green);
+  font-weight: 650;
+}
+.interview-style__choice:disabled,
+.ticket--interview .pill:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.interview-style__choice[aria-pressed='false']:disabled,
+.ticket--interview .ticket__interview-actions .pill:disabled {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink-3);
 }
 
 .composer-wrap {
@@ -5540,6 +5584,16 @@ html[data-plush='wait'] .hello-bubble {
   font-variant-numeric: tabular-nums;
   color: var(--ink-3);
 }
+.callroom__mode-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--kraft);
+  color: var(--kraft-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
 /* 面包 and the red phone on one table. The picture is wider than tall (1000 × 820). */
 /*
  * No width transition: animating the width re-laid out the room and rebuilt the 3D phone's drawing
@@ -5752,7 +5806,7 @@ html[data-plush='wait'] .hello-bubble {
   color: var(--ink-3);
   animation: line-in 0.6s ease-out both;
 }
-/* Only four phases say anything here, so no row is reserved: the space goes to the captions. */
+/* The caption slot takes the space when there is no hint. */
 .callroom__hint {
   margin-top: 5px;
   font-size: 0.92rem;
@@ -5811,6 +5865,15 @@ html[data-plush='wait'] .hello-bubble {
   margin-top: 14px;
   text-align: center;
 }
+.callroom__question-hint {
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cap {
   flex: none;
   display: block;
@@ -5852,6 +5915,9 @@ html[data-plush='wait'] .hello-bubble {
   text-wrap: balance;
   /* being cut off is a recession, not a switch */
   transition: color 0.35s ease-out, opacity 0.35s ease-out;
+}
+.cap--bread.is-preview .cap__text {
+  color: var(--ink-2);
 }
 /* Cut off mid-sentence: the line recedes and trails off. Static properties, so it reads with reduced motion. */
 .cap--bread.is-cut .cap__text {
@@ -6031,6 +6097,12 @@ html[data-plush='wait'] .hello-bubble {
   background: color-mix(in srgb, var(--sheet) 54%, transparent);
   color: var(--ink);
 }
+.callroom__link--interview {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 48%, transparent);
+  text-underline-offset: 4px;
+}
 .callroom__link .lucide {
   width: 15px;
   height: 15px;
@@ -6043,6 +6115,123 @@ html[data-plush='wait'] .hello-bubble {
   min-height: 0;
   border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   background: color-mix(in srgb, var(--surface) 44%, transparent);
+}
+
+.call-bridge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin: 12px 16px 0;
+  padding: 6px 10px;
+  border-radius: var(--r-sheet);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.8rem;
+}
+.call-bridge .pill {
+  padding-inline: 9px;
+  font-size: inherit;
+}
+.call-interview {
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sheet);
+  background: var(--receipt);
+  color: var(--ink);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+  scrollbar-width: thin;
+}
+.call-interview:focus-visible {
+  outline-offset: -3px;
+}
+.callroom__side > .call-interview {
+  flex: 0 1 auto;
+  max-height: 62%;
+  margin: 12px 16px 0;
+}
+.call-interview > * + * {
+  margin-top: 8px;
+}
+.call-interview__status {
+  color: var(--ink-2);
+  font-size: 0.83rem;
+  font-weight: 650;
+  text-wrap: wrap;
+}
+.call-interview__question {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.call-interview__focus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+.call-interview__tag {
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.call-interview__notes {
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.83rem;
+}
+.call-interview__notes summary {
+  width: fit-content;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+.call-interview__notes li + li {
+  margin-top: 6px;
+}
+.call-interview__card {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  padding: 8px 10px;
+  border-radius: var(--r-paper);
+  background: var(--surface-2);
+}
+.call-interview__card h4 {
+  font-size: 0.95rem;
+}
+.call-interview__card dl > div + div {
+  margin-top: 4px;
+}
+.call-interview__card dt {
+  font-weight: 600;
+}
+.call-interview__card dd {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 0.82rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.call-interview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.call-interview__actions .pill[aria-disabled='true'] {
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  cursor: default;
 }
 
 .calllog {
@@ -6105,16 +6294,22 @@ html[data-plush='wait'] .hello-bubble {
   font-size: 0.9rem;
   color: var(--ink-3);
 }
-.calllog--compact {
+.calllog--compact,
+.call-interview--compact {
   flex: 1 1 auto;
   width: 100%;
   max-width: 620px;
   min-height: 140px;
   margin-top: 12px;
+  animation: rise 0.32s var(--ease-out) both;
+}
+.call-interview--compact {
+  min-height: 0;
+}
+.calllog--compact {
   border: 1px solid var(--line);
   border-radius: var(--r-sheet);
   background: color-mix(in srgb, var(--surface) 66%, transparent);
-  animation: rise 0.32s var(--ease-out) both;
 }
 .calllog--compact .calllog__h {
   padding: 12px 16px 6px;
@@ -6122,7 +6317,7 @@ html[data-plush='wait'] .hello-bubble {
 .calllog--compact .calllog__scroll {
   padding: 4px 16px 14px;
 }
-.callroom.is-log .callroom__stage {
+.callroom:is(.is-log, :has(.call-interview--compact)) .callroom__stage {
   width: min(170px, 40vw, 22dvh);
 }
 
@@ -6684,6 +6879,12 @@ body:has(dialog[open]) .callroom__pulse::after {
   .call-pill {
     padding: 0 12px 0 8px;
   }
+  .callroom__more:has(.callroom__link--interview) {
+    gap: 1px 4px;
+  }
+  .callroom__more:has(.callroom__link--interview) .callroom__link {
+    padding-inline: 7px;
+  }
   /* the key keeps its own size at the right, like on wide screens; a full-width bar read as a form's submit */
   .first-note__row {
     flex-direction: column;
@@ -6821,6 +7022,8 @@ body:has(dialog[open]) .callroom__pulse::after {
   .phone-door__btn,
   .phone-door--hero .phone-door__text,
   .call-pill,
+  .callroom__mode-pill,
+  .call-interview,
   .callkey__btn,
   .hello__bubble,
   .starter,
@@ -6831,6 +7034,9 @@ body:has(dialog[open]) .callroom__pulse::after {
   .end-desk,
   .end-confirm {
     border: 1px solid CanvasText;
+  }
+  .interview-style__choice[aria-pressed='true'] {
+    border: 2px solid Highlight;
   }
   .connbar {
     border-bottom: 2px solid CanvasText;

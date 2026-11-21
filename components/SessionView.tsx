@@ -13,7 +13,7 @@ import { SavePreview } from './SavePreview';
 import { MaterialDialog } from './Sources';
 import { TopBar } from './TopBar';
 import { WorkPanel, type TraySection } from './WorkPanel';
-import { AUDIO_ACTIVITIES, IDLE_CALL, buddyForActivity, buddyLine, isCallOpen } from './call';
+import { AUDIO_ACTIVITIES, IDLE_CALL, buddyForActivity, buddyLine, callBlockReason, isCallOpen } from './call';
 import { anyDialogOpen, morph, useFlash, useMediaQuery } from './hooks';
 import {
   ACTIVITY_META,
@@ -27,7 +27,7 @@ import {
 } from './labels';
 import type { AssistMode, BreadVM } from './vm';
 
-export type EntryIntent = 'talk' | 'welcome' | 'review' | 'resume' | 'call' | null;
+export type EntryIntent = 'talk' | 'welcome' | 'review' | 'resume' | 'call' | 'interview' | null;
 
 interface SessionViewProps {
   vm: BreadVM;
@@ -62,6 +62,11 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   const [speakPendingId, setSpeakPendingId] = useState<string | null>(null);
   const [live, setLive] = useState('');
   const [callMarks, setCallMarks] = useState<CallMark[]>([]);
+  const [cardBeforeDebriefId, setCardBeforeDebriefId] = useState<string | null>(null);
+  const debrief = state.interview?.stage === 'debrief';
+  // The stage changes before the request finishes. A card from an earlier turn can still be current.
+  if (!debrief && state.currentCardId !== cardBeforeDebriefId) setCardBeforeDebriefId(state.currentCardId);
+  const debriefCard = debrief && currentCard?.type === 'review' && currentCard.id !== cardBeforeDebriefId ? currentCard : null;
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -72,14 +77,14 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
   const hasTalked = state.messages.some((m) => m.role === 'user') || state.sources.length > 0 || state.mode !== 'listen';
 
   // 面包 waves once when a fresh conversation opens, then settles into whatever is really going on.
-  const greeting = useFlash(intent !== 'call' && intent !== 'resume' && state.messages.length === 0, 2600);
+  const greeting = useFlash(intent !== 'call' && intent !== 'interview' && intent !== 'resume' && state.messages.length === 0, 2600);
   const typing = draft.trim().length > 0;
   const buddy = greeting && activity === 'idle' && !typing ? 'wave' : buddyForActivity(activity, typing);
 
-  // Typing intent gets the keyboard; listen-first and call intents do not (no surprise keyboard on phones).
+  // Typing intent gets the keyboard; listen-first and interview entry keep focus on the page.
   useEffect(() => {
     if (intent === 'call') return;
-    if (intent === 'welcome') headingRef.current?.focus();
+    if (intent === 'welcome' || intent === 'interview') headingRef.current?.focus();
     else textareaRef.current?.focus({ preventScroll: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -121,10 +126,10 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
         marks.map((k, i) => (i === marks.length - 1 && k.end === null ? { ...k, end: count, seconds: lastElapsed.current } : k)),
       );
       setLive('通话挂断了，刚才的话都在对话里');
-      window.setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 0);
+      if (!trayOpen) window.setTimeout(() => textareaRef.current?.focus({ preventScroll: true }), 0);
     }
     wasInCall.current = inCall;
-  }, [inCall]);
+  }, [inCall, trayOpen]);
 
   const cardKey = currentCard ? `${currentCard.id}:${currentCard.revision}:${currentCard.validity}` : null;
   useEffect(() => {
@@ -187,16 +192,26 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
 
   const assist = (mode: AssistMode, direction?: string) => {
     if (!canAct || busy) return;
+    if (mode === 'interview') headingRef.current?.focus({ preventScroll: true });
     void vm.assist(mode, direction);
+  };
+
+  const backToTalk = () => {
+    if (state.mode === 'interview') {
+      headingRef.current?.focus({ preventScroll: true });
+      vm.exitInterviewToListen();
+    } else {
+      vm.setMode('listen');
+    }
   };
 
   // The retry key disappears as soon as the reply is underway; keep focus on the page, not on <body>,
   // and without pulling up a phone keyboard.
-  const canRetry = !!vm.canRetry && !!vm.retryLastTurn && canAct && !inCall;
+  const canRetry = vm.canRetry && canAct && !inCall;
   const retry = () => {
     if (!canRetry || busy) return;
     headingRef.current?.focus({ preventScroll: true });
-    void vm.retryLastTurn?.();
+    void vm.retryLastTurn();
   };
 
   // A call owns the microphone and the speaker. A one-off recording has to be settled by the user
@@ -339,7 +354,16 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
 
         <main id="main" className="stage" aria-labelledby={inCall ? undefined : 'conv-heading'} aria-label={inCall ? '和面包语音通话' : undefined}>
           {inCall ? (
-            <CallRoom vm={vm} wide={isDesktop} onHangup={vm.hangupCall} />
+            <CallRoom
+              vm={vm}
+              wide={isDesktop}
+              debriefCard={debriefCard}
+              onHangup={vm.hangupCall}
+              onOpenDebriefCard={() => {
+                vm.hangupCall();
+                openTray('card');
+              }}
+            />
           ) : (
             <>
               <h1 id="conv-heading" ref={headingRef} tabIndex={-1} className="sr-only">
@@ -386,15 +410,12 @@ export function SessionView({ vm, intent, initialDraft = '', onOpenArchive, onOp
 
               <div className="dock">
                 <ModeBar
-                  mode={state.mode}
-                  selectedQuestion={state.selectedQuestion}
-                  practiceCriteria={state.practiceCriteria}
+                  vm={vm}
                   canAct={canAct}
-                  busy={busy}
                   show={hasTalked && !['requesting_mic', 'recording', 'recorded', 'transcribing'].includes(activity) && !vm.transcriptDraft}
-                  hasCard={!!currentCard}
                   onAssist={assist}
-                  onBackToTalk={() => vm.setMode('listen')}
+                  onBackToTalk={backToTalk}
+                  onInterviewCall={!callBlocked && !callBlockReason(caps) ? startCall : undefined}
                   onAdjustPractice={() => {
                     settle();
                     setAdjustOpen(true);

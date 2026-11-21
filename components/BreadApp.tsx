@@ -9,13 +9,12 @@ import { Notices } from './Notices';
 import { SavedArchive } from './SavedArchive';
 import { AboutSheet, type TextSize } from './ServiceStatus';
 import { SessionView, type EntryIntent } from './SessionView';
-import { CALL_RUNNING, IDLE_CALL, isCallOpen } from './call';
+import { CALL_RUNNING, IDLE_CALL, callBlockReason, isCallOpen } from './call';
 import { morph } from './hooks';
 import { STOP_BEFORE_MODAL } from './labels';
-import type { BreadVM } from './vm';
 
 export default function BreadApp() {
-  const vm = useBread() as BreadVM;
+  const vm = useBread();
   const { state } = vm;
   const [intent, setIntent] = useState<EntryIntent>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -76,6 +75,13 @@ export default function BreadApp() {
     void vm.startCall();
   };
 
+  const interview = () => {
+    setInitialDraft('');
+    if (state.lifecycle === 'ended') vm.reset();
+    setIntent('interview');
+    void vm.startInterview({ startCall: !callBlockReason(vm.capabilities) });
+  };
+
   const resume = (saved: SavedCase) => {
     setIntent('resume');
     vm.resumeSaved(saved);
@@ -125,6 +131,7 @@ export default function BreadApp() {
             vm.start('listen', true);
           }}
           onReview={review}
+          onInterview={interview}
           onOpenArchive={openArchive}
           onOpenAbout={openAbout}
         />

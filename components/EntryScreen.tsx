@@ -7,6 +7,7 @@ import { BrandLogo } from './Brand';
 import { CallLauncher } from './Companion';
 import { LampScene } from './NightWindow';
 import { AiStamp } from './ServiceStatus';
+import { callBlockReason } from './call';
 import { useAutoGrow } from './hooks';
 
 interface EntryScreenProps {
@@ -16,6 +17,7 @@ interface EntryScreenProps {
   onCall: (draft?: string) => void;
   onWelcome: () => void;
   onReview: () => void;
+  onInterview: () => void;
   onOpenArchive: () => void;
   onOpenAbout: () => void;
 }
@@ -34,7 +36,7 @@ interface EntryScreenProps {
  * The night is said once, small, above the title; the bar at the top only carries the name.
  */
 export function EntryScreen(props: EntryScreenProps) {
-  const { caps, savedCount, onTalk, onCall, onWelcome, onReview, onOpenArchive, onOpenAbout } = props;
+  const { caps, savedCount, onTalk, onCall, onWelcome, onReview, onInterview, onOpenArchive, onOpenAbout } = props;
   const [text, setText] = useState('');
   const ref = useRef<HTMLTextAreaElement>(null);
   useAutoGrow(ref, text, 200);
@@ -149,6 +151,20 @@ export function EntryScreen(props: EntryScreenProps) {
               <span className="later-link__text">
                 <span className="later-link__title">以前留下的{savedCount > 0 ? `（${savedCount}）` : ''}</span>
                 <small>只在这台设备的这个浏览器里</small>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="later-link"
+              onClick={onInterview}
+              aria-labelledby="entry-interview-title"
+              aria-describedby="entry-interview-detail"
+            >
+              <span className="later-link__text">
+                <span id="entry-interview-title" className="later-link__title">准备下一场，来一段模拟面试</span>
+                <small id="entry-interview-detail">
+                  {callBlockReason(caps) ? '文字多轮追问模拟，练完一起复盘' : '通电话多轮追问，温和陪练或真实深挖，练完一起复盘'}
+                </small>
               </span>
             </button>
           </footer>

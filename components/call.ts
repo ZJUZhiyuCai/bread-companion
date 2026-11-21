@@ -1,4 +1,4 @@
-import type { Activity, CallPhase, CallState, Capabilities } from '@/domain/types';
+import type { Activity, CallPhase, CallState, Capabilities, Mode } from '@/domain/types';
 import type { BuddyState } from './BreadBuddy';
 import type { AvatarState } from './labels';
 
@@ -30,21 +30,22 @@ export function isCallOpen(call: CallState): boolean {
 export const CALL_RUNNING: CallPhase[] = ['connecting', 'listening', 'transcribing', 'thinking', 'speaking', 'muted'];
 
 /**
- * One short line per phase, in 面包's own voice. `hint` is only for the four phases where something
- * about the device or the error genuinely needs saying — the running phases say nothing, because the
- * keys carry their own names and speaking up no longer needs instructions.
+ * One short line per phase, in 面包's own voice. Hints appear when the user's next action needs context.
  *
  * 转写 and 思考 deliberately share a title: which one is running is an implementation detail, and
  * swapping headings twice inside a second just reads as a machine busy with itself.
  */
-export function callMeta(call: CallState): { title: string; hint: string } {
+export function callMeta(call: CallState, mode: Mode = 'listen'): { title: string; hint: string } {
   switch (call.phase) {
     case 'idle':
       return { title: '还没接通', hint: '' };
     case 'connecting':
       return { title: '正在接通', hint: '浏览器问你时，选“允许”就好。' };
     case 'listening':
-      return { title: call.heardSpeech ? '嗯，在听' : '在听', hint: '' };
+      return {
+        title: call.heardSpeech ? '嗯，在听' : '在听',
+        hint: mode === 'interview' ? '慢慢想，答完点“说完了”或停顿两秒' : '',
+      };
     case 'transcribing':
     case 'thinking':
       return { title: '嗯，让我想想', hint: '' };
