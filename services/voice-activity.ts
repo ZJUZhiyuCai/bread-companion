@@ -1,43 +1,62 @@
+import type { CallTurnProfile } from '@/domain/types';
+
+interface VoiceActivityConfig { gapSeconds: number; maxSeconds: number; }
+
+export const CALL_TURN_PROFILES = {
+  chat: { gapSeconds: 0.65, maxSeconds: 55 },
+  interview: { gapSeconds: 1.8, maxSeconds: 120 },
+} satisfies Record<CallTurnProfile, VoiceActivityConfig>;
+
 /** Local energy gate. It detects speech-like sound/pauses, never emotions or identity. */
 export class VoiceActivity {
   private pre: Float32Array[] = [];
   private frames: Float32Array[] = [];
-  private duration = 0;
-  private voiced = 0;
-  private silence = 0;
+  private capturedSamples = 0;
+  private voicedSamples = 0;
+  private silentSamples = 0;
   private floor = 0.0005;
   private started = false;
   private announced = false;
-  constructor(readonly sampleRate: number, private gapSeconds = 0.65, private maxSeconds = 55) {}
-  reset() { this.pre = []; this.frames = []; this.duration = this.voiced = this.silence = 0; this.started = this.announced = false; }
+  constructor(readonly sampleRate: number, private gapSeconds = CALL_TURN_PROFILES.chat.gapSeconds, private maxSeconds = CALL_TURN_PROFILES.chat.maxSeconds) {}
+  setConfig({ gapSeconds, maxSeconds }: VoiceActivityConfig) {
+    this.gapSeconds = gapSeconds;
+    this.maxSeconds = maxSeconds;
+  }
+  reset() { this.pre = []; this.frames = []; this.capturedSamples = this.voicedSamples = this.silentSamples = 0; this.started = this.announced = false; }
   push(frame: Float32Array, allowVoice = true): { level: number; heardSpeech: boolean; speechStarted: boolean; utterance: Float32Array | null } {
-    const dt = frame.length / this.sampleRate;
+    const limit = Math.floor(this.sampleRate * this.maxSeconds);
     const rms = Math.sqrt(frame.reduce((n, v) => n + v * v, 0) / Math.max(1, frame.length));
     // Normal listening admits a quiet phone microphone; barge-in retains its stricter spectral gate.
     const threshold = Math.max(0.002, Math.min(0.025, this.floor * 3));
     const loud = allowVoice && rms > threshold;
     if (!this.started && !loud && allowVoice) this.floor = this.floor * 0.97 + rms * 0.03;
     if (!this.started) {
-      this.pre.push(frame.slice());
-      while (this.pre.reduce((n, f) => n + f.length, 0) > this.sampleRate * 0.28 && this.pre.length > 1) this.pre.shift();
-      if (loud) { this.started = true; this.frames = this.pre; this.pre = []; this.duration = this.frames.reduce((n, f) => n + f.length, 0) / this.sampleRate; this.voiced = dt; }
-    } else {
-      this.frames.push(frame.slice()); this.duration += dt;
-      if (loud) { this.voiced += dt; this.silence = 0; } else this.silence += dt;
+      const samples = frame.slice(0, limit);
+      this.pre.push(samples);
+      const preLimit = Math.min(this.sampleRate * 0.28, limit);
+      while (this.pre.reduce((n, f) => n + f.length, 0) > preLimit && this.pre.length > 1) this.pre.shift();
+      if (loud) {
+        this.started = true; this.frames = this.pre; this.pre = [];
+        this.capturedSamples = this.frames.reduce((n, f) => n + f.length, 0);
+        this.voicedSamples = samples.length;
+      }
+    } else if (this.capturedSamples < limit) {
+      const samples = frame.slice(0, limit - this.capturedSamples);
+      this.frames.push(samples); this.capturedSamples += samples.length;
+      if (loud) { this.voicedSamples += samples.length; this.silentSamples = 0; } else this.silentSamples += samples.length;
     }
-    const heardSpeech = this.started && this.voiced >= 0.16;
+    const heardSpeech = this.started && this.voicedSamples >= this.sampleRate * 0.16;
     const speechStarted = heardSpeech && !this.announced;
     if (speechStarted) this.announced = true;
-    const utterance = this.started && (this.silence >= this.gapSeconds || this.duration >= this.maxSeconds) ? this.finish() : null;
+    const utterance = this.started && (this.silentSamples >= this.gapSeconds * this.sampleRate || this.capturedSamples >= limit) ? this.finish() : null;
     return { level: Math.min(1, rms * 8), heardSpeech, speechStarted, utterance };
   }
   finish(): Float32Array | null {
     let out: Float32Array | null = null;
-    if (this.voiced >= 0.16) {
-      const length = this.frames.reduce((n, f) => n + f.length, 0);
+    if (this.voicedSamples >= this.sampleRate * 0.16) {
       // Keep final consonants without uploading the whole end-of-turn silence.
-      const trim = Math.floor(Math.max(0, this.silence - 0.2) * this.sampleRate);
-      out = new Float32Array(Math.max(0, length - trim)); let offset = 0;
+      const trim = Math.floor(Math.max(0, this.silentSamples - this.sampleRate * 0.2));
+      out = new Float32Array(Math.max(0, this.capturedSamples - trim)); let offset = 0;
       for (const frame of this.frames) { const n = Math.min(frame.length, out.length - offset); if (n <= 0) break; out.set(frame.subarray(0, n), offset); offset += n; }
     }
     this.reset(); return out;

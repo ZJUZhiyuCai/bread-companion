@@ -1,4 +1,12 @@
-import type { CallState, Capabilities, Card, Mode, Origin, SavedCase, SessionState } from './types';
+import type { CallState, Capabilities, Card, InterviewStyle, Mode, Origin, SavedCase, SessionState } from './types';
+
+export interface StartInterviewOptions {
+  style?: InterviewStyle;
+  role?: string;
+  topic?: string;
+  maxRounds?: number;
+  startCall?: boolean;
+}
 /** Stable frontend boundary. Codex implements services/use-bread.ts; Claude owns UI. */
 export interface BreadViewModel {
   state: SessionState;
@@ -24,9 +32,13 @@ export interface BreadViewModel {
   interruptCall: () => void;
   finishCallTurn: () => void;
   resumeCall: () => Promise<void>;
+  startInterview: (options?: StartInterviewOptions) => Promise<void>;
+  setInterviewStyle: (style: InterviewStyle) => void;
+  requestInterviewDebrief: () => Promise<void>;
+  exitInterviewToListen: () => void;
   start: (mode?: Mode, welcome?: boolean) => void;
   send: (text: string) => Promise<void>;
-  assist: (mode: Exclude<Mode, 'listen'>) => Promise<void>;
+  assist: (mode: Exclude<Mode, 'listen'>, direction?: string) => Promise<void>;
   addMaterial: (text: string) => boolean;
   setMode: (mode: Mode) => void;
   stop: () => void;

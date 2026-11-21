@@ -44,7 +44,21 @@ export interface InterviewUpdate {
 export interface SessionState { rejectedFindings?: RejectedFinding[]; sessionId: string; caseId: string; started: boolean; mode: Mode; interview: InterviewState | null; lifecycle: 'active' | 'ended'; activity: Activity; supportState: 'normal' | 'support_guidance'; epoch: number; activeRunId: string | null; contextRevision: number; messages: Message[]; sources: Source[]; findings: Finding[]; cards: Card[]; currentCardId: string | null; selectedQuestion: string; practiceCriteria: string[]; endSnapshot: EndSnapshot | null; }
 export interface TurnRequest extends RunToken { requestId: string; mode: Mode; channel?: 'text' | 'call'; userMessage: string; context: { interview?: InterviewState; rejectedFindings?: RejectedFinding[]; summary: string; recentMessages: { role: 'user' | 'assistant'; text: string }[]; sources: Source[]; sourceSegments?: SourceSegment[]; preferences?: ConversationPreferences; selectedQuestion?: string; practiceCriteria?: string[] }; }
 export type CallPhase = 'idle' | 'connecting' | 'listening' | 'transcribing' | 'thinking' | 'speaking' | 'muted' | 'paused' | 'error';
-export interface CallState { inputWarning?: string; active: boolean; phase: CallPhase; muted: boolean; elapsedSeconds: number; level: number; heardSpeech: boolean; lastHeard: string; caption: string; error: string; }
+export type CallTurnProfile = 'chat' | 'interview';
+export interface CallState {
+  inputWarning?: string;
+  active: boolean;
+  phase: CallPhase;
+  muted: boolean;
+  elapsedSeconds: number;
+  level: number;
+  heardSpeech: boolean;
+  lastHeard: string;
+  caption: string;
+  /** True while the caption is a stream preview awaiting candidate validation. */
+  captionPreview?: boolean;
+  error: string;
+}
 export interface PracticeSetup { question: string; criteria: string[]; }
 export interface TurnCandidate extends RunToken { requestId: string; assistantText: string; findings: Finding[]; cardDraft?: Card; practiceSetup?: PracticeSetup; interviewUpdate?: InterviewUpdate; suggestedMode?: Mode; supportGuidance?: boolean; warnings: string[]; serviceMode: 'mock' | 'real'; }
 export interface Capabilities { agent: { mode: 'mock' | 'real'; label: string; configured: boolean }; asr: { available: boolean; label: string; reason?: string; opusUpload?: boolean; callPipeline?: boolean }; tts: { available: boolean; label: string; reason?: string; greeting?: string; turnStream?: boolean; sentenceStream?: boolean }; limits: { maxInputChars: number; maxSourceChars: number; maxAudioBytes: number; maxRecordingSeconds: number }; processingNotice: string; }

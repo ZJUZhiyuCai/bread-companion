@@ -1,5 +1,6 @@
 import { encodeWav } from './media-controller';
-import { resampleMono, VoiceActivity } from './voice-activity';
+import { CALL_TURN_PROFILES, resampleMono, VoiceActivity } from './voice-activity';
+import type { CallTurnProfile } from '@/domain/types';
 import { PlaybackEchoGuard, speechLikeFrame } from './playback-echo';
 import { startDialTone } from './dial-tone';
 import { CaptureHealth } from './capture-health';
@@ -23,9 +24,10 @@ export interface CallAudioEvents {
 }
 export interface CallAudioPort {
   open: (events: CallAudioEvents) => Promise<boolean>;
+  setProfile?: (profile: CallTurnProfile) => void;
   listen: (enabled: boolean, options?: { interruptible?: boolean; preserve?: boolean }) => void;
   finish: () => void;
-  play: (blob: CallSpeech, signal: AbortSignal, onStart: () => void) => Promise<void>;
+  play: (blob: CallSpeech, signal: AbortSignal, onStart: () => void, startWithFirstChunk?: boolean) => Promise<void>;
   stopPlayback: () => void;
   stopDialTone?: () => void;
   observeNetworkDelay?: (ms: number) => void;
@@ -43,6 +45,7 @@ export class BrowserCallAudio implements CallAudioPort {
   private cancelStream: (() => void) | null = null;
   private resolvePlayback: (() => void) | null = null;
   private detector: VoiceActivity | null = null;
+  private profile: CallTurnProfile = 'chat';
   private listening = false;
   private interruptible = false;
   private echo = new PlaybackEchoGuard();
@@ -56,6 +59,10 @@ export class BrowserCallAudio implements CallAudioPort {
     if (Number.isFinite(ms) && ms >= 0 && ms <= 5000) this.networkDelayMs = Math.max(ms, this.networkDelayMs * .7);
   };
   stopDialTone = () => { this.stopRingback?.(); this.stopRingback = null; };
+  setProfile(profile: CallTurnProfile) {
+    this.profile = profile;
+    this.detector?.setConfig(CALL_TURN_PROFILES[profile]);
+  }
 
   async open(events: CallAudioEvents): Promise<boolean> {
     this.close(); const generation = this.generation;
@@ -84,7 +91,9 @@ export class BrowserCallAudio implements CallAudioPort {
       const capture = new AudioWorkletNode(context, 'bread-capture', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], channelCount: 1 });
       this.capture = capture; this.source = context.createMediaStreamSource(stream);
       this.source.connect(capture); capture.connect(context.destination);
-      this.detector = new VoiceActivity(context.sampleRate); this.events = events;
+      this.detector = new VoiceActivity(context.sampleRate);
+      this.detector.setConfig(CALL_TURN_PROFILES[this.profile]);
+      this.events = events;
       capture.onprocessorerror = () => events.failure('声音处理暂时中断了，可以重试或打字。');
       capture.port.onmessage = ({ data }: MessageEvent<{ samples: Float32Array; epoch: number; at: number }>) => {
         if (generation !== this.generation || !this.listening || data.epoch !== this.captureEpoch || !(data.samples instanceof Float32Array)) return;
@@ -126,7 +135,7 @@ export class BrowserCallAudio implements CallAudioPort {
     this.events?.utterance(new File([encodeWav(pcm)], 'call-turn.wav', { type: 'audio/wav' }));
   }
   finish() { if (!this.listening) return; const samples = this.detector?.finish(); if (samples) this.submit(samples); }
-  async play(blob: CallSpeech, signal: AbortSignal, onStart: () => void): Promise<void> {
+  async play(blob: CallSpeech, signal: AbortSignal, onStart: () => void, startWithFirstChunk = false): Promise<void> {
     const context = this.context; if (!context) throw new Error('声音连接已暂停，请继续通话。');
     this.stopPlayback(); signal.throwIfAborted();
     if (blob instanceof SpeechChunks) {
@@ -135,7 +144,7 @@ export class BrowserCallAudio implements CallAudioPort {
       try {
         const decoder = blob.kind === 'mp3' ? await createSpeechDecoder(signal) : null;
         if (context !== this.context) { decoder?.free(); return; }
-        if (blob.kind !== 'mp3' || decoder) return this.playPcm(blob, signal, onStart, decoder);
+        if (blob.kind !== 'mp3' || decoder) return this.playPcm(blob, signal, onStart, decoder, startWithFirstChunk);
         // No second synthesis if the optional decoder cannot initialize.
         const chunks: Uint8Array<ArrayBuffer>[] = [], iterator = blob[Symbol.asyncIterator]();
         try {
@@ -157,7 +166,7 @@ export class BrowserCallAudio implements CallAudioPort {
     });
     signal.throwIfAborted();
   }
-  private async playPcm(stream: SpeechChunks, parent: AbortSignal, onStart: () => void, decoder: MPEGDecoder | null) {
+  private async playPcm(stream: SpeechChunks, parent: AbortSignal, onStart: () => void, decoder: MPEGDecoder | null, startWithFirstChunk: boolean) {
     const context = this.context!;
     const canceled = new AbortController(), signal = AbortSignal.any([parent, canceled.signal]);
     const cancel = () => canceled.abort(); this.cancelStream = cancel;
@@ -168,7 +177,8 @@ export class BrowserCallAudio implements CallAudioPort {
     // The first MP3 fragment can contain only 252 ms. On a high-RTT link, starting
     // it immediately may exhaust playback before the next fragment arrives.
     const weakLink = this.networkDelayMs >= 250 || network?.effectiveType === '3g' || (network?.rtt ?? 0) >= 250 || ((network?.downlink ?? 0) > 0 && network!.downlink! < 1);
-    const startupSamples = decoder ? stream.sampleRate * (weakLink ? .5 : .2) : 0;
+    // Sentence audio may have to wait for the model before another packet exists.
+    const startupSamples = decoder && !startWithFirstChunk ? stream.sampleRate * (weakLink ? .5 : .2) : 0;
     let buffered: Float32Array[] = [], bufferedSamples = 0;
     const schedule = (pcm: Float32Array) => {
       const buffer = context.createBuffer(1, pcm.length, stream.sampleRate);
@@ -254,10 +264,10 @@ export class BrowserCallAudio implements CallAudioPort {
 }
 
 /** A resumed sentence can arrive before ASR completes; retain its earlier audio instead of losing it. */
-export async function joinCallUtterances(first: Promise<File>, second: File): Promise<File> {
+export async function joinCallUtterances(first: Promise<File>, second: File, maxSeconds = CALL_TURN_PROFILES.chat.maxSeconds): Promise<File> {
   const a = new DataView(await (await first).arrayBuffer()), b = new DataView(await second.arrayBuffer());
   const lengthA = (a.byteLength - 44) / 2, lengthB = (b.byteLength - 44) / 2, gap = 1600;
-  if (lengthA + lengthB + gap > 16000 * 55) throw new Error('这一段有点长，可以拆成两句说。');
+  if (lengthA + lengthB + gap > 16000 * maxSeconds) throw new Error('这一段有点长，可以拆成两句说。');
   const pcm = new Float32Array(lengthA + gap + lengthB);
   for (let i = 0; i < lengthA; i++) pcm[i] = a.getInt16(44 + i * 2, true) / 32768;
   for (let i = 0; i < lengthB; i++) pcm[lengthA + gap + i] = b.getInt16(44 + i * 2, true) / 32768;

@@ -185,6 +185,18 @@ describe('compressed streaming avoids the PCM bandwidth penalty', () => {
     stream.push(mp3.slice(8192)); await vi.waitFor(() => expect(h.nodes.length).toBeGreaterThan(1));
     abort.abort(); await rejected; h.nodes.forEach(s => expect(s.stop).toHaveBeenCalledTimes(1));
   });
+  it('starts a sentence on its first decoded MP3 fragment even on a high-RTT link', async () => {
+    const h = player(), stream = new Mp3Speech(), abort = new AbortController(), start = vi.fn();
+    h.audio.observeNetworkDelay(650);
+    const played = h.audio.play(stream, abort.signal, start, true);
+    const rejected = expect(played).rejects.toMatchObject({ name: 'AbortError' });
+    try {
+      stream.push(mp3.slice(0, 4096));
+      await vi.waitFor(() => expect(start).toHaveBeenCalledOnce());
+      expect(h.nodes).toHaveLength(1);
+    } finally { abort.abort(); await rejected; }
+    expect(h.nodes[0].stop).toHaveBeenCalledOnce();
+  });
   it('uses native decoding of the same response if the optional decoder cannot initialize', async () => {
     vi.spyOn(decoderFactory, 'createSpeechDecoder').mockResolvedValue(null);
     const h = player(), stream = new Mp3Speech(), start = vi.fn();
