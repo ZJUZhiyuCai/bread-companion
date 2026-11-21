@@ -1,6 +1,7 @@
 import type { TurnRequest } from '@/domain/types';
 import { candidateSchema } from '@/domain/schemas';
 import { validateCandidate } from '@/domain/evidence';
+import { interviewNeedsDebrief } from '@/domain/policy';
 import { withAbort } from '@/lib/abort';
 import { config } from './config';
 import { AppError } from './errors';
@@ -8,8 +9,11 @@ import { withCircuit } from './resilience';
 import { RealProvider } from './providers/real-agent';
 import { MockProvider } from './providers/mock-agent';
 
-export const turnLane = (input: TurnRequest) => input.mode === 'listen'
-  ? input.channel === 'call' ? 'call' as const : 'companion' as const : 'analysis' as const;
+export function turnLane(input: TurnRequest) {
+  if (input.mode === 'listen') return input.channel === 'call' ? 'call' : 'companion';
+  if (input.mode === 'interview' && input.channel === 'call' && !interviewNeedsDebrief(input.context.interview)) return 'call';
+  return 'analysis';
+}
 
 /** Both transports publish only the same complete, validated candidate. */
 export async function generateTurn(input: TurnRequest, signal: AbortSignal) {

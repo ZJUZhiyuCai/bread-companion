@@ -1,4 +1,4 @@
-import type { Mode } from './types';
+import type { InterviewState, Mode } from './types';
 
 /** Only direct, unambiguous leave-taking. Quoted stories, requests and ambiguous prefixes go to the model. */
 export function farewellReply(text: string): string | null {
@@ -12,14 +12,36 @@ export function farewellReply(text: string): string | null {
   return /明天/.test(last) ? '好，明天聊。' : '好，回头聊。';
 }
 
+const intentText = (text: string) => text.trim().replace(/[。！!，,？?\s]+$/g, '');
+const directIntentText = (text: string) => text.replace(/^(?:现在|今天|今晚)[，,\s]*(?=我)/, '').replace(/^我(?:现在|今天|今晚)/, '我');
+const startInterview = /^(?:请)?(?:我(?:现在)?(?:想要?|要)|我们|能不能|可不可以|可以)?(?:帮我|陪我|一起)?(?:现在|先)?(?:(?:开始|来(?:一段|一场|一次|一轮|个)|做(?:一场|一次))?(?:语音)?模拟面试|(?:你)?(?:来)?(?:当|做)(?:我的)?面试官(?:来?问我)?)(?:吧|好吗|可以吗|行吗|吗)?$/;
+const leaveInterview = /^(?:我)?(?:现在|今天|今晚|暂时|还是)?(?:先)?(?:(?:不想|不要|不用|不|别)(?:再)?(?:语音)?模拟(?:面试|了)(?:了)?|回到(?:聊聊|聊天))(?:吧)?(?=$|[。！!，,？?\s])/;
+
+export function interviewControlIntent(text: string): 'debrief' | 'gentle' | 'realistic' | null {
+  const t = intentText(text);
+  if (/^(?:请|帮我|先|我们|现在|我想要?){0,3}(?:结束(?:这场|这轮|这次)?(?:模拟面试|模拟|面试)(?:吧|了)?|复盘(?:一下)?(?:这场|这轮|这次|刚才的)(?:模拟面试|模拟|面试)(?:吧)?|到这里[，,\s]*复盘一下(?:吧)?)$/.test(t)) return 'debrief';
+  if (/^(?:请|可以|能不能|我想)?(?:温和一点(?:问)?|轻松一点(?:问)?|问得温和一点)(?:吧|吗)?$/.test(t)) return 'gentle';
+  if (/^(?:请|可以|能不能|我想)?(?:严格一点(?:问)?|深挖一下|按真实面试来|问得严格一点)(?:吧|吗)?$/.test(t)) return 'realistic';
+  return null;
+}
+
+/** Once the last question is answered, the next turn generates the debrief. */
+export function interviewNeedsDebrief(interview?: InterviewState | null): boolean {
+  return !!interview && (interview.stage === 'debrief' || interview.round >= interview.maxRounds);
+}
+
 // Direct requests only. Quoted material is not a command, and declining analysis takes priority.
 export function explicitIntent(text: string): Mode | 'stop' | 'end' | null {
-  const t = text.trim().replace(/[。！!，,？?\s]+$/g, '');
+  const t = intentText(text);
   if (/^(停止|停一下|暂停|先停一下|别说了)$/.test(t)) return 'stop';
   if (/^(结束|结束会话|今天到这里|今晚到这里|今晚先到这里)$/.test(t)) return 'end';
   if (/^[“”「」『』"']|^(他说|她说|面试官说|原文|引用|假如|如果)/.test(t)) return null;
   // Normalize only an explicit conversational prefix; quoted/reported content was excluded above.
-  const direct = t.replace(/^(?:现在|今天|今晚)[，,\s]*(?=我)/, '').replace(/^我(?:现在|今天|今晚)/, '我');
+  const direct = directIntentText(t);
+  if (leaveInterview.test(direct)) return 'listen';
+  if (startInterview.test(direct) || (/[，,：:\n]\s*(?:岗位|公司|想练|主题|方向|我应聘)/.test(direct)
+    && startInterview.test(direct.split(/[，,：:\n]/, 1)[0]))) return 'interview';
+  if (interviewControlIntent(t)) return null;
   if (/^我(?:不想|不要|先不)(?:再)?(?:复盘|分析|评价|练习)/.test(direct)) return 'listen';
   if (/^(?:我(?:想|想要)|(?:可以|能不能)(?:请)?帮我)(?:再|重新)?(?:复盘|分析一下|看看(?:刚才|那段|这段|我的|的){0,3}(?:回答|面试))(?=$|吗|了|一下|[。！!，,？?：:\s])/.test(direct)) return 'review';
   if (/^(我们)?(一起)?练习(过|了|的时候|之后)/.test(t)) return null;
@@ -39,7 +61,9 @@ export function explicitIntent(text: string): Mode | 'stop' | 'end' | null {
 // Only pure action requests are excluded from evidence selection. A request containing
 // an interview excerpt remains ordinary user material; its content must not disappear.
 export function isActionOnly(text: string): boolean {
-  const t = text.trim().replace(/[。！!，,？?\s]+$/g, '');
+  const t = intentText(text);
+  const direct = directIntentText(t);
+  if (startInterview.test(direct) || (direct && direct.match(leaveInterview)?.[0] === direct) || interviewControlIntent(t)) return true;
   if (/^(?:现在[，,\s]*)?我(?:现在)?想(?:再|重新)?复盘(?:一下)?(?:了)?$/.test(t) || /^(?:可以|能不能)帮我看看(?:刚才|那段|这段|我的|的){0,3}回答(?:吗)?$/.test(t)) return true;
   return /^(请)?(帮我)?(直接复盘|复盘|整理一下|留个记号|留一个记号)$/.test(t)
     || /^(请根据我提供的材料做一次复盘|请按修正后的材料重新复盘|请根据已确认的原话复盘|请按修正后的内容重新整理记号|帮我把刚才说的留个记号|帮我复盘一下刚才的面试片段|陪我练一题，请根据我们聊过的内容选一个问题)$/.test(t);

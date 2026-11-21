@@ -182,7 +182,7 @@ export class BreadController {
     await this.requestTurn(text, channel);
   };
   assist = async (mode: Exclude<Mode, 'listen'>, direction = '') => {
-    const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。' };
+    const requests = { organize: '帮我把刚才说的留个记号。', review: '帮我复盘一下刚才的面试片段。', practice: '陪我练一题，请根据我们聊过的内容选一个问题。', interview: '开始模拟面试。' };
     this.hangupCall();
     await this.sendMessage(requests[mode] + (direction.trim() ? `\n本次修改方向（用户说明）：${direction.trim().slice(0, 300)}` : ''), 'text', true);
   };

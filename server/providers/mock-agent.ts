@@ -1,12 +1,91 @@
-import type { Card, Finding, TurnCandidate, TurnRequest } from '@/domain/types';
-import { requestSegments } from '@/domain/context-builder';
-import { farewellReply, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
+import type { Card, Finding, SourceSegment, TurnCandidate, TurnRequest } from '@/domain/types';
+import { interviewAnswerMessages, requestSegments } from '@/domain/context-builder';
+import { normalizeFindingText } from '@/domain/evidence';
+import { farewellReply, interviewControlIntent, interviewNeedsDebrief, isActionOnly, needsImmediateSupport, SUPPORT_TEXT } from '@/domain/policy';
 import type { AgentProvider } from './agent';
+
+const interviewQuestions = [
+  { topic: /benchmark|评测|科研绘图|agent/i, question: '选一个你参与过的评测，说说你怎么验证它能发现真实的问题？', focusPoints: ['评测依据', '自己的工作'] },
+  { topic: /前端|react|vue|浏览器/i, question: '讲一次你处理过的页面性能问题，你是从哪里开始定位的？', focusPoints: ['定位方法', '验证效果'] },
+  { topic: /后端|分布式|api|高并发/i, question: '讲一次你参与处理的服务故障，你最先用什么信号缩小了排查范围？', focusPoints: ['排查依据', '负责范围'] },
+  { topic: /数据分析|实验|断点|增长/i, question: '选一次你用数据帮助做决策的经历，你用什么证据判断这项建议值得采纳？', focusPoints: ['决策依据', '验证方法'] },
+  { topic: /产品|需求|运营/, question: '选一次你参与的需求取舍，当时你怎么决定优先做哪一项？', focusPoints: ['取舍依据', '个人贡献'] },
+];
+const followUps = {
+  gentle: [
+    { question: '我们接着刚才那段说。挑一个你亲手做的步骤，当时是怎么做的？', focusPoints: ['亲手执行的动作', '实例细节'], gap: '可以挑一个亲手做的步骤展开。' },
+    { question: '做完以后，你从什么现象看出这一步起了作用？', focusPoints: ['可观察的结果', '判断依据'], gap: '可以讲清你观察到了什么。' },
+    { question: '回头看这段经历，有哪一个决定你想再试一次？', focusPoints: ['反思', '可执行调整'], gap: '可以说一个想重试的决定。' },
+    { question: '如果给没参与过的人讲这段经历，你会先交代哪个限制？', focusPoints: ['关键限制', '沟通顺序'], gap: '可以先把当时最重要的限制交代清楚。' },
+    { question: '这次以后，你保留了哪个做法，下一个项目也会用？', focusPoints: ['做法迁移', '具体场景'], gap: '可以挑一个做法，说清下一次怎么用。' },
+  ],
+  realistic: [
+    { question: '你用什么指标判定这个做法有效，判定阈值是怎么选的？', focusPoints: ['指标与阈值', '验证依据'], gap: '需要说明判定有效的可观察信号。' },
+    { question: '如果关键假设失效，最先出问题的环节是什么？你怎么发现？', focusPoints: ['失效模式', '发现信号'], gap: '可以明确关键假设失效时的发现信号。' },
+    { question: '这件事里哪项取舍由你做出，哪部分是团队已有的决定？', focusPoints: ['个人决策', '职责边界'], gap: '可以区分个人决定和团队已有决定。' },
+    { question: '如果预算减半，哪个环节你会先舍掉，代价是什么？', focusPoints: ['优先级', '取舍代价'], gap: '可以讲清压缩预算会牺牲什么。' },
+    { question: '这个方案在什么条件下不再适用，换方案的触发点是什么？', focusPoints: ['适用边界', '切换条件'], gap: '可以明确方案的适用边界。' },
+  ],
+};
+const answerDetail = /人工检查|对照组|通过标准|埋点|缓存|灰度|回滚|日志|监控|接口|样例|指标/;
+
+function mockInterview(input: TurnRequest, base: TurnCandidate, evidence: SourceSegment[]): TurnCandidate {
+  const { interview, recentMessages } = input.context;
+  if (interviewNeedsDebrief(interview) || interviewControlIntent(input.userMessage) === 'debrief') {
+    const answers = interview ? interviewAnswerMessages(recentMessages, interview).map(m => m.text) : [];
+    const answering = !!interview?.currentQuestion && !isActionOnly(input.userMessage);
+    if (answering) answers.push(input.userMessage);
+    const source = evidence.find(s => s.confirmed && s.origin === 'user_recollection' && s.label !== '本次请求'
+      && !s.label.startsWith('粘贴的材料') && answers.some(answer => answer.includes(s.text)));
+    const quote = source ? Array.from(source.text).slice(0, 100).join('') : '';
+    const refs = source ? [{ sourceId: source.sourceId, sourceRevision: source.sourceRevision, segmentId: source.segmentId, quote }] : [];
+    const detail = quote.match(answerDetail)?.[0];
+    const fact: Finding = { id: base.runId + '_answer', kind: 'reported_fact', text: (detail ? '你在回答里提到了' + detail + '。原话是：' : '这次回答的原话：') + quote, evidenceRefs: refs, validity: 'draft' };
+    const unknown: Finding = { id: base.runId + '_unknown', kind: 'unknown', text: '真实招聘方的录用或拒绝原因仍然未知。', evidenceRefs: [], validity: 'draft' };
+    const suggestion: Finding = { id: base.runId + '_next', kind: 'practice_suggestion', text: source
+      ? '下次可以从这段回答里挑一个动作，接上一句你用什么观察来判断它有效。'
+      : '材料有限，通用练习建议是先挑一个你亲手做过的步骤，用一句话说清这一步。', evidenceRefs: refs, validity: 'draft' };
+    const rejected = new Set(input.context.rejectedFindings?.map(f => normalizeFindingText(f.text)));
+    const findings = [...(source ? [fact] : []), unknown, suggestion].filter(f => !rejected.has(normalizeFindingText(f.text)));
+    const cardDraft: Card = {
+      id: base.runId + '_card', caseId: input.sessionId, type: 'review', title: '这场模拟的小复盘', revision: 1, parentRevision: null,
+      sections: findings.map(f => ({ key: f.kind === 'reported_fact' ? '这次说清楚的部分' : f.kind === 'unknown' ? '仍然未知' : '下次可以练的一点', text: f.text, findingIds: [f.id] })),
+      validity: 'draft', createdAt: new Date().toISOString(), serviceMode: 'mock',
+    };
+    const assistantText = input.context.rejectedFindings?.some(f => f.needsAcknowledgement)
+      ? '那条你不认同的判断先撤下。这一轮辛苦了，我们就留一点能用在下次练习的东西。'
+      : !findings.includes(suggestion) ? '这一轮辛苦了。这次练习可以先停在这里。'
+        : detail ? '这一轮辛苦了。你提到了' + detail + '，下次可以接着讲讲你用它判断了什么。'
+          : source ? '这一轮辛苦了。我们留一段你说过的原话，下次挑一个你做过的步骤，把判断依据也讲出来。'
+            : '这轮先到这里。我们手边的回答还少，下次挑一个你亲手做过的步骤讲开就好。';
+    const latestDetail = answering ? input.userMessage.match(answerDetail)?.[0] : undefined;
+    return { ...base, assistantText, interviewUpdate: { stage: 'debrief', ...(answering ? {
+      roundNote: { ...(latestDetail ? { strength: '回答提到了' + latestDetail + '。' } : {}), ...(findings.includes(suggestion) ? { gap: suggestion.text } : {}) }
+    } : {}) }, findings, ...(findings.length ? { cardDraft } : {}) };
+  }
+  if (!interview?.round || interview.stage === 'opening') {
+    const topic = [interview?.role, interview?.topic, input.userMessage, ...evidence.map(s => s.text),
+      ...recentMessages.filter(m => m.role === 'user').map(m => m.text)].join('\n');
+    const selected = interviewQuestions.find(entry => entry.topic.test(topic));
+    const question = selected?.question ?? '选一个你实际参与过的项目，说说你负责了哪一部分？';
+    const focusPoints = selected?.focusPoints ?? ['你的负责范围', '一个项目实例'];
+    return { ...base, assistantText: (interview?.style === 'realistic' ? '我们开始。' : '我们先从你熟悉的经历开始。') + question,
+      interviewUpdate: { stage: 'question', question, focusPoints } };
+  }
+  const choices = followUps[interview.style];
+  const { question, focusPoints, gap } = choices[(interview.round - 1) % choices.length];
+  const mentioned = input.userMessage.match(answerDetail)?.[0];
+  const strength = mentioned ? '回答提到了' + mentioned + '。' : undefined;
+  const acknowledgment = interview.style === 'gentle' && strength ? '你提到了' + mentioned + '。' : '';
+  return { ...base, assistantText: acknowledgment + question,
+    interviewUpdate: { stage: 'follow_up', question, focusPoints, roundNote: { ...(strength ? { strength } : {}), gap } } };
+}
 
 export function mockCandidate(input: TurnRequest): TurnCandidate {
   const evidence = requestSegments(input);
   const base: TurnCandidate = { requestId: input.requestId, sessionId: input.sessionId, runId: input.runId, epoch: input.epoch, contextRevision: input.contextRevision, assistantText: '', findings: [], warnings: ['当前为规则演示，开放话题理解有限。'], serviceMode: 'mock' };
   if (needsImmediateSupport(input.userMessage)) return { ...base, assistantText: SUPPORT_TEXT, supportGuidance: true };
+  if (input.mode === 'interview') return mockInterview(input, base, evidence);
   if (input.mode === 'practice' && !input.context.selectedQuestion) {
     const material = evidence.filter(s => s.confirmed && s.label !== '本次请求').map(s => s.text).join('\n');
     const question = /benchmark|评测|Agent/i.test(material) ? '讲讲你怎样判断这个 Agent 的效果。你做了什么验证，还有哪些地方不确定？' : '选一个你确实参与过的项目，说说你负责什么，以及怎样判断做得好不好。';

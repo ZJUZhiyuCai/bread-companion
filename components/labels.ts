@@ -52,6 +52,7 @@ export const DOING_META: Record<Mode, string | null> = {
   organize: '在把你说过的话留成一张记号',
   review: '在一起看那段回答',
   practice: '在练一题',
+  interview: '在模拟面试',
 };
 
 export const ORIGIN_META: Record<Origin, { label: string; desc: string }> = {

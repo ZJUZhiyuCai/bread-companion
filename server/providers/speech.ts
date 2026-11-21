@@ -2,8 +2,20 @@ import { config } from '@/server/config';
 import { AppError } from '@/server/errors';
 import { readProviderJson, retryAfterSeconds } from './response';
 import { withAbort } from '@/lib/abort';
-import { validateOpus } from './opus-upload';
+import { maxOpusBytes, validateOpus } from './opus-upload';
 import { providerFetch } from '@/server/provider-fetch';
+import { readAudioEnvelope } from '@/server/audio-envelope';
+
+export const CHAT_ASR_SECONDS = 65;
+export const INTERVIEW_ASR_SECONDS = 125;
+
+/** The profile arrives in the form. Use the bounded interview envelope while
+ * reading it and apply the selected profile's duration during media validation. */
+export function readSpeechUpload(req: Request, metadataBytes = 8192) {
+  const interviewBytes = Math.max(44 + INTERVIEW_ASR_SECONDS * 32000, maxOpusBytes(INTERVIEW_ASR_SECONDS));
+  const chatWavBytes = 44 + CHAT_ASR_SECONDS * 32000;
+  return readAudioEnvelope(req, metadataBytes + interviewBytes - chatWavBytes);
+}
 export async function synthesize(text: string, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<Uint8Array> {
   const c = config();
   if (!c.tts || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
@@ -18,7 +30,7 @@ const accepted = new Set(['audio/wav', 'audio/x-wav']);
 export function validateAudio(file: File) {
   if (!accepted.has(file.type.split(';')[0]) || file.size < 44 || file.size > 10 * 1024 * 1024) throw new AppError('UNSUPPORTED_MEDIA', 415);
 }
-export async function validateWav(file: File) {
+export async function validateWav(file: File, maxSeconds = CHAT_ASR_SECONDS) {
   validateAudio(file);
   // The browser adapter always sends this exact format. Verify real bytes and duration before billing ASR.
   const bytes = await file.arrayBuffer(); const view = new DataView(bytes); const text = (start: number, end: number) => new TextDecoder().decode(bytes.slice(start, end));
@@ -34,13 +46,13 @@ export async function validateWav(file: File) {
     if (type === 'data') duration += size / 32000;
     offset = start + size + (size % 2);
   }
-  if (!format || duration <= 0 || duration > 65) throw new AppError('UNSUPPORTED_MEDIA',415);
+  if (!format || duration <= 0 || duration > maxSeconds) throw new AppError('UNSUPPORTED_MEDIA',415);
 }
-export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = providerFetch): Promise<string> {
+export async function transcribe(file: File, signal: AbortSignal, fetcher: typeof fetch = providerFetch, maxSeconds = CHAT_ASR_SECONDS): Promise<string> {
   const c = config();
   if (!c.asr || !c.miniKey) throw new AppError('PROVIDER_UNAVAILABLE', 503);
-  if (file.type.split(';')[0] === 'audio/ogg') await validateOpus(file, signal);
-  else await validateWav(file);
+  if (file.type.split(';')[0] === 'audio/ogg') await validateOpus(file, signal, maxSeconds);
+  else await validateWav(file, maxSeconds);
   // At most one sequential retry within the original request deadline/admission slot.
   // No duplicate browser request, no hedge, no retry after cancellation or a quota/auth rejection.
   for (let attempt = 0; ; attempt++) {
@@ -59,7 +71,7 @@ export async function transcribe(file: File, signal: AbortSignal, fetcher: typeo
       providerCode = typeof payload?.base_resp?.status_code === 'number' && Number.isFinite(payload.base_resp.status_code) ? payload.base_resp.status_code : undefined;
       if (providerCode !== undefined && providerCode !== 0) throw new AppError('PROVIDER_UNAVAILABLE', 502, false);
       if (typeof payload?.text !== 'string' || payload.text.length > 4000) throw new AppError('PROVIDER_UNAVAILABLE', 502, true);
-      if (typeof payload.duration === 'number' && payload.duration > 65) throw new AppError('UNSUPPORTED_MEDIA', 415);
+      if (typeof payload.duration === 'number' && payload.duration > maxSeconds) throw new AppError('UNSUPPORTED_MEDIA', 415);
       signal.throwIfAborted(); return payload.text.trim();
     } catch (error) {
       signal.throwIfAborted();

@@ -2,13 +2,14 @@ import { BlobSource, EncodedPacketSink, Input, OGG } from 'mediabunny';
 import { AppError } from '@/server/errors';
 
 const invalid = () => new AppError('UNSUPPORTED_MEDIA', 415);
+export const maxOpusBytes = (maxSeconds: number) => (maxSeconds > 65 ? 4 : 2) * 1024 * 1024;
 
 /** Limit the container to one complete, contiguous logical stream before invoking a general media parser. */
-function checkPages(bytes: Uint8Array) {
+function checkPages(bytes: Uint8Array, maxCount: number) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let offset = 0, serial = 0, sequence = 0, ended = false;
   while (offset < bytes.length) {
-    if (ended || offset + 27 > bytes.length || view.getUint32(offset) !== 0x4f676753 || bytes[offset + 4] !== 0 || ++sequence > 4096) throw invalid();
+    if (ended || offset + 27 > bytes.length || view.getUint32(offset) !== 0x4f676753 || bytes[offset + 4] !== 0 || ++sequence > maxCount) throw invalid();
     const flags = bytes[offset + 5], segments = bytes[offset + 26];
     if (flags & ~7 || !segments || offset + 27 + segments > bytes.length || view.getUint32(offset + 18, true) !== sequence - 1) throw invalid();
     if (sequence === 1) { if (flags !== 2) throw invalid(); serial = view.getUint32(offset + 14, true); }
@@ -31,9 +32,10 @@ function packetSeconds(packet: Uint8Array) {
   return frameMs * count / 1000;
 }
 
-export async function validateOpus(file: File, signal: AbortSignal) {
-  if (file.type.split(';')[0] !== 'audio/ogg' || file.size < 47 || file.size > 2 * 1024 * 1024) throw invalid();
-  signal.throwIfAborted(); checkPages(new Uint8Array(await file.arrayBuffer())); signal.throwIfAborted();
+export async function validateOpus(file: File, signal: AbortSignal, maxSeconds = 65) {
+  if (file.type.split(';')[0] !== 'audio/ogg' || file.size < 47 || file.size > maxOpusBytes(maxSeconds)) throw invalid();
+  const maxCount = maxSeconds > 65 ? 8192 : 4096;
+  signal.throwIfAborted(); checkPages(new Uint8Array(await file.arrayBuffer()), maxCount); signal.throwIfAborted();
   const input = new Input({ source: new BlobSource(file), formats: [OGG] });
   try {
     const tracks = await input.getTracks(), track = tracks[0];
@@ -42,7 +44,7 @@ export async function validateOpus(file: File, signal: AbortSignal) {
     for await (const packet of new EncodedPacketSink(track).packets()) {
       signal.throwIfAborted(); duration += packetSeconds(packet.data); end = packet.timestamp + packet.duration;
       // A single encoder-delay/padding allowance, not one allowance per page or packet.
-      if (++count > 4096 || duration > 65.12 || !Number.isFinite(end) || packet.timestamp < -.12 || end > 65.001) throw invalid();
+      if (++count > maxCount || duration > maxSeconds + .12 || !Number.isFinite(end) || packet.timestamp < -.12 || end > maxSeconds + .001) throw invalid();
     }
     if (!count || end <= 0 || Math.abs(duration - end) > .12) throw invalid();
   } catch (error) { signal.throwIfAborted(); if (error instanceof AppError) throw error; throw invalid(); }

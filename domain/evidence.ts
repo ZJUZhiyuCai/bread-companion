@@ -1,4 +1,5 @@
 import type { Card, EvidenceRef, EvidenceSnapshot, Finding, Source, TurnCandidate, TurnRequest } from './types';
+import { interviewNeedsDebrief } from './policy';
 
 export function segments(source: Source): { id: string; text: string }[] {
   const result: { id: string; text: string }[] = [];
@@ -12,6 +13,7 @@ export function locateEvidence(sources: Source[], ref: EvidenceRef, requireConfi
   return !!source && (!requireConfirmed || source.confirmed) && segments(source).some(s => s.id === ref.segmentId && s.text.includes(ref.quote));
 }
 export function refKey(ref: EvidenceRef): string { return JSON.stringify([ref.sourceId, ref.sourceRevision, ref.segmentId, ref.quote]); }
+export const normalizeFindingText = (text: string) => text.replace(/[\s\p{P}]/gu, '');
 export function firstReference(source: Source): EvidenceRef {
   const seg = segments(source)[0];
   return { sourceId: source.id, sourceRevision: source.revision, segmentId: seg.id, quote: Array.from(seg.text).slice(0, 200).join('') };
@@ -31,25 +33,38 @@ export function evidenceSnapshots(card: Card, findings: Finding[], sources: Sour
 export function validateCandidate(candidate: TurnCandidate, input: TurnRequest): string[] {
   const errors: string[] = [];
   for (const key of ['requestId', 'sessionId', 'runId', 'epoch', 'contextRevision'] as const) if (candidate[key] !== input[key]) errors.push('STALE_RESULT');
-  const normalize = (s: string) => s.replace(/[\s\p{P}]/gu, '');
-  const rejected = new Set((input.context.rejectedFindings ?? []).map(f => normalize(f.text)));
-  if (candidate.findings.some(f => rejected.has(normalize(f.text)))) errors.push('REJECTED_FINDING_REPEATED');
+  const rejected = new Set((input.context.rejectedFindings ?? []).map(f => normalizeFindingText(f.text)));
+  if (candidate.findings.some(f => rejected.has(normalizeFindingText(f.text)))) errors.push('REJECTED_FINDING_REPEATED');
   if (candidate.cardDraft?.titleUserEdited || candidate.cardDraft?.sections.some(s => s.userEdited)) errors.push('MODEL_CANNOT_MARK_USER_EDIT');
   const preparingPractice = input.mode === 'practice' && !input.context.selectedQuestion;
   if (candidate.practiceSetup && (!preparingPractice || candidate.supportGuidance)) errors.push('PRACTICE_SETUP_NOT_REQUESTED');
   if (preparingPractice && !candidate.supportGuidance && !candidate.practiceSetup) errors.push('PRACTICE_SETUP_REQUIRED');
   if (preparingPractice && (candidate.findings.length || candidate.cardDraft)) errors.push('PRACTICE_ANSWER_REQUIRED');
+  const interviewUpdate = candidate.interviewUpdate;
+  if (interviewUpdate && (input.mode !== 'interview' || candidate.supportGuidance)) errors.push('INTERVIEW_UPDATE_NOT_REQUESTED');
+  if (input.mode === 'interview' && !candidate.supportGuidance) {
+    if (!interviewUpdate) errors.push('INTERVIEW_UPDATE_REQUIRED');
+    const debrief = interviewNeedsDebrief(input.context.interview);
+    if (debrief && interviewUpdate && interviewUpdate.stage !== 'debrief') errors.push('INTERVIEW_DEBRIEF_REQUIRED');
+    if (debrief || interviewUpdate?.stage === 'debrief') {
+      if (candidate.cardDraft && candidate.cardDraft.type !== 'review') errors.push('MODE_VIOLATION');
+    } else {
+      if (interviewUpdate && !interviewUpdate.question?.trim()) errors.push('INTERVIEW_QUESTION_REQUIRED');
+      if (candidate.findings.length || candidate.cardDraft) errors.push('INTERVIEW_QA_NO_CARD');
+    }
+  }
   if (input.mode === 'listen' && (candidate.findings.length || candidate.cardDraft)) errors.push('MODE_VIOLATION');
   if (input.mode === 'listen' && candidate.assistantText.length > 240) errors.push('REPLY_TOO_LONG');
   if (input.mode === 'organize' && candidate.findings.some(f => f.kind === 'inference' || f.kind === 'practice_suggestion')) errors.push('MODE_VIOLATION');
   if (input.mode === 'organize' && candidate.cardDraft?.type === 'review') errors.push('MODE_VIOLATION');
   if (candidate.supportGuidance && (candidate.findings.length || candidate.cardDraft)) errors.push('SUPPORT_MODE_VIOLATION');
   if (new Set(candidate.findings.map(f => f.id)).size !== candidate.findings.length) errors.push('DUPLICATE_FINDING');
+  const requireConfirmed = input.mode === 'review' || input.mode === 'practice' || input.mode === 'interview';
   for (const f of candidate.findings) {
     if (f.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');
     if (['reported_fact', 'inference'].includes(f.kind) && !f.evidenceRefs.length) errors.push('EVIDENCE_REQUIRED');
     if (f.kind === 'practice_suggestion' && !f.evidenceRefs.length && !/通用|材料有限|材料不足/.test(f.text)) errors.push('EVIDENCE_REQUIRED');
-    for (const ref of f.evidenceRefs) if (!(input.context.sourceSegments ? input.context.sourceSegments.some(s => s.sourceId === ref.sourceId && s.sourceRevision === ref.sourceRevision && s.segmentId === ref.segmentId && s.text.includes(ref.quote) && (!['review', 'practice'].includes(input.mode) || s.confirmed)) : locateEvidence(input.context.sources, ref, input.mode === 'review' || input.mode === 'practice'))) errors.push('EVIDENCE_MISMATCH');
+    for (const ref of f.evidenceRefs) if (!(input.context.sourceSegments ? input.context.sourceSegments.some(s => s.sourceId === ref.sourceId && s.sourceRevision === ref.sourceRevision && s.segmentId === ref.segmentId && s.text.includes(ref.quote) && (!requireConfirmed || s.confirmed)) : locateEvidence(input.context.sources, ref, requireConfirmed))) errors.push('EVIDENCE_MISMATCH');
   }
   if (candidate.cardDraft) {
     if (candidate.cardDraft.validity !== 'draft') errors.push('MODEL_CANNOT_CONFIRM');

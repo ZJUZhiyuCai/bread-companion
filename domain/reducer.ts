@@ -1,9 +1,28 @@
-import type { Activity, Card, EndSnapshot, Finding, Mode, RunToken, SessionState, Source, TurnCandidate } from './types';
+import type { Activity, Card, EndSnapshot, InterviewState, InterviewStyle, InterviewUpdate, Mode, RunToken, SessionState, Source, TurnCandidate } from './types';
 import { cardCanConfirm, evidenceSnapshots, linkedFindings } from './evidence';
 
 export function uid(prefix = 'id'): string { return `${prefix}_${globalThis.crypto.randomUUID()}`; }
 export function initialState(sessionId = uid('session'), caseId = uid('case')): SessionState {
-  return { sessionId, caseId, started: false, mode: 'listen', lifecycle: 'active', activity: 'idle', supportState: 'normal', epoch: 0, activeRunId: null, contextRevision: 0, messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [], endSnapshot: null };
+  return { sessionId, caseId, started: false, mode: 'listen', interview: null, lifecycle: 'active', activity: 'idle', supportState: 'normal', epoch: 0, activeRunId: null, contextRevision: 0, messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [], endSnapshot: null };
+}
+type InterviewOptions = Partial<Pick<InterviewState, 'style' | 'role' | 'topic' | 'maxRounds'>>;
+function openInterview({ style = 'gentle', role = '', topic = '', maxRounds = 4 }: InterviewOptions = {}): InterviewState {
+  return { style, stage: 'opening', role: role.trim().slice(0, 80), topic: topic.trim().slice(0, 120), round: 0,
+    maxRounds: Math.min(6, Math.max(1, Math.trunc(Number.isNaN(maxRounds) ? 4 : maxRounds))), currentQuestion: '', focusPoints: [], notes: [] };
+}
+function advanceInterview(interview: InterviewState, update: InterviewUpdate): InterviewState {
+  const { roundNote, stage, role = interview.role, topic = interview.topic } = update;
+  const notes = roundNote && interview.currentQuestion
+    ? [...interview.notes, { round: Math.max(1, interview.round), question: interview.currentQuestion,
+      ...(roundNote.strength ? { strength: roundNote.strength } : {}), ...(roundNote.gap ? { gap: roundNote.gap } : {}) }].slice(-6)
+    : interview.notes;
+  const revised = { ...interview, stage, role, topic, notes };
+  if (stage === 'debrief') return revised;
+  return { ...revised, round: Math.min(interview.maxRounds, interview.round + 1),
+    currentQuestion: update.question ?? '', focusPoints: update.focusPoints?.slice(0, 2) ?? [] };
+}
+function replaceInterview(state: SessionState, mode: Mode, interview: InterviewState | null): SessionState {
+  return { ...state, mode, interview, epoch: state.epoch + 1, contextRevision: state.contextRevision + 1, activeRunId: null, activity: 'idle' };
 }
 export function isCurrent(state: SessionState, token: RunToken): boolean {
   return state.lifecycle === 'active' && state.sessionId === token.sessionId && state.activeRunId === token.runId && state.epoch === token.epoch && state.contextRevision === token.contextRevision;
@@ -23,6 +42,10 @@ export function makeEndSnapshot(state: SessionState, includeDraft = false): EndS
 export type Event =
   | { type: 'START'; mode: Mode; welcome?: string }
   | { type: 'MODE'; mode: Mode }
+  | ({ type: 'START_INTERVIEW' } & InterviewOptions)
+  | { type: 'SET_INTERVIEW_STYLE'; style: InterviewStyle }
+  | { type: 'REQUEST_INTERVIEW_DEBRIEF' }
+  | { type: 'EXIT_INTERVIEW' }
   | { type: 'USER'; text: string; source: Source }
   | { type: 'RUN'; runId: string; activity: Activity }
   | { type: 'ACTIVITY'; token: RunToken; activity: Activity }
@@ -53,8 +76,16 @@ export function reducer(state: SessionState, event: Event): SessionState {
   }
   if (state.lifecycle === 'ended') return state;
   switch (event.type) {
-    case 'START': return { ...state, started: true, mode: event.mode, activity: 'idle', messages: event.welcome ? [{ id: uid('message'), role: 'assistant', text: event.welcome }] : state.messages };
-    case 'MODE': return { ...state, mode: event.mode, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
+    case 'START': return { ...state, started: true, mode: event.mode, interview: event.mode === 'interview' ? state.interview ?? openInterview() : null, activity: 'idle', messages: event.welcome ? [{ id: uid('message'), role: 'assistant', text: event.welcome }] : state.messages };
+    case 'MODE': {
+      const interview = event.mode === 'interview' ? state.interview ?? openInterview() : null;
+      if (interview !== state.interview) return replaceInterview(state, event.mode, interview);
+      return { ...state, mode: event.mode, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
+    }
+    case 'START_INTERVIEW': return { ...replaceInterview(state, 'interview', openInterview(event)), started: true };
+    case 'SET_INTERVIEW_STYLE': return state.interview ? replaceInterview(state, state.mode, { ...state.interview, style: event.style }) : state;
+    case 'REQUEST_INTERVIEW_DEBRIEF': return state.interview ? replaceInterview(state, state.mode, { ...state.interview, stage: 'debrief' }) : state;
+    case 'EXIT_INTERVIEW': return replaceInterview(state, 'listen', null);
     case 'USER': return { ...state, messages: [...state.messages, { id: uid('message'), role: 'user', text: event.text, sourceId: event.source.id }], sources: [...state.sources, event.source], contextRevision: state.contextRevision + 1 };
     case 'RUN': return { ...state, activeRunId: event.runId, activity: event.activity };
     case 'ACTIVITY': return isCurrent(state, event.token) ? { ...state, activity: event.activity } : state;
@@ -64,10 +95,15 @@ export function reducer(state: SessionState, event: Event): SessionState {
       const c = event.candidate;
       const nextRevision = Math.max(0, ...state.cards.map(v => v.revision)) + 1;
       const card = c.cardDraft ? { ...c.cardDraft, caseId: state.caseId, revision: nextRevision, parentRevision: currentCard(state)?.revision ?? null } : undefined;
-      return { ...state, rejectedFindings: state.mode !== 'listen' && !c.supportGuidance ? state.rejectedFindings?.map(f => ({...f, needsAcknowledgement: false})) : state.rejectedFindings, ...(c.practiceSetup ? { selectedQuestion: c.practiceSetup.question, practiceCriteria: c.practiceSetup.criteria, contextRevision: state.contextRevision + 1 } : {}), mode: c.supportGuidance ? 'listen' : state.mode, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
+      const interview = c.supportGuidance ? null : state.mode === 'interview' && state.interview && c.interviewUpdate
+        ? advanceInterview(state.interview, c.interviewUpdate) : state.interview;
+      return { ...state, rejectedFindings: state.mode !== 'listen' && !c.supportGuidance ? state.rejectedFindings?.map(f => ({...f, needsAcknowledgement: false})) : state.rejectedFindings,
+        ...(c.practiceSetup ? { selectedQuestion: c.practiceSetup.question, practiceCriteria: c.practiceSetup.criteria } : {}),
+        contextRevision: state.contextRevision + (c.practiceSetup || interview !== state.interview ? 1 : 0),
+        mode: c.supportGuidance ? 'listen' : state.mode, interview, activeRunId: null, activity: 'idle', supportState: c.supportGuidance ? 'support_guidance' : state.supportState, messages: [...state.messages, { id: uid('message'), role: 'assistant', text: c.assistantText, serviceMode: c.serviceMode }], findings: [...state.findings, ...c.findings], cards: card ? [...state.cards, card] : state.cards, currentCardId: card?.id ?? state.currentCardId };
     }
     case 'STOP': return { ...state, epoch: state.epoch + 1, activeRunId: null, activity: 'paused' };
-    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state, true), rejectedFindings: [], messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [] };
+    case 'END': return { ...state, lifecycle: 'ended', epoch: state.epoch + 1, activeRunId: null, activity: 'idle', endSnapshot: makeEndSnapshot(state, true), rejectedFindings: [], messages: [], sources: [], findings: [], cards: [], currentCardId: null, selectedQuestion: '', practiceCriteria: [], interview: null };
     case 'ADD_SOURCE': return { ...state, sources: [...state.sources, event.source], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     case 'CORRECT_SOURCE': {
       if (!state.sources.some(s => s.id === event.id)) return state;
@@ -99,8 +135,8 @@ export function reducer(state: SessionState, event: Event): SessionState {
       const ids = new Set(card.sections.flatMap(s => s.findingIds));
       return { ...state, cards: state.cards.map(c => c.id === card.id ? { ...c, validity: 'confirmed' } : c), findings: state.findings.map(f => ids.has(f.id) ? { ...f, validity: 'confirmed' } : f) };
     }
-    case 'PREPARE_PRACTICE': return { ...state, mode: 'practice', selectedQuestion: '', practiceCriteria: [], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
-    case 'PRACTICE': return { ...state, mode: 'practice', selectedQuestion: event.question, practiceCriteria: event.criteria.slice(0, 2), epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
+    case 'PREPARE_PRACTICE': return { ...state, mode: 'practice', interview: null, selectedQuestion: '', practiceCriteria: [], contextRevision: state.contextRevision + 1, epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
+    case 'PRACTICE': return { ...state, mode: 'practice', interview: null, selectedQuestion: event.question, practiceCriteria: event.criteria.slice(0, 2), epoch: state.epoch + 1, activeRunId: null, activity: 'idle' };
     default: return state;
   }
 }
