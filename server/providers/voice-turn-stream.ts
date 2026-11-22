@@ -157,7 +157,9 @@ export async function streamVoiceTurn({ req, input, signal, format, bufferMp3, a
     const providerMs = performance.now() - agentStart;
     if (!tail && !deferredSentences.length) return { candidate, providerMs };
     send({ type: 'candidate', candidate, timing: { agentMs: providerMs, elapsedMs: performance.now() - started } });
-    for (const sentence of deferredSentences) enqueue(sentence);
+    // Coalesce deferred sentences into one TTS call so interview turns and support tails
+    // avoid multiplying MiniMax QPS and keep natural prosody across sentences.
+    if (deferredSentences.length) enqueue(deferredSentences.join(''));
     await releaseAgent();
     await tail;
     await releaseSpeech();

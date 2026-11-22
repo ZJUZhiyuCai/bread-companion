@@ -117,7 +117,7 @@ describe('sentence voice orchestration', () => {
     expect(() => availableSlots('tts', 3)).not.toThrow();
   });
 
-  it('streams Anthropic interview text, coalesces the first MP3 and removes split tags from later sentences', async () => {
+  it('streams Anthropic interview text and coalesces deferred sentences into one MP3 synthesis call', async () => {
     vi.stubEnv('AGENT_CALL_MODEL', 'call-fixture');
     vi.stubEnv('AGENT_CALL_PROTOCOL', 'anthropic');
     const turn = interview();
@@ -128,7 +128,8 @@ describe('sentence voice orchestration', () => {
       sseData({ type: 'message_delta', delta: { stop_reason: 'end_turn' } }), sseData({ type: 'message_stop' }),
     ];
     const tag = [73, 68, 51, 3, 0, 0, 0, 0, 0, 2, 7, 8];
-    const frames = [[255, 227, 1, 0], [255, 227, 2, 0]];
+    const frame = [255, 227, 1, 0];
+    const ttsCalls: string[] = [];
     const provider = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
       if (String(url).endsWith('/messages')) {
@@ -138,17 +139,39 @@ describe('sentence voice orchestration', () => {
         return sse(characters.join(''));
       }
       expect(body.audio_setting.format).toBe('mp3');
-      const frame = body.text === opener ? frames[0] : frames[1];
+      ttsCalls.push(body.text);
       return sse(voiceReply(1, tag.slice(0, 5), 'mp3') + voiceReply(2, [...tag.slice(5), ...frame], 'mp3'));
     });
     const events = await allEvents(await postWith(req(turn, 'mp3-chunks-v1'), provider));
     expect(events[0].type).toBe('candidate');
-    expect(events.filter(e => e.type === 'delta').map(e => e.text)).toEqual([opener, question]);
+    expect(ttsCalls).toEqual([opener + question]);
+    expect(events.filter(e => e.type === 'delta').map(e => e.text)).toEqual([opener + question]);
     expect(events.filter(e => e.type === 'audio_start')).toEqual([{ type: 'audio_start', requestId: turn.requestId, format: 'mp3', sampleRate: 32000, channels: 1 }]);
+    const audio = events.filter(e => e.type === 'audio_chunk');
+    expect(audio.map(e => e.sequence)).toEqual([0]);
+    expect(Buffer.concat(audio.map(e => Buffer.from(e.audio, 'base64')))).toEqual(Buffer.from([...tag, ...frame]));
+    expect(events.find(e => e.type === 'candidate').candidate.interviewUpdate).toMatchObject({ stage: 'question', question });
+    expect(events.at(-1).type).toBe('done');
+  });
+
+  it('coalesces the first MP3 and removes split ID3v2 tags from later early-streamed listen sentences', async () => {
+    const turn = listening();
+    const first = '等了一周只收到四个字。', second = '这落差确实不好受。';
+    const tag = [73, 68, 51, 3, 0, 0, 0, 0, 0, 2, 7, 8];
+    const frames = [[255, 227, 1, 0], [255, 227, 2, 0]];
+    const provider = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      if (String(url).endsWith('/chat/completions')) {
+        return sse(openAiText('{"assistantText":"' + first) + openAiText(second + '","supportGuidance":false}') + 'data: [DONE]\n\n');
+      }
+      const frame = body.text === first ? frames[0] : frames[1];
+      return sse(voiceReply(1, tag.slice(0, 5), 'mp3') + voiceReply(2, [...tag.slice(5), ...frame], 'mp3'));
+    });
+    const events = await allEvents(await postWith(req(turn, 'mp3-chunks-v1'), provider));
+    expect(events.filter(e => e.type === 'delta').map(e => e.text)).toEqual([first, second]);
     const audio = events.filter(e => e.type === 'audio_chunk');
     expect(audio.map(e => e.sequence)).toEqual([0, 1]);
     expect(Buffer.concat(audio.map(e => Buffer.from(e.audio, 'base64')))).toEqual(Buffer.from([...tag, ...frames[0], ...frames[1]]));
-    expect(events.find(e => e.type === 'candidate').candidate.interviewUpdate).toMatchObject({ stage: 'question', question });
     expect(events.at(-1).type).toBe('done');
   });
 

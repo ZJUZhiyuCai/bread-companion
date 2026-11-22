@@ -36,7 +36,11 @@ export async function* synthesizeStream(text: string, signal: AbortSignal, fetch
           let event;
           try { event = JSON.parse(data); } catch { throw invalid(); }
           data = '';
-          if (!event || typeof event !== 'object' || (event.base_resp && event.base_resp.status_code !== 0)) throw invalid();
+          if (!event || typeof event !== 'object') throw invalid();
+          if (event.base_resp && event.base_resp.status_code !== 0) {
+            if (event.base_resp.status_code === 1002) throw new AppError('RATE_LIMITED', 429, true);
+            throw invalid();
+          }
           const status = event.data?.status, hex = event.data?.audio;
           if (status !== 1 && status !== 2) throw invalid();
           if (hex !== undefined && hex !== '') {
